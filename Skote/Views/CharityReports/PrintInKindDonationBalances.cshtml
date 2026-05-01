@@ -1,8 +1,0 @@
-@model InfrastructureManagmentWebFramework.Models.Reports.InKindDonationBalanceReportVm
-@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة تقرير الأرصدة المتبقية للتبرعات العينية"; }
-<h3>تقرير الأرصدة المتبقية للتبرعات العينية</h3>
-<div class="meta">الفترة: @(Model.FromDate?.ToString("yyyy-MM-dd") ?? "الكل") - @(Model.ToDate?.ToString("yyyy-MM-dd") ?? "الكل")</div>
-<table class="table">
-    <thead><tr><th>التاريخ</th><th>رقم التبرع</th><th>المتبرع</th><th>الصنف</th><th>المخزن</th><th>الكمية الواردة</th><th>الكمية المخصصة</th><th>المتبقي</th><th>الحالة</th></tr></thead>
-    <tbody>@foreach (var row in Model.Rows){<tr><td>@row.DonationDate.ToString("yyyy-MM-dd")</td><td>@row.DonationNumber</td><td>@row.DonorName</td><td>@row.ItemName</td><td>@row.WarehouseName</td><td>@row.DonatedQuantity.ToString("N2")</td><td>@row.AllocatedQuantity.ToString("N2")</td><td>@row.RemainingQuantity.ToString("N2")</td><td>@row.ReceiptStatusName</td></tr>}</tbody>
-</table>

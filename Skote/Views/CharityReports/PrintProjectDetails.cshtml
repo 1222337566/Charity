@@ -1,3 +1,0 @@
-@model InfrastructureManagmentWebFramework.Models.Reports.ProjectDetailsReportVm
-@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة التقرير التفصيلي للمشروعات"; }
-<h3>التقرير التفصيلي للمشروعات</h3><table class="table"><thead><tr><th>الكود</th><th>المشروع</th><th>الفترة</th><th>الحالة</th><th>الموازنة</th><th>المنفذ</th><th>نسبة التنفيذ</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@row.ProjectCode</td><td>@row.ProjectName</td><td>@row.StartDate.ToString("yyyy-MM-dd") - @(row.EndDate?.ToString("yyyy-MM-dd") ?? "-")</td><td>@row.Status</td><td>@row.Budget.ToString("N2")</td><td>@row.ActualBudgetLines.ToString("N2")</td><td>@row.ExecutionPercentage.ToString("N2")%</td></tr>}</tbody></table>

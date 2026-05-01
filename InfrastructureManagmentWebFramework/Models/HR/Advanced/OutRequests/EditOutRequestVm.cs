@@ -1,1 +1,0 @@
-namespace InfrastructureManagmentWebFramework.Models.HR.Advanced.OutRequests { public class EditOutRequestVm : CreateOutRequestVm { } }

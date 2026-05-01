@@ -1,0 +1,45 @@
+@model IEnumerable<InfrastrfuctureManagmentCore.Domains.Charity.MinutesAndDecisions.BoardDecisionFollowUp>
+@{
+    var decision = ViewBag.Decision as InfrastrfuctureManagmentCore.Domains.Charity.MinutesAndDecisions.BoardDecision;
+    ViewData["Title"] = "متابعة القرار";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h4 class="mb-1">متابعة القرار</h4>
+            <div class="text-muted">@decision?.DecisionNumber - @decision?.Title</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="BoardDecisions" asp-action="Details" asp-route-id="@decision?.Id" class="btn btn-light">رجوع للقرار</a>
+            <a asp-action="Create" asp-route-boardDecisionId="@decision?.Id" class="btn btn-primary">إضافة متابعة</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                        <th>نسبة الإنجاز</th>
+                        <th>التفاصيل</th>
+                        <th>الإجراء التالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.FollowUpDate.ToString("yyyy-MM-dd")</td>
+                        <td>@item.Status</td>
+                        <td>@(item.ProgressPercent ?? 0)%</td>
+                        <td>@item.Details</td>
+                        <td>@item.NextAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,23 @@
+@model Skote.Models.Charity.MinutesAndDecisions.BoardDecisionVm
+@{
+    var meeting = ViewBag.Meeting as InfrastrfuctureManagmentCore.Domains.Charity.MinutesAndDecisions.BoardMeeting;
+    ViewData["Title"] = "تعديل قرار";
+}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">تعديل قرار / توصية</h4>
+            <small class="text-muted">@meeting?.Title</small>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                @await Html.PartialAsync("_Form", Model)
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                    <a asp-action="Index" asp-route-meetingId="@Model.BoardMeetingId" class="btn btn-light">رجوع</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

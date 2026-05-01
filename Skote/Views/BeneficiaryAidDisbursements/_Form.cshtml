@@ -1,0 +1,116 @@
+@using InfrastructureManagmentServices.Charity.Funding
+@using InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.AidDisbursements
+@model CreateBeneficiaryAidDisbursementVm
+@{
+    string FundingBadgeClass(string statusCode) => statusCode switch
+    {
+        AidRequestFundingStatusCodes.FullyFunded => "bg-success-subtle text-success",
+        AidRequestFundingStatusCodes.PartiallyFunded => "bg-info-subtle text-info",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    string DisbursementBadgeClass(string statusCode) => statusCode switch
+    {
+        AidRequestFundingStatusCodes.FullyDisbursed => "bg-success-subtle text-success",
+        AidRequestFundingStatusCodes.PartiallyDisbursed => "bg-info-subtle text-info",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+}
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div class="row g-3">
+    @if (Model.AidRequestId.HasValue)
+    {
+        <div class="col-12">
+            <div class="alert alert-info mb-0">
+                <div class="d-flex gap-2 flex-wrap mb-2">
+                    <span class="badge @FundingBadgeClass(Model.FundingStatusCode)">@Model.FundingStatusName</span>
+                    <span class="badge @DisbursementBadgeClass(Model.DisbursementStatusCode)">@Model.DisbursementStatusName</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-2"><strong>المطلوب:</strong> @Model.RequestedAmount.ToString("N2")</div>
+                    <div class="col-md-2"><strong>الممول:</strong> @Model.FundedAmount.ToString("N2")</div>
+                    <div class="col-md-2"><strong>المصروف سابقًا:</strong> @Model.AlreadyDisbursedAmount.ToString("N2")</div>
+                    <div class="col-md-2"><strong>متبقي للتمويل:</strong> @Model.RemainingToFundAmount.ToString("N2")</div>
+                    <div class="col-md-2"><strong>المتاح للصرف:</strong> @Model.RemainingToDisburseAmount.ToString("N2")</div>
+                    <div class="col-md-2"><strong>المتبقي على الطلب:</strong> @Model.RemainingOnRequestAmount.ToString("N2")</div>
+                </div>
+                @if (Model.DonationId.HasValue)
+                {
+                    <div class="mt-2"><strong>المتاح من التبرع المحدد لهذا الطلب:</strong> @Model.SelectedDonationRemainingAmount.ToString("N2")</div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="col-md-6">
+        <label asp-for="BeneficiaryId" class="form-label"></label>
+        <select asp-for="BeneficiaryId" asp-items="Model.Beneficiaries" class="form-select">
+            <option value="">-- اختر المستفيد --</option>
+        </select>
+        <span asp-validation-for="BeneficiaryId" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="DisbursementDate" class="form-label"></label>
+        <input asp-for="DisbursementDate" type="date" class="form-control" />
+        <span asp-validation-for="DisbursementDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="AidRequestId" class="form-label"></label>
+        <select asp-for="AidRequestId" asp-items="Model.AidRequests" class="form-select">
+            <option value="">-- اختر الطلب أولًا --</option>
+        </select>
+        <span asp-validation-for="AidRequestId" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AidTypeId" class="form-label"></label>
+        <select asp-for="AidTypeId" asp-items="Model.AidTypes" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+        <span asp-validation-for="AidTypeId" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Amount" class="form-label"></label>
+        <input asp-for="Amount" class="form-control" />
+        <span asp-validation-for="Amount" class="text-danger"></span>
+        <small class="text-muted">لا يمكن الصرف بأكثر من الرصيد الممول وغير المصروف للطلب.</small>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PaymentMethodId" class="form-label"></label>
+        <select asp-for="PaymentMethodId" asp-items="Model.PaymentMethods" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="FinancialAccountId" class="form-label"></label>
+        <select asp-for="FinancialAccountId" asp-items="Model.FinancialAccounts" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ProjectId" class="form-label"></label>
+        <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+            <option value="">-- بدون مشروع --</option>
+        </select>
+        <span asp-validation-for="ProjectId" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="GrantAgreementId" class="form-label"></label>
+        <select asp-for="GrantAgreementId" asp-items="Model.GrantAgreements" class="form-select">
+            <option value="">-- بدون اتفاقية --</option>
+        </select>
+        <span asp-validation-for="GrantAgreementId" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="DonationId" class="form-label"></label>
+        <select asp-for="DonationId" asp-items="Model.Donations" class="form-select">
+            <option value="">-- بدون تبرع محدد --</option>
+        </select>
+        <span asp-validation-for="DonationId" class="text-danger"></span>
+        <small class="text-muted">بعد اختيار الطلب ستظهر فقط التبرعات التي ما زال بها رصيد متاح لهذا الطلب. وإذا تركت التبرع فارغًا سيستهلك النظام تلقائيًا من أقدم سطور التخصيص المتاحة (FIFO).</small>
+    </div>
+    <div class="col-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+</div>

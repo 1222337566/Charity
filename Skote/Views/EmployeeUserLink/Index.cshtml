@@ -1,0 +1,174 @@
+@model List<InfrastrfuctureManagmentCore.Domains.HR.HrEmployee>
+@{
+    ViewData["Title"] = "ربط الموظفين بالمستخدمين";
+    var usersByEmpId = ViewBag.UsersByEmployeeId as Dictionary<Guid, InfrastructureManagmentCore.Domains.Identity.ApplicationUser>
+                    ?? new Dictionary<Guid, InfrastructureManagmentCore.Domains.Identity.ApplicationUser>();
+    var allRoles = ViewBag.AllRoles as List<string> ?? new();
+}
+
+<style>
+.eu-hero{background:linear-gradient(135deg,#1e3a5f,#2d5282);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.eu-stat{background:rgba(255,255,255,.12);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:70px}
+.eu-stat .n{font-size:1.3rem;font-weight:800}
+.eu-stat .l{font-size:.67rem;opacity:.8}
+.eu-card{background:#fff;border-radius:14px;border:.5px solid rgba(30,58,95,.1);box-shadow:0 2px 10px rgba(30,58,95,.05);margin-bottom:10px;overflow:hidden}
+.eu-row{padding:12px 16px;display:flex;align-items:center;gap:12px}
+.eu-avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:#fff;flex-shrink:0}
+.role-chip{padding:2px 8px;border-radius:5px;font-size:.68rem;font-weight:700;background:rgba(30,58,95,.1);color:#1e3a5f}
+.linked-badge{padding:2px 8px;border-radius:5px;font-size:.68rem;font-weight:700;background:#d1fae5;color:#065f46}
+.unlinked-badge{padding:2px 8px;border-radius:5px;font-size:.68rem;font-weight:700;background:#fee2e2;color:#991b1b}
+.action-panel{border-top:.5px solid rgba(30,58,95,.07);background:#fafcff;padding:10px 16px;display:none}
+.action-panel.show{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+</style>
+
+@* Hero *@
+<div class="eu-hero">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1 text-white"><i class="bx bx-link me-2"></i>ربط الموظفين بالمستخدمين</h4>
+      <div style="opacity:.7;font-size:.8rem">كل موظف يحصل على حساب مستخدم وصلاحيات بناءً على وظيفته</div>
+    </div>
+  </div>
+  <div class="d-flex gap-3 flex-wrap">
+    <div class="eu-stat">
+      <div class="n">@Model.Count</div><div class="l">إجمالي الموظفين</div>
+    </div>
+    <div class="eu-stat" style="background:rgba(52,195,143,.2)">
+      <div class="n">@usersByEmpId.Count</div><div class="l">مرتبطون</div>
+    </div>
+    <div class="eu-stat" style="background:rgba(244,106,106,.2)">
+      <div class="n">@(Model.Count - usersByEmpId.Count)</div><div class="l">بدون حساب</div>
+    </div>
+  </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+  <div class="alert alert-success alert-dismissible fade show" style="border-radius:12px">
+    <i class="bx bx-check-circle me-2"></i>@TempData["Success"]
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+}
+@if (TempData["Error"] != null)
+{
+  <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px">
+    @TempData["Error"]
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+}
+
+@foreach (var emp in Model)
+{
+  var user     = usersByEmpId.TryGetValue(emp.Id, out var u) ? u : null;
+  var hasUser  = user != null;
+  var initials = string.Join("", emp.FullName.Split(' ').Take(2).Select(w => w.Length > 0 ? w[0].ToString() : ""));
+  var colors   = new[]{"#0e6f73","#556ee6","#f1b44c","#34c38f","#f46a6a","#8b5cf6"};
+  var color    = colors[Math.Abs(emp.FullName.GetHashCode()) % colors.Length];
+  var cardId   = $"eu-{emp.Id:N}";
+
+  <div class="eu-card">
+    <div class="eu-row" onclick="togglePanel('@cardId')" style="cursor:pointer">
+      <div class="eu-avatar" style="background:@color">@initials</div>
+      <div class="flex-grow-1 min-w-0">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="fw-bold" style="font-size:.9rem">@emp.FullName</span>
+          @if (!string.IsNullOrWhiteSpace(emp.JobTitle?.Name))
+          { <span class="role-chip">@emp.JobTitle.Name</span> }
+          @if (!string.IsNullOrWhiteSpace(emp.Department?.Name))
+          { <span style="font-size:.74rem;color:#6b7d80">@emp.Department.Name</span> }
+        </div>
+        <div class="d-flex align-items-center gap-2 mt-1">
+          @if (hasUser)
+          {
+            <span class="linked-badge">✓ @user!.UserName</span>
+            @if (!user.IsActive)
+            { <span style="padding:2px 8px;border-radius:5px;font-size:.68rem;font-weight:700;background:#fef3c7;color:#92400e">معطّل</span> }
+          }
+          else
+          {
+            <span class="unlinked-badge">✗ بدون حساب</span>
+          }
+        </div>
+      </div>
+      <i class="bx bx-chevron-down" style="color:#adb5bd"></i>
+    </div>
+
+    <div id="@cardId" class="action-panel">
+      @if (!hasUser)
+      {
+        <a asp-action="CreateAccount" asp-route-employeeId="@emp.Id"
+           class="btn btn-success btn-sm fw-bold" style="border-radius:9px">
+          <i class="bx bx-user-plus me-1"></i>إنشاء حساب جديد
+        </a>
+        <a asp-action="LinkExistingUser" asp-route-employeeId="@emp.Id"
+           class="btn btn-outline-primary btn-sm fw-bold" style="border-radius:9px">
+          <i class="bx bx-link me-1"></i>ربط بحساب موجود
+        </a>
+      }
+      else
+      {
+        <a asp-action="ManageRoles" asp-route-employeeId="@emp.Id"
+           class="btn btn-primary btn-sm fw-bold" style="border-radius:9px">
+          <i class="bx bx-shield me-1"></i>إدارة الصلاحيات
+        </a>
+
+        @* تعطيل / تفعيل *@
+        <form asp-action="ToggleAccount" asp-route-employeeId="@emp.Id" method="post" class="d-inline">
+          @Html.AntiForgeryToken()
+          <button type="submit" class="btn btn-sm fw-bold"
+                  style="border-radius:9px;background:@(user!.IsActive?"rgba(244,106,106,.1)":"rgba(52,195,143,.1)");color:@(user.IsActive?"#f46a6a":"#065f46");border:.5px solid @(user.IsActive?"rgba(244,106,106,.3)":"rgba(52,195,143,.3)")">
+            <i class="bx bx-@(user.IsActive?"block":"check") me-1"></i>@(user.IsActive?"تعطيل الحساب":"تفعيل الحساب")
+          </button>
+        </form>
+
+        @* إعادة تعيين كلمة المرور *@
+        <button type="button" class="btn btn-warning btn-sm fw-bold" style="border-radius:9px"
+                data-bs-toggle="modal" data-bs-target="#resetModal-@emp.Id.ToString("N")">
+          <i class="bx bx-key me-1"></i>إعادة تعيين كلمة المرور
+        </button>
+
+        <div style="font-size:.75rem;color:#6b7d80">
+          <i class="bx bx-user me-1"></i>@user!.UserName &nbsp;
+          @if (!string.IsNullOrWhiteSpace(user.Email))
+          { <i class="bx bx-envelope me-1"></i><span>@user.Email</span> }
+        </div>
+      }
+    </div>
+  </div>
+
+  @* Modal إعادة كلمة المرور *@
+  @if (hasUser)
+  {
+    <div class="modal fade" id="resetModal-@emp.Id.ToString("N")" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:16px">
+          <div class="modal-header" style="background:#f59e0b;border-radius:16px 16px 0 0;color:#fff;border:none">
+            <h6 class="modal-title fw-bold">إعادة كلمة مرور @emp.FullName</h6>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <form asp-action="ResetPassword" asp-route-employeeId="@emp.Id" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-body p-4">
+              <label class="form-label fw-semibold" style="font-size:.83rem">كلمة المرور الجديدة</label>
+              <input name="newPassword" type="password" class="form-control" style="border-radius:10px"
+                     placeholder="8 أحرف على الأقل" required minlength="8"/>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-warning fw-bold" style="border-radius:10px">تغيير</button>
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+}
+
+@section Scripts {
+<script>
+function togglePanel(id) {
+    var p = document.getElementById(id);
+    p.classList.toggle('show');
+}
+</script>
+}

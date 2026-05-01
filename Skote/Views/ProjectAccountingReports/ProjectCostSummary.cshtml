@@ -1,0 +1,20 @@
+@model InfrastructureManagmentWebFramework.Models.AccountingProjects.ProjectCostSummaryVm
+@{ ViewData["Title"] = "ملخص تكلفة المشروعات"; }
+<form method="get" class="row g-3 mb-3">
+    <div class="col-md-4"><select asp-for="ProjectId" asp-items="Model.Projects" class="form-select"><option value="">كل المشروعات</option></select></div>
+    <div class="col-md-3"><select asp-for="CostCenterId" asp-items="Model.CostCenters" class="form-select"><option value="">كل مراكز التكلفة</option></select></div>
+    <div class="col-md-2"><input asp-for="FromDate" type="date" class="form-control" /></div>
+    <div class="col-md-2"><input asp-for="ToDate" type="date" class="form-control" /></div>
+    <div class="col-md-1"><button class="btn btn-primary w-100">عرض</button></div>
+</form>
+<table class="table table-bordered table-striped">
+    <thead><tr><th>المشروع</th><th>مركز التكلفة</th><th>مدين</th><th>دائن</th><th>صافي</th></tr></thead>
+    <tbody>
+    @foreach (var row in Model.Rows)
+    {
+        <tr>
+            <td>@row.ProjectName</td><td>@row.CostCenterName</td><td>@row.TotalDebit</td><td>@row.TotalCredit</td><td>@row.NetCost</td>
+        </tr>
+    }
+    </tbody>
+</table>

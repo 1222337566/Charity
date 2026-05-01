@@ -1,0 +1,163 @@
+﻿<div class="vertical-menu">
+    <div data-simplebar class="h-100">
+        <div id="sidebar-menu">
+            <ul class="metismenu list-unstyled" id="side-menu">
+
+                <!-- الرئيسية -->
+                <li class="menu-title" key="t-main">الرئيسية</li>
+
+                <li>
+                    <a href="@Url.Action("DashboardAccounts", "Dashboard")" class="waves-effect">
+                        <i class="bx bx-home-circle"></i>
+                        <span key="t-dashboard">لوحة التحكم</span>
+                    </a>
+                     
+                </li>
+
+                <!-- الإعدادات الأساسية -->
+                <li class="menu-title" key="t-masterdata">الإعدادات الأساسية</li>
+
+                <li>
+                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                        <i class="bx bx-cog"></i>
+                        <span key="t-basicdata">البيانات الأساسية</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        <li>
+                            <a href="@Url.Action("Index", "CompanyProfile")">بيانات الشركة</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "FinancialAccount")">دليل الحسابات</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "Customers")">العملاء</a>
+                       </li>
+                        <li>
+                            <a href="@Url.Action("Index", "Suppliers")">الموردون</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "ExpenseCategories")">تصنيفات المصروفات</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "Expenses")">المصروفات</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "ItemGroups")">مجموعات الأصناف</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "Units")">الوحدات</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "Items")">الأصناف</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "Warehouses")">المخازن</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "PaymentMethods")">طرق الدفع</a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- المخزون -->
+                <li class="menu-title" key="t-stock">المخزون</li>
+
+                <li>
+                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                        <i class="bx bx-package"></i>
+                        <span key="t-inventory">إدارة المخزون</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        <li>
+                            <a href="@Url.Action("Index", "StockBalances")">أرصدة المخزون</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("OpeningBalance", "StockBalances")">رصيد افتتاحي</a>
+                        </li>
+
+                        @* روابط مستقبلية *@
+                        @* <li><a href="#">الحركات المخزنية</a></li> *@
+                        @* <li><a href="#">التحويل بين المخازن</a></li> *@
+                        @* <li><a href="#">الجرد والتسويات</a></li> *@
+                    </ul>
+                </li>
+
+                <!-- المشتريات -->
+                <li class="menu-title" key="t-purchases">المشتريات</li>
+
+                <li>
+                    <a href="@Url.Action("Index", "PurchaseInvoices")" class="waves-effect">
+                        <i class="bx bx-cart-alt"></i>
+                        <span key="t-purchaseinvoices">فواتير الشراء</span>
+                    </a>
+                </li>
+
+                <!-- المبيعات -->
+                <li class="menu-title" key="t-sales">المبيعات</li>
+
+                <li>
+                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                        <i class="bx bx-receipt"></i>
+                        <span key="t-salesops">المبيعات ونقاط البيع</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        <li>
+                            <a href="@Url.Action("Index", "SalesInvoices")">فواتير البيع</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Index", "Pos")">POS</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("HeldInvoices", "Pos")">الفواتير المعلقة</a>
+                        </li>
+                        <li>
+                            <a href="/SalesReturns">مرتجع المبيعات</a>
+                         </li>
+                        @* روابط مستقبلية *@
+                        @* <li><a href="#">مرتجع المبيعات</a></li> *@
+                        @* <li><a href="#">تعليق/استرجاع الفواتير</a></li> *@
+                    </ul>
+                </li>
+
+                <!-- المالية -->
+                <li class="menu-title" key="t-finance">المالية</li>
+
+                <li>
+                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                        <i class="bx bx-wallet"></i>
+                        <span key="t-financial">العمليات المالية</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        <li>
+                            <a href="@Url.Action("Index", "FinancialAccounts")">دليل الحسابات</a>
+                        </li>
+
+                        @* روابط مستقبلية *@
+                        @* <li><a href="#">القيود اليومية</a></li> *@
+                        @* <li><a href="#">سندات القبض</a></li> *@
+                        @* <li><a href="#">سندات الصرف</a></li> *@
+                        @* <li><a href="#">الخزائن والبنوك</a></li> *@
+                    </ul>
+                </li>
+
+                <!-- التقارير -->
+                <li class="menu-title" key="t-reports">التقارير</li>
+
+                <li>
+                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                        <i class="bx bx-bar-chart-alt-2"></i>
+                        <span key="t-reportsmenu">التقارير</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        @* روابط مستقبلية *@
+                        @* <li><a href="#">تقرير المبيعات اليومية</a></li> *@
+                        @* <li><a href="#">تقرير المخزون</a></li> *@
+                        @* <li><a href="#">تقرير المشتريات</a></li> *@
+                        @* <li><a href="#">ميزان المراجعة</a></li> *@
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</div>

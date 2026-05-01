@@ -1,0 +1,124 @@
+﻿@model InfrastructureManagmentWebFramework.Models.AccountingIntegration.CreateAccountingIntegrationProfileVm
+
+<div class="alert alert-info small">
+    مصادر الربط المحاسبي أصبحت ديناميكية من شاشة "مصادر الربط". يمكن إنشاء أكثر من Profile لنفس المصدر مع شروط مطابقة مختلفة، وسيختار النظام الأكثر تحديدًا عند إنشاء القيد.
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="SourceType" class="form-label"></label>
+        <select asp-for="SourceType" asp-items="Model.SourceTypes" class="form-select">
+            <option value="">-- اختر مصدر الربط --</option>
+        </select>
+        <span asp-validation-for="SourceType" class="text-danger"></span>
+        <div class="form-text">القائمة تُقرأ من قاعدة البيانات وليست ثابتة داخل الكود.</div>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="EventCode" class="form-label"></label>
+        <input asp-for="EventCode" class="form-control" placeholder="مثال: DON-GENERAL-CASH" />
+        <span asp-validation-for="EventCode" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="EventNameAr" class="form-label"></label>
+        <input asp-for="EventNameAr" class="form-control" placeholder="مثال: تحصيل تبرع عام نقدي" />
+        <span asp-validation-for="EventNameAr" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-8">
+        <label asp-for="ProfileNameAr" class="form-label"></label>
+        <input asp-for="ProfileNameAr" class="form-control" />
+        <span asp-validation-for="ProfileNameAr" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Priority" class="form-label"></label>
+        <input asp-for="Priority" class="form-control" type="number" min="1" />
+        <span asp-validation-for="Priority" class="text-danger"></span>
+        <div class="form-text">عند تساوي الشروط، الرقم الأقل له أولوية أعلى.</div>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+    </div>
+
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header bg-light">
+                <strong>شروط اختيار الـ Profile</strong>
+                <div class="text-muted small">اترك الحقل فارغًا ليطبق على كل الحالات. كلما زادت الشروط أصبح الـ Profile أكثر تحديدًا.</div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="MatchDonationType" class="form-label"></label>
+                        <select asp-for="MatchDonationType" asp-items="Model.DonationTypes" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="MatchTargetingScopeCode" class="form-label"></label>
+                        <select asp-for="MatchTargetingScopeCode" asp-items="Model.TargetingScopes" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="MatchPurposeName" class="form-label"></label>
+                        <input asp-for="MatchPurposeName" class="form-control" placeholder="مثال: زكاة الفطر / شنطة رمضان" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="MatchAidTypeId" class="form-label"></label>
+                        <select asp-for="MatchAidTypeId" asp-items="Model.AidTypes" class="form-select">
+                            <option value="">-- كل أنواع المساعدة --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="MatchStoreMovementType" class="form-label"></label>
+                        <select asp-for="MatchStoreMovementType" asp-items="Model.StoreMovementTypes" class="form-select"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="DebitAccountId" class="form-label"></label>
+        <select asp-for="DebitAccountId" asp-items="Model.Accounts" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+        <span asp-validation-for="DebitAccountId" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="CreditAccountId" class="form-label"></label>
+        <select asp-for="CreditAccountId" asp-items="Model.Accounts" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+        <span asp-validation-for="CreditAccountId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="DefaultCostCenterId" class="form-label"></label>
+        <select asp-for="DefaultCostCenterId" asp-items="Model.CostCenters" class="form-select">
+            <option value="">-- بدون --</option>
+        </select>
+    </div>
+
+    <div class="col-md-6 d-flex align-items-end">
+        <div class="form-check form-switch me-4">
+            <input asp-for="UseSourceFinancialAccountAsDebit" class="form-check-input" />
+            <label asp-for="UseSourceFinancialAccountAsDebit" class="form-check-label"></label>
+        </div>
+        <div class="form-check form-switch me-4">
+            <input asp-for="UseSourceFinancialAccountAsCredit" class="form-check-input" />
+            <label asp-for="UseSourceFinancialAccountAsCredit" class="form-check-label"></label>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-check form-switch">
+            <input asp-for="AutoPost" class="form-check-input" />
+            <label asp-for="AutoPost" class="form-check-label"></label>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-check form-switch">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label"></label>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,28 @@
+@model List<InfrastrfuctureManagmentCore.Domains.HR.HrLeaveType>
+@{ViewData["Title"] = "أنواع الإجازات";}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="fw-bold mb-0" style="color:#0a5f63"><i class="bx bx-cog me-2"></i>أنواع الإجازات</h4>
+  <a asp-action="Index" class="btn btn-outline-secondary fw-bold" style="border-radius:12px">← رجوع</a>
+</div>
+<div class="card" style="border-radius:16px;overflow:hidden">
+  <table class="table table-hover mb-0" style="font-size:.86rem">
+    <thead style="background:#f8fbfb">
+      <tr><th>اللون</th><th>الكود</th><th>الاسم</th><th>الفئة</th><th>الحد الأقصى/سنة</th><th>مدفوعة</th><th>يُرحَّل</th><th>الحالة</th></tr>
+    </thead>
+    <tbody>
+      @foreach (var t in Model)
+      {
+        <tr>
+          <td><div style="width:16px;height:16px;border-radius:4px;background:@t.Color"></div></td>
+          <td class="fw-semibold">@t.Code</td>
+          <td>@t.NameAr</td>
+          <td><span style="padding:2px 8px;border-radius:5px;font-size:.7rem;background:rgba(14,111,115,.08);color:#0a5f63">@t.Category</span></td>
+          <td class="fw-semibold">@t.MaxDaysPerYear يوم</td>
+          <td>@(t.PaidLeave ? "✓ مدفوعة" : "بدون راتب")</td>
+          <td>@(t.CarryOverAllowed ? $"✓ ({t.MaxCarryOverDays} يوم)" : "لا")</td>
+          <td><span class="badge @(t.IsActive?"bg-success":"bg-secondary")">@(t.IsActive?"نشط":"غير نشط")</span></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,21 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Tasks.CreateProjectPhaseTaskVm
+<input type="hidden" asp-for="ProjectId" />
+<input type="hidden" asp-for="PhaseId" />
+<input type="hidden" asp-for="ActivityId" />
+<div class="row g-3">
+    <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /></div>
+    <div class="col-md-9"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /></div>
+    <div class="col-12"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control"></textarea></div>
+    <div class="col-md-2"><label asp-for="SortOrder" class="form-label"></label><input asp-for="SortOrder" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="Status" class="form-label"></label><select asp-for="Status" class="form-select"><option>Todo</option><option>InProgress</option><option>Blocked</option><option>Done</option></select></div>
+    <div class="col-md-2"><label asp-for="Priority" class="form-label"></label><select asp-for="Priority" class="form-select"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+    <div class="col-md-3"><label asp-for="PlannedStartDate" class="form-label"></label><input asp-for="PlannedStartDate" type="date" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="DueDate" class="form-label"></label><input asp-for="DueDate" type="date" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="AssignedToName" class="form-label"></label><input asp-for="AssignedToName" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="AssignedToUserId" class="form-label"></label><input asp-for="AssignedToUserId" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="PercentComplete" class="form-label"></label><input asp-for="PercentComplete" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="EstimatedHours" class="form-label"></label><input asp-for="EstimatedHours" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="SpentHours" class="form-label"></label><input asp-for="SpentHours" class="form-control" /></div>
+    <div class="col-md-3 form-check mt-4 ms-3"><input asp-for="RequiresDailyFollowUp" class="form-check-input" /><label asp-for="RequiresDailyFollowUp" class="form-check-label"></label></div>
+    <div class="col-12"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control"></textarea></div>
+</div>

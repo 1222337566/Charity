@@ -1,0 +1,359 @@
+@using Skote.Helpers
+@using InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.Shared
+@using InfrastrfuctureManagmentCore.Domains.Charity.Beneficiaries
+@model InfrastructureManagmentWebFramework.Models.Charity.Beneficiaries.BeneficiaryDetailsVm
+
+@{
+    ViewData["Title"] = "ملف المستفيد";
+    var canManageCommittee = User.IsInRole(CharityRoles.Admin) || User.HasCharityPermission(CharityPermissions.CommitteeDecisionManage);
+    var canManageBeneficiaries = User.HasCharityPermission(CharityPermissions.BeneficiariesManage);
+    var canViewAidOps = User.IsInRole(CharityRoles.Admin) || User.HasCharityPermission(CharityPermissions.AidDisbursementView) || User.HasCharityPermission(CharityPermissions.AidDisbursementManage);
+    var canManageAidOps = User.IsInRole(CharityRoles.Admin) || User.HasCharityPermission(CharityPermissions.AidDisbursementManage);
+    var hasApprovedCommitteeDecision = Model.CommitteeDecisions.Any(x => x.ApprovedStatus);
+    var categoryAssignments =
+       ViewBag.BeneficiaryCategoryAssignments as List<BeneficiaryCategoryAssignment>
+       ?? new List<BeneficiaryCategoryAssignment>();
+    ViewBag.HasApprovedCommitteeDecision = hasApprovedCommitteeDecision;
+
+    var beneficiaryHeader = new BeneficiaryHeaderVm
+            {
+                Id = Model.Id,
+                Code = Model.Code,
+                FullName = Model.FullName,
+                NationalId = Model.NationalId,
+                PhoneNumber = Model.PhoneNumber,
+                StatusName = Model.FullName
+            };
+}
+
+<partial name="~/Views/Shared/Beneficiaries/_BeneficiaryHeader.cshtml" model="beneficiaryHeader" />
+
+<div class="mb-3">
+  <a asp-controller="BeneficiaryCard" asp-action="Index" asp-route-id="@Model.Id"
+     class="btn btn-primary fw-bold" style="border-radius:12px">
+    <i class="bx bx-id-card me-2"></i>البطاقة الشاملة
+  </a>
+</div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><h5 class="mb-0">البيانات الأساسية</h5></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">الاسم</dt><dd class="col-sm-8">@Model.FullName</dd>
+                        <dt class="col-sm-4">الكود</dt><dd class="col-sm-8">@Model.Code</dd>
+                        <dt class="col-sm-4">الرقم القومي</dt><dd class="col-sm-8">@(Model.NationalId ?? "-")</dd>
+                        <dt class="col-sm-4">تاريخ الميلاد</dt><dd class="col-sm-8">@(Model.BirthDate?.ToString("yyyy-MM-dd") ?? "-")</dd>
+                        <dt class="col-sm-4">النوع</dt><dd class="col-sm-8">@(Model.GenderText ?? "-")</dd>
+                        <dt class="col-sm-4">الحالة الاجتماعية</dt><dd class="col-sm-8">@(Model.MaritalStatusText ?? "-")</dd>
+                        <dt class="col-sm-4">الهاتف</dt><dd class="col-sm-8">@(Model.PhoneNumber ?? "-")</dd>
+                        <dt class="col-sm-4">هاتف بديل</dt><dd class="col-sm-8">@(Model.AlternatePhoneNumber ?? "-")</dd>
+                        <dt class="col-sm-4">الحالة</dt><dd class="col-sm-8">@(Model.StatusText ?? "-")</dd>
+                        <dt class="col-sm-4">نشط</dt><dd class="col-sm-8">@(Model.IsActive ? "نعم" : "لا")</dd>
+                        <dt class="col-sm-4">تاريخ التسجيل</dt><dd class="col-sm-8">@Model.RegistrationDate.ToString("yyyy-MM-dd")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><h5 class="mb-0">بيانات المعيشة</h5></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">العنوان</dt><dd class="col-sm-8">@(Model.AddressLine ?? "-")</dd>
+                        <dt class="col-sm-4">المحافظة</dt><dd class="col-sm-8">@(Model.GovernorateName ?? "-")</dd>
+                        <dt class="col-sm-4">المدينة</dt><dd class="col-sm-8">@(Model.CityName ?? "-")</dd>
+                        <dt class="col-sm-4">المنطقة</dt><dd class="col-sm-8">@(Model.AreaName ?? "-")</dd>
+                        <dt class="col-sm-4">عدد أفراد الأسرة</dt><dd class="col-sm-8">@Model.FamilyMembersCount</dd>
+                        <dt class="col-sm-4">الدخل الشهري</dt><dd class="col-sm-8">@(Model.MonthlyIncome?.ToString("N2") ?? "-")</dd>
+                        <dt class="col-sm-4">مصدر الدخل</dt><dd class="col-sm-8">@(Model.IncomeSource ?? "-")</dd>
+                        <dt class="col-sm-4">حالة العمل</dt><dd class="col-sm-8">@(Model.WorkStatus ?? "-")</dd>
+                        <dt class="col-sm-4">حالة السكن</dt><dd class="col-sm-8">@(Model.HousingStatus ?? "-")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">أفراد الأسرة</h5>
+                    <a asp-controller="BeneficiaryFamilyMembers" asp-action="Create" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-primary">إضافة</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light"><tr><th>الاسم</th><th>القرابة</th><th>معال</th></tr></thead>
+                            <tbody>
+                            @if (Model.FamilyMembers.Any())
+                            {
+                                foreach (var item in Model.FamilyMembers.Take(5))
+                                {
+                                    <tr><td>@item.FullName</td><td>@(item.Relationship ?? "-")</td><td>@(item.IsDependent ? "نعم" : "لا")</td></tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="3" class="text-center text-muted">لا توجد بيانات</td></tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">المستندات</h5>
+                    <a asp-controller="BeneficiaryDocuments" asp-action="Create" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-primary">إضافة</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light"><tr><th>النوع</th><th>الرقم</th><th>موثق</th></tr></thead>
+                            <tbody>
+                            @if (Model.Documents.Any())
+                            {
+                                foreach (var item in Model.Documents.Take(5))
+                                {
+                                    <tr><td>@item.DocumentType</td><td>@(item.DocumentNumber ?? "-")</td><td>@(item.IsVerified ? "نعم" : "لا")</td></tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="3" class="text-center text-muted">لا توجد مستندات</td></tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><h5 class="mb-0">الحالة الصحية والتعليمية</h5></div>
+                <div class="card-body">
+                    <p><strong>الحالة الصحية:</strong> @(Model.HealthStatus ?? "-")</p>
+                    <p><strong>الحالة التعليمية:</strong> @(Model.EducationStatus ?? "-")</p>
+                    <p class="mb-0"><strong>ملاحظات:</strong> @(Model.Notes ?? "-")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">البحث الاجتماعي</h5>
+                    <a asp-controller="BeneficiaryAssessments" asp-action="Create" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-primary">إضافة</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.Assessments.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var item in Model.Assessments.Take(5))
+                            {
+                                <li class="list-group-item">
+                                    <div class="fw-bold">@item.VisitDate.ToString("yyyy-MM-dd")</div>
+                                    <div>نوع المساعدة المقترح: @(item.RecommendedAidType ?? "-")</div>
+                                    <div>القيمة المقترحة: @(item.RecommendationAmount?.ToString("N2") ?? "-")</div>
+                                    <div>التوصية: @(item.RecommendationText ?? "-")</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">لا توجد تقييمات بعد.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">قرارات اللجنة</h5>
+                    @if (canManageCommittee)
+                    {
+                        <a asp-controller="BeneficiaryCommitteeDecisions" asp-action="Create" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-primary">إضافة</a>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (Model.CommitteeDecisions.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var item in Model.CommitteeDecisions.Take(5))
+                            {
+                                <li class="list-group-item">
+                                    <div class="fw-bold">@item.DecisionDate.ToString("yyyy-MM-dd") - @item.DecisionType</div>
+                                    <div>نوع المساعدة: @(item.ApprovedAidType ?? "-")</div>
+                                    <div>القيمة: @(item.ApprovedAmount?.ToString("N2") ?? "-")</div>
+                                    <div>المدة: @(item.DurationInMonths?.ToString() ?? "-") شهر</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">لا توجد قرارات لجنة بعد.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bx bx-category me-1"></i>
+                تصنيفات ومشاركات المستفيد
+            </h5>
+
+            <a asp-controller="BeneficiaryCategoryAssignments"
+               asp-action="Create"
+               asp-route-beneficiaryId="@Model.Id"
+               class="btn btn-sm btn-primary">
+                <i class="bx bx-plus"></i>
+                إضافة تصنيف / مشاركة
+            </a>
+        </div>
+
+        <div class="card-body">
+            @if (!categoryAssignments.Any())
+            {
+                <div class="alert alert-info mb-0">
+                    لا توجد تصنيفات مسجلة لهذا المستفيد.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead>
+                            <tr>
+                                <th>التصنيف</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الإضافة</th>
+                                <th>ملاحظات</th>
+                                <th style="width:100px">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in categoryAssignments)
+                            {
+                                <tr>
+                                    <td>@item.Category?.NameAr</td>
+                                    <td>@BeneficiaryCategoryAssignmentStatuses.ToArabic(item.Status)</td>
+                                    <td>@item.AssignedAtUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                                    <td>@item.Notes</td>
+                                    <td>
+                                        <form asp-controller="BeneficiaryCategoryAssignments"
+                                              asp-action="Delete"
+                                              asp-route-id="@item.Id"
+                                              method="post"
+                                              onsubmit="return confirm('هل تريد حذف هذا التصنيف من المستفيد؟');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                حذف
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">طلبات المساعدة</h5>
+                    <div class="d-flex gap-2">
+                        <a asp-controller="BeneficiaryAidRequests" asp-action="Index" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-secondary">عرض الكل</a>
+                        @if (canManageBeneficiaries && hasApprovedCommitteeDecision)
+                        {
+                            <a asp-controller="BeneficiaryAidRequests" asp-action="Create" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-primary">إضافة</a>
+                        }
+                        else if (canManageBeneficiaries)
+                        {
+                            <span class="btn btn-sm btn-soft-secondary disabled" title="لا يمكن إضافة طلب مساعدة قبل صدور قرار لجنة معتمد">إضافة</span>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.AidRequests.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var item in Model.AidRequests.Take(5))
+                            {
+                                <li class="list-group-item">
+                                    <div class="fw-bold">@item.RequestDate.ToString("yyyy-MM-dd") - @(item.AidType ?? "-")</div>
+                                    <div>القيمة المطلوبة: @(item.RequestedAmount?.ToString("N2") ?? "-")</div>
+                                    <div>الحالة: @(item.Status ?? "-")</div>
+                                    <div>السبب: @(item.Reason ?? "-")</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">لا توجد طلبات مساعدة بعد.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">سجل الصرف</h5>
+                    <div class="d-flex gap-2">
+                        @if (canViewAidOps)
+                        {
+                            <a asp-controller="BeneficiaryAidDisbursements" asp-action="Index" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-secondary">عرض الكل</a>
+                        }
+                        @if (canManageAidOps && hasApprovedCommitteeDecision)
+                        {
+                            <a asp-controller="BeneficiaryAidDisbursements" asp-action="Create" asp-route-beneficiaryId="@Model.Id" class="btn btn-sm btn-soft-primary">إضافة</a>
+                        }
+                        else if (canManageAidOps)
+                        {
+                            <span class="btn btn-sm btn-soft-secondary disabled" title="لا يمكن إضافة صرف قبل صدور قرار لجنة معتمد">إضافة</span>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.AidDisbursements.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var item in Model.AidDisbursements.Take(5))
+                            {
+                                <li class="list-group-item">
+                                    <div class="fw-bold">@item.DisbursementDate.ToString("yyyy-MM-dd") - @(item.AidType ?? "-")</div>
+                                    <div>المبلغ المصروف: @(item.Amount?.ToString("N2") ?? "-")</div>
+                                    <div>ملاحظات: @(item.Notes ?? "-")</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">لا توجد عمليات صرف بعد.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

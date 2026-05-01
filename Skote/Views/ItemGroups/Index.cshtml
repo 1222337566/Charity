@@ -1,0 +1,88 @@
+﻿@model List<ItemGroupListItemVm>
+@using InfrastructureManagmentWebFramework.Models.FinancialAccounting;
+
+@{
+    ViewData["Title"] = "مجموعات الأصناف";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">مجموعات الأصناف</h4>
+            <a asp-action="Create" class="btn btn-primary btn-sm">إضافة مجموعة</a>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الكود</th>
+                            <th>الاسم</th>
+                            <th>الأب</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.GroupCode</td>
+                                <td>@item.GroupNameAr</td>
+                                <td>@(item.ParentGroupName ?? "-")</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">نشطة</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">غير نشطة</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
+                                            تعديل
+                                        </a>
+
+                                        <form asp-action="ToggleActive" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+
+                                            @if (item.IsActive)
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('هل تريد تعطيل المجموعة؟');">
+                                                    تعطيل
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-success"
+                                                        onclick="return confirm('هل تريد تفعيل المجموعة؟');">
+                                                    تفعيل
+                                                </button>
+                                            }
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

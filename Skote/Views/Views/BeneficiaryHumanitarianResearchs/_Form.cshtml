@@ -1,0 +1,160 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.HumanitarianResearch.CreateBeneficiaryHumanitarianResearchVm
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="BeneficiaryId" class="form-label">المستفيد</label>
+        <select asp-for="BeneficiaryId" asp-items="Model.Beneficiaries" class="form-select"></select>
+        <span asp-validation-for="BeneficiaryId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="ResearchNumber" class="form-label"></label>
+        <input asp-for="ResearchNumber" class="form-control" />
+        <span asp-validation-for="ResearchNumber" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="RequestDate" class="form-label"></label>
+        <input asp-for="RequestDate" type="date" class="form-control" />
+        <span asp-validation-for="RequestDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="ResearchDate" class="form-label"></label>
+        <input asp-for="ResearchDate" type="date" class="form-control" />
+        <span asp-validation-for="ResearchDate" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="AidTypeName" class="form-label"></label>
+        <input asp-for="AidTypeName" class="form-control" />
+        <span asp-validation-for="AidTypeName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="ApplicantName" class="form-label"></label>
+        <input asp-for="ApplicantName" class="form-control" />
+        <span asp-validation-for="ApplicantName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="SourceOfRequest" class="form-label"></label>
+        <input asp-for="SourceOfRequest" class="form-control" />
+        <span asp-validation-for="SourceOfRequest" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="ResearcherCode" class="form-label"></label>
+        <input asp-for="ResearcherCode" class="form-control" />
+        <span asp-validation-for="ResearcherCode" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="ResearcherName" class="form-label"></label>
+        <input asp-for="ResearcherName" class="form-control" />
+        <span asp-validation-for="ResearcherName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="CommitteeCode" class="form-label"></label>
+        <input asp-for="CommitteeCode" class="form-control" />
+        <span asp-validation-for="CommitteeCode" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="PriorityLevel" class="form-label"></label>
+        <input asp-for="PriorityLevel" class="form-control" />
+        <span asp-validation-for="PriorityLevel" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="NickName" class="form-label"></label>
+        <input asp-for="NickName" class="form-control" />
+        <span asp-validation-for="NickName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="Age" class="form-label"></label>
+        <input asp-for="Age" class="form-control" />
+        <span asp-validation-for="Age" class="text-danger"></span>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label asp-for="MaritalStatus" class="form-label"></label>
+        <input asp-for="MaritalStatus" class="form-control" />
+        <span asp-validation-for="MaritalStatus" class="text-danger"></span>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label asp-for="NationalId" class="form-label"></label>
+        <input asp-for="NationalId" class="form-control" />
+        <span asp-validation-for="NationalId" class="text-danger"></span>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label asp-for="FamilyMembersCount" class="form-label"></label>
+        <input asp-for="FamilyMembersCount" class="form-control" />
+        <span asp-validation-for="FamilyMembersCount" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label asp-for="AddressLine" class="form-label"></label>
+        <textarea asp-for="AddressLine" class="form-control" rows="2"></textarea>
+        <span asp-validation-for="AddressLine" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="TotalIncome" class="form-label"></label>
+        <input asp-for="TotalIncome" class="form-control" />
+        <span asp-validation-for="TotalIncome" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="TotalExpenses" class="form-label"></label>
+        <input asp-for="TotalExpenses" class="form-control" />
+        <span asp-validation-for="TotalExpenses" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="AverageIncome" class="form-label"></label>
+        <input asp-for="AverageIncome" class="form-control" />
+        <span asp-validation-for="AverageIncome" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3 mb-3 form-check mt-4">
+        <input asp-for="HasExistingProject" class="form-check-input" />
+        <label asp-for="HasExistingProject" class="form-check-label"></label>
+    </div>
+    <div class="col-md-5 mb-3">
+        <label asp-for="ExistingProjectType" class="form-label"></label>
+        <input asp-for="ExistingProjectType" class="form-control" />
+        <span asp-validation-for="ExistingProjectType" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="ExistingProjectSize" class="form-label"></label>
+        <input asp-for="ExistingProjectSize" class="form-control" />
+        <span asp-validation-for="ExistingProjectSize" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="RequiredNeedsPrimary" class="form-label"></label>
+        <textarea asp-for="RequiredNeedsPrimary" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="RequiredNeedsPrimary" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="RequiredNeedsSecondary" class="form-label"></label>
+        <textarea asp-for="RequiredNeedsSecondary" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="RequiredNeedsSecondary" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label asp-for="HousingDescription" class="form-label"></label>
+        <textarea asp-for="HousingDescription" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="HousingDescription" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label asp-for="ResearcherReport" class="form-label"></label>
+        <textarea asp-for="ResearcherReport" class="form-control" rows="5"></textarea>
+        <span asp-validation-for="ResearcherReport" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label asp-for="ResearchManagerOpinion" class="form-label"></label>
+        <textarea asp-for="ResearchManagerOpinion" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="ResearchManagerOpinion" class="text-danger"></span>
+    </div>
+</div>

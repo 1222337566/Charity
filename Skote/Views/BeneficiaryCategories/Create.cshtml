@@ -1,0 +1,79 @@
+﻿@model InfrastrfuctureManagmentCore.Domains.Charity.Beneficiaries.BeneficiaryCategory
+
+@{
+    ViewData["Title"] = Model.Id == Guid.Empty ? "إنشاء تصنيف مستفيد" : "تعديل تصنيف مستفيد";
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <form asp-action="@(ViewContext.RouteData.Values["action"]?.ToString())" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="NameAr" class="form-label">اسم التصنيف</label>
+                        <input asp-for="NameAr" class="form-control" />
+                        <span asp-validation-for="NameAr" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label">الكود</label>
+                        <input asp-for="Code" class="form-control" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">الوصف</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SortOrder" class="form-label">الترتيب</label>
+                        <input asp-for="SortOrder" class="form-control" type="number" />
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="IsWaitingListCategory" class="form-check-input" />
+                        <label asp-for="IsWaitingListCategory" class="form-check-label">تصنيف قائمة انتظار</label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="RequiresDisabilityType" class="form-check-input" />
+                        <label asp-for="RequiresDisabilityType" class="form-check-label">يتطلب نوع الإعاقة</label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="IsProjectRelated" class="form-check-input" />
+                        <label asp-for="IsProjectRelated" class="form-check-label">مرتبط بمشروع</label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="IsActivityRelated" class="form-check-input" />
+                        <label asp-for="IsActivityRelated" class="form-check-label">مرتبط بنشاط</label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">مفعل</label>
+                    </div>
+                </div>
+
+                <div class="card-footer d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

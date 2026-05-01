@@ -1,0 +1,14 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Volunteers.CreateVolunteerSkillVm
+<div class="mb-3">
+    <label asp-for="SkillDefinitionId" class="form-label">المهارة</label>
+    <select asp-for="SkillDefinitionId" asp-items="Model.SkillDefinitions" class="form-select"></select>
+    <span asp-validation-for="SkillDefinitionId" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="SkillLevel" class="form-label">المستوى</label>
+    <select asp-for="SkillLevel" asp-items="Model.SkillLevels" class="form-select"></select>
+</div>
+<div class="mb-3">
+    <label asp-for="Notes" class="form-label">ملاحظات</label>
+    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+</div>

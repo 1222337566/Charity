@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    @Html.Partial("~/Views/Shared/_title_meta.cshtml")
+    @RenderSection("styles", required: false)
+    @Html.Partial("~/Views/Shared/_head_css.cshtml")
+    <link href="~/assets/css/joud-auth.css" rel="stylesheet" />
+</head>
+<body class="auth-body-bg joud-auth-page">
+    @RenderBody()
+
+    @Html.Partial("~/Views/Shared/_vendor_scripts.cshtml")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

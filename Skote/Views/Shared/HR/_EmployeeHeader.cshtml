@@ -1,0 +1,30 @@
+@using InfrastructureManagmentWebFramework.Models.HR.EmployeeProfile
+@{
+    var header = ViewBag.EmployeeHeader as EmployeeHeaderVm;
+}
+@if (header != null)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h4 class="mb-1">@header.FullName</h4>
+                    <div class="text-muted">
+                        كود: @header.Code |
+                        القسم: @(header.DepartmentName ?? "-") |
+                        الوظيفة: @(header.JobTitleName ?? "-") |
+                        الحالة: @header.Status |
+                        الهاتف: @(header.PhoneNumber ?? "-") |
+                        تاريخ التعيين: @header.HireDate.ToString("yyyy-MM-dd") |
+                        الأساسي: @header.BasicSalary.ToString("N2")
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a asp-controller="HrEmployees" asp-action="Details" asp-route-id="@header.Id" class="btn btn-outline-secondary btn-sm">البيانات الأساسية</a>
+                    <a asp-controller="HrAttendanceRecords" asp-action="Index" asp-route-employeeId="@header.Id" class="btn btn-outline-secondary btn-sm">الحضور والانصراف</a>
+                    <a asp-controller="HrAttendanceRecords" asp-action="Create" asp-route-employeeId="@header.Id" class="btn btn-primary btn-sm">إضافة حضور</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,1 @@
+namespace InfrastructureManagmentWebFramework.Models.HR.Advanced.Evaluations { public class EditPerformanceEvaluationVm : CreatePerformanceEvaluationVm { } }

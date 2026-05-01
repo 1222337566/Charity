@@ -1,0 +1,97 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Donors.DonorListPageVm
+@using Skote.Helpers
+@{
+    ViewData["Title"] = "المتبرعون";
+}
+<div class="page-content">
+    <div class="container-fluid">
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">بحث</label>
+                        <input asp-for="Filter.Q" name="q" class="form-control" placeholder="اسم، كود، هاتف..." />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">نوع المتبرع</label>
+                        <select asp-for="Filter.DonorType" name="donorType" asp-items="Model.Filter.DonorTypes" class="form-select">
+                            <option value="">الكل</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">الحالة</label>
+                        <select asp-for="Filter.IsActive" name="isActive" class="form-select">
+                            <option value="">الكل</option>
+                            <option value="true">نشط</option>
+                            <option value="false">غير نشط</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary">بحث</button>
+                        <a asp-action="Index" class="btn btn-light">إعادة ضبط</a>
+                        <authz policy="DonorsManage">
+                            <a asp-action="Create" class="btn btn-success">إضافة متبرع</a>
+                        </authz>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">إجمالي المتبرعين</div><h4 class="mb-0">@Model.TotalCount</h4></div></div></div>
+            <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">النشطون</div><h4 class="mb-0">@Model.ActiveCount</h4></div></div></div>
+            <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">إجمالي التبرعات الظاهرة</div><h4 class="mb-0">@Model.TotalDonations.ToString("N2")</h4></div></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-body table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>النوع</th>
+                            <th>الاسم</th>
+                            <th>مسؤول التواصل</th>
+                            <th>الهاتف</th>
+                            <th>المحافظة</th>
+                            <th>إجمالي التبرعات</th>
+                            <th>الحالة</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Rows)
+                    {
+                        <tr>
+                            <td>@item.Code</td>
+                            <td>@item.DonorType</td>
+                            <td>@item.FullName</td>
+                            <td>@item.ContactPerson</td>
+                            <td>@item.PhoneNumber</td>
+                            <td>@item.GovernorateName</td>
+                            <td>@item.TotalDonations.ToString("N2")</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">نشط</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">غير نشط</span>
+                                }
+                            </td>
+                            <td class="text-nowrap">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary">عرض</a>
+                                <authz policy="DonorsManage">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light">تعديل</a>
+                                </authz>
+                                <a asp-controller="Donations" asp-action="Index" asp-route-donorId="@item.Id" class="btn btn-sm btn-outline-success">التبرعات</a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

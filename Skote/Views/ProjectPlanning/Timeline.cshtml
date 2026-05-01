@@ -1,0 +1,281 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.ProjectPlanning.ProjectPlanningTimelineVm
+<partial name="~/Views/Shared/Projects/_ProjectHeader.cshtml" />
+@{
+    var totalDays  = Math.Max(1, (Model.RangeEnd - Model.RangeStart).Days + 1);
+    var today      = DateTime.Today;
+    var todayOff   = (today >= Model.RangeStart && today <= Model.RangeEnd)
+                       ? Math.Round((decimal)(today - Model.RangeStart).Days / totalDays * 100m, 2)
+                       : (decimal)-1;
+
+    // Generate month/week header labels
+    var months = new List<(string Label, decimal OffsetPct, decimal WidthPct)>();
+    var cur = new DateTime(Model.RangeStart.Year, Model.RangeStart.Month, 1);
+    while (cur <= Model.RangeEnd)
+    {
+        var mStart = (cur < Model.RangeStart ? Model.RangeStart : cur);
+        var mEnd   = new DateTime(cur.Year, cur.Month, DateTime.DaysInMonth(cur.Year, cur.Month));
+        if (mEnd > Model.RangeEnd) mEnd = Model.RangeEnd;
+        var off   = Math.Round((decimal)(mStart - Model.RangeStart).Days / totalDays * 100m, 2);
+        var width = Math.Round((decimal)((mEnd - mStart).Days + 1) / totalDays * 100m, 2);
+        months.Add((cur.ToString("MMM yy"), off, width));
+        cur = cur.AddMonths(1);
+    }
+
+    string StatusColor(string s) => s?.ToLower() switch {
+        "completed"  or "مكتمل"          => "#34c38f",
+        "inprogress" or "جاري"           => "#556ee6",
+        "pending"    or "قيد الانتظار"   => "#f1b44c",
+        "delayed"    or "متأخر"          => "#f46a6a",
+        "planned"    or "مخطط"           => "#50a5f1",
+        _                               => "#adb5bd"
+    };
+
+    string StatusBg(string s) => s?.ToLower() switch {
+        "completed"  or "مكتمل"        => "rgba(52,195,143,.15)",
+        "inprogress" or "جاري"         => "rgba(85,110,230,.13)",
+        "pending"    or "قيد الانتظار" => "rgba(241,180,76,.14)",
+        "delayed"    or "متأخر"        => "rgba(244,106,106,.13)",
+        "planned"    or "مخطط"         => "rgba(80,165,241,.13)",
+        _                             => "rgba(173,181,189,.13)"
+    };
+
+    string StatusLabel(string s) => s?.ToLower() switch {
+        "completed"  or "مكتمل"        => "مكتمل",
+        "inprogress" or "جاري"         => "جارٍ",
+        "pending"    or "قيد الانتظار" => "انتظار",
+        "delayed"    or "متأخر"        => "متأخر",
+        "planned"    or "مخطط"         => "مخطط",
+        _                             => s
+    };
+}
+
+<style>
+.tl-wrap{background:#fff;border-radius:16px;overflow:hidden;border:.5px solid rgba(14,111,115,.12);box-shadow:0 4px 24px rgba(14,111,115,.07)}
+
+/* Header */
+.tl-hdr{background:linear-gradient(135deg,#0a5659,#0e6f73,#0c8387);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.tl-hdr-title{color:#fff;font-size:1.1rem;font-weight:700}
+.tl-hdr-range{color:rgba(255,255,255,.75);font-size:.85rem;margin-top:2px}
+.tl-legend{display:flex;gap:14px;flex-wrap:wrap}
+.tl-leg{display:flex;align-items:center;gap:5px;color:rgba(255,255,255,.88);font-size:11px;white-space:nowrap}
+.tl-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* Month ruler */
+.tl-ruler{display:flex;background:#f0f9f9;border-bottom:.5px solid rgba(14,111,115,.10);position:relative;height:32px;overflow:hidden}
+.tl-ruler-spacer{width:220px;min-width:220px;border-left:.5px solid rgba(14,111,115,.10);flex-shrink:0}
+.tl-ruler-months{flex:1;position:relative;overflow:hidden}
+.tl-ruler-month{position:absolute;top:0;height:100%;display:flex;align-items:center;padding:0 6px;font-size:10.5px;font-weight:700;color:#0e6f73;border-left:.5px solid rgba(14,111,115,.12);overflow:hidden;white-space:nowrap}
+
+/* Grid */
+.tl-grid{overflow-x:auto}
+.tl-row{display:flex;border-bottom:.5px solid rgba(14,111,115,.07);transition:background .12s}
+.tl-row:hover{background:rgba(14,111,115,.025)}
+.tl-row:last-child{border-bottom:none}
+
+/* Label col */
+.tl-label{width:220px;min-width:220px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;border-left:.5px solid rgba(14,111,115,.08);flex-shrink:0}
+.tl-phase-name{font-size:13px;font-weight:600;color:#15363a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-phase-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.tl-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+.tl-pct{font-size:10px;color:#6b7d80}
+
+/* Bar col */
+.tl-bars{flex:1;position:relative;padding:10px 0;min-height:52px}
+.tl-bar-track{position:absolute;top:50%;transform:translateY(-50%);height:24px;border-radius:8px;display:flex;align-items:center;overflow:hidden;min-width:4px}
+.tl-bar-fill{height:100%;border-radius:8px;transition:width .4s ease}
+.tl-bar-label{position:absolute;top:0;left:0;right:0;height:100%;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;pointer-events:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.20)}
+
+/* Today line */
+    .tl-today-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #f46a6a;
+        z-index: 5;
+        pointer-events: none;
+        box-shadow: 0 0 4px rgba(255,255,255,.40)
+    }
+
+        .tl-today-line::before {
+            content: "اليوم";
+            position: absolute;
+            top: 2px;
+            right: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            color: #f46a6a;
+            white-space: nowrap;
+            text-shadow: 0 1px 3px rgba(0,0,0,.25)
+        }
+
+/* Vertical grid lines */
+.tl-vline{position:absolute;top:0;bottom:0;width:.5px;background:rgba(14,111,115,.07);pointer-events:none}
+
+/* Stats */
+.tl-stats{background:#f5faf9;border-top:.5px solid rgba(14,111,115,.08);padding:12px 24px;display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+.tl-stat{display:flex;align-items:center;gap:7px}
+.tl-stat-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.tl-stat-lbl{font-size:11px;color:#6b7d80}
+.tl-stat-n{font-size:13px;font-weight:700;color:#15363a}
+
+/* Empty */
+.tl-empty{padding:48px 24px;text-align:center;color:#adb5bd}
+.tl-empty i{font-size:40px;display:block;margin-bottom:10px}
+
+media(max-width:767.98px){
+  .tl-label{width:150px;min-width:150px}
+  .tl-ruler-spacer{width:150px;min-width:150px}
+  .tl-bar-label{display:none}
+}
+</style>
+
+<div class="tl-wrap mb-4">
+
+  
+  <div class="tl-hdr">
+    <div>
+      <div class="tl-hdr-title"><i class="bx bx-bar-chart-alt-2 me-2"></i>الجدول الزمني للمراحل</div>
+      <div class="tl-hdr-range">
+        @Model.RangeStart.ToString("dd MMM yyyy") — @Model.RangeEnd.ToString("dd MMM yyyy")
+        &nbsp;·&nbsp; @totalDays يوم
+      </div>
+    </div>
+    <div class="tl-legend">
+      <div class="tl-leg"><div class="tl-leg-dot" style="background:#34c38f"></div>مكتمل</div>
+      <div class="tl-leg"><div class="tl-leg-dot" style="background:#556ee6"></div>جارٍ</div>
+      <div class="tl-leg"><div class="tl-leg-dot" style="background:#50a5f1"></div>مخطط</div>
+      <div class="tl-leg"><div class="tl-leg-dot" style="background:#f1b44c"></div>انتظار</div>
+      <div class="tl-leg"><div class="tl-leg-dot" style="background:#f46a6a"></div>متأخر</div>
+    </div>
+  </div>
+
+  @if (!Model.Rows.Any())
+  {
+    <div class="tl-empty">
+      <i class="bx bx-calendar-x"></i>
+      لا توجد مراحل مضافة لهذا المشروع بعد.
+    </div>
+  }
+  else
+  {
+    
+    <div class="tl-ruler">
+      <div class="tl-ruler-spacer"></div>
+      <div class="tl-ruler-months">
+        @foreach (var m in months)
+        {
+          <div class="tl-ruler-month"
+               style="right:@m.OffsetPct%;width:@m.WidthPct%">
+            @m.Label
+          </div>
+        }
+      </div>
+    </div>
+
+   
+    <div class="tl-grid">
+      @foreach (var row in Model.Rows)
+      {
+        var barColor  = StatusColor(row.Status);
+        var barBg     = StatusBg(row.Status);
+        var duration  = (row.EndDate - row.StartDate).Days + 1;
+
+        <div class="tl-row">
+
+         
+          <div class="tl-label">
+            <div class="tl-phase-name" title="@row.PhaseName">@row.PhaseName</div>
+            <div class="tl-phase-meta">
+              <span class="tl-badge"
+                    style="background:@barBg;color:@barColor">
+                @StatusLabel(row.Status)
+              </span>
+              <span class="tl-pct">@row.ProgressPercent%</span>
+              <span class="tl-pct">@duration يوم</span>
+            </div>
+          </div>
+
+          
+          <div class="tl-bars">
+
+           
+            @foreach (var m in months.Skip(1))
+            {
+              <div class="tl-vline" style="right:@m.OffsetPct%"></div>
+            }
+
+          
+            @if (todayOff >= 0)
+            {
+              <div class="tl-today-line" style="right:@todayOff%"></div>
+            }
+
+           
+            <div class="tl-bar-track"
+                 style="right:@row.OffsetPercent%;width:@row.WidthPercent%;background:@barBg;border:1px solid @barColor">
+
+              
+              <div class="tl-bar-fill"
+                   style="width:@row.ProgressPercent%;background:@barColor;opacity:.85"></div>
+
+              
+              <div class="tl-bar-label">
+                @row.PhaseName
+                &nbsp;
+                <span style="opacity:.75;font-size:9px">@row.StartDate.ToString("d MMM") → @row.EndDate.ToString("d MMM")</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      }
+    </div>
+
+    }
+    @{
+      var cnt      = Model.Rows.Count;
+      var cntDone  = Model.Rows.Count(r => r.Status?.ToLower() is "completed"  or "مكتمل");
+      var cntActiv = Model.Rows.Count(r => r.Status?.ToLower() is "inprogress" or "جاري");
+      var cntPlan  = Model.Rows.Count(r => r.Status?.ToLower() is "planned"    or "مخطط");
+      var cntLate  = Model.Rows.Count(r => r.Status?.ToLower() is "delayed"    or "متأخر");
+      var avgProg  = cnt > 0 ? Math.Round(Model.Rows.Average(r => r.ProgressPercent), 0) : 0;
+    }
+    <div class="tl-stats">
+      <div class="tl-stat">
+        <div class="tl-stat-dot" style="background:#0e6f73"></div>
+        <span class="tl-stat-lbl">إجمالي المراحل</span>
+        <span class="tl-stat-n">@cnt</span>
+      </div>
+      <div class="tl-stat">
+        <div class="tl-stat-dot" style="background:#34c38f"></div>
+        <span class="tl-stat-lbl">مكتملة</span>
+        <span class="tl-stat-n">@cntDone</span>
+      </div>
+      <div class="tl-stat">
+        <div class="tl-stat-dot" style="background:#556ee6"></div>
+        <span class="tl-stat-lbl">جارية</span>
+        <span class="tl-stat-n">@cntActiv</span>
+      </div>
+      <div class="tl-stat">
+        <div class="tl-stat-dot" style="background:#50a5f1"></div>
+        <span class="tl-stat-lbl">مخططة</span>
+        <span class="tl-stat-n">@cntPlan</span>
+      </div>
+      @if (cntLate > 0)
+      {
+        <div class="tl-stat">
+          <div class="tl-stat-dot" style="background:#f46a6a"></div>
+          <span class="tl-stat-lbl">متأخرة</span>
+          <span class="tl-stat-n" style="color:#f46a6a">@cntLate</span>
+        </div>
+      }
+      <div class="tl-stat ms-auto">
+        <div class="tl-stat-dot" style="background:#d9a44a"></div>
+        <span class="tl-stat-lbl">متوسط التقدم</span>
+        <span class="tl-stat-n">@avgProg%</span>
+      </div>
+    </div>
+  }
+
+</div>

@@ -1,0 +1,123 @@
+@model Skote.Models.Charity.MinutesAndDecisions.BoardMeetingVm
+
+<div class="row g-3">
+    <div class="col-md-3">
+        <label class="form-label">رقم الاجتماع</label>
+        <input asp-for="MeetingNumber" class="form-control" />
+        <span asp-validation-for="MeetingNumber" class="text-danger"></span>
+    </div>
+    <div class="col-md-9">
+        <label class="form-label">عنوان الاجتماع</label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">تاريخ الاجتماع</label>
+        <input asp-for="MeetingDate" type="date" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">وقت البدء</label>
+        <input asp-for="StartTime" type="time" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">وقت الانتهاء</label>
+        <input asp-for="EndTime" type="time" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">نوع الاجتماع</label>
+        <select asp-for="MeetingType" class="form-select">
+            <option value="Board">مجلس إدارة</option>
+            <option value="Committee">لجنة</option>
+            <option value="Executive">تنفيذي</option>
+            <option value="Emergency">طارئ</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">الحالة</label>
+        <select asp-for="Status" class="form-select">
+            <option value="Draft">مسودة</option>
+            <option value="Approved">معتمد</option>
+            <option value="Closed">مغلق</option>
+        </select>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">المكان</label>
+        <input asp-for="Location" class="form-control" />
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">جدول الأعمال</label>
+        <textarea asp-for="Agenda" class="form-control" rows="4"></textarea>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">نص الافتتاح القانوني</label>
+        <textarea asp-for="LegalOpeningText" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">ملخص المناقشات</label>
+        <textarea asp-for="DiscussionSummary" class="form-control" rows="5"></textarea>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">ملخص التوصيات</label>
+        <textarea asp-for="RecommendationsSummary" class="form-control" rows="4"></textarea>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">نص الإغلاق القانوني</label>
+        <textarea asp-for="LegalClosingText" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">المحضر الكامل</label>
+        <textarea asp-for="FullMinuteText" class="form-control" rows="8"></textarea>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">ملاحظات عامة</label>
+        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+    </div>
+</div>
+
+<hr />
+
+<h5 class="mb-3">الحضور</h5>
+<div class="table-responsive">
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>الاسم</th>
+                <th>الصفة</th>
+                <th>الحضور</th>
+                <th>ملاحظات</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for (var i = 0; i < Model.Attendees.Count; i++)
+        {
+            <tr>
+                <td>
+                    <input asp-for="Attendees[@i].FullName" class="form-control" />
+                </td>
+                <td>
+                    <input asp-for="Attendees[@i].PositionTitle" class="form-control" />
+                </td>
+                <td>
+                    <select asp-for="Attendees[@i].AttendanceStatus" class="form-select">
+                        <option value="Present">حاضر</option>
+                        <option value="Absent">غائب</option>
+                        <option value="Excused">اعتذار</option>
+                    </select>
+                </td>
+                <td>
+                    <input asp-for="Attendees[@i].Notes" class="form-control" />
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

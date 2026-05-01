@@ -1,0 +1,257 @@
+﻿@using InfrastructureManagmentWebFramework.Models.Dashboard
+@model DashboardIndexVm
+
+@{
+    ViewBag.Title = "لوحة التحكم";
+    ViewBag.pTitle = "لوحة التحكم";
+    ViewBag.pageTitle = "الرئيسية";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">عدد الأصناف</p>
+                        <h4 class="mb-0">@Model.ItemsCount</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-primary">
+                                <i class="bx bx-box font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="@Url.Action("Index", "Items")" class="text-primary">عرض الأصناف</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">عدد المخازن</p>
+                        <h4 class="mb-0">@Model.WarehousesCount</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="avatar-sm rounded-circle bg-success mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-success">
+                                <i class="bx bx-store font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="@Url.Action("Index", "Warehouses")" class="text-success">عرض المخازن</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">فواتير البيع اليوم</p>
+                        <h4 class="mb-0">@Model.SalesTodayCount</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="avatar-sm rounded-circle bg-info mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-info">
+                                <i class="bx bx-receipt font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="@Url.Action("Index", "SalesInvoices")" class="text-info">عرض المبيعات</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">الفواتير المعلقة</p>
+                        <h4 class="mb-0">@Model.HeldInvoicesCount</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="avatar-sm rounded-circle bg-warning mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-warning">
+                                <i class="bx bx-time font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="@Url.Action("HeldInvoices", "Pos")" class="text-warning">عرض المعلقة</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <p class="text-muted fw-medium">فواتير الشراء اليوم</p>
+                <h4 class="mb-0">@Model.PurchasesTodayCount</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <p class="text-muted fw-medium">أرصدة المخزون</p>
+                <h4 class="mb-0">@Model.StockBalancesCount</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <p class="text-muted fw-medium">أصناف منخفضة الرصيد</p>
+                <h4 class="mb-0">@Model.LowStockCount</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <p class="text-muted fw-medium">طرق الدفع النشطة</p>
+                <h4 class="mb-0">@Model.ActivePaymentMethodsCount</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">اختصارات سريعة</h4>
+
+                <div class="d-grid gap-2">
+                    <a href="@Url.Action("Index", "Pos")" class="btn btn-primary">
+                        فتح شاشة POS
+                    </a>
+
+                    <a href="@Url.Action("Create", "PurchaseInvoices")" class="btn btn-success">
+                        إضافة فاتورة شراء
+                    </a>
+
+                    <a href="@Url.Action("OpeningBalance", "StockBalances")" class="btn btn-info">
+                        إدخال رصيد افتتاحي
+                    </a>
+
+                    <a href="@Url.Action("Create", "Items")" class="btn btn-secondary">
+                        إضافة صنف جديد
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">آخر فواتير البيع</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-centered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>التاريخ</th>
+                                <th>العميل</th>
+                                <th>المخزن</th>
+                                <th>الصافي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.LatestSales.Any())
+                            {
+                                foreach (var item in Model.LatestSales)
+                                {
+                                    <tr>
+                                        <td>@item.Number</td>
+                                        <td>@item.DateUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>@item.PartyName</td>
+                                        <td>@item.WarehouseName</td>
+                                        <td>@item.NetAmount</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">لا توجد بيانات</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">آخر فواتير الشراء</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-centered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>التاريخ</th>
+                                <th>المورد</th>
+                                <th>المخزن</th>
+                                <th>الصافي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.LatestPurchases.Any())
+                            {
+                                foreach (var item in Model.LatestPurchases)
+                                {
+                                    <tr>
+                                        <td>@item.Number</td>
+                                        <td>@item.DateUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>@item.PartyName</td>
+                                        <td>@item.WarehouseName</td>
+                                        <td>@item.NetAmount</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">لا توجد بيانات</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

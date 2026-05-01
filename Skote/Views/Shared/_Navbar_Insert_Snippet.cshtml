@@ -1,0 +1,11 @@
+@* Partial insertion into _Layout.cshtml navbar *@
+<div class="d-flex align-items-center gap-2 ms-auto">
+  @await Html.PartialAsync("~/Views/Shared/_SearchBox.cshtml")
+  <button class="btn btn-outline-secondary btn-sm" data-action="toggle-theme" title="Toggle theme">🌓</button>
+</div>
+
+@section Scripts {
+  <script src="~/js/search.init.js"></script>
+  <script src="~/js/theme.toggle.js"></script>
+}
+<link rel="stylesheet" href="~/assets/css/darkmode.css" />

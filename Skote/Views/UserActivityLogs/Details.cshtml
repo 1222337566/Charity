@@ -1,0 +1,74 @@
+@model Skote.ViewModels.Audit.UserActivityLogDetailsVm
+@{
+    ViewData["Title"] = "تفاصيل الحركة";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">تفاصيل الحركة</h4>
+        <a href="@Url.Action("Index")" class="btn btn-light">رجوع</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">الرقم</dt><dd class="col-sm-9">@Model.Id</dd>
+                <dt class="col-sm-3">من قام بالإجراء</dt><dd class="col-sm-9">@Model.UserName <span class="text-muted">@Model.UserId</span></dd>
+                <dt class="col-sm-3">الإجراء</dt><dd class="col-sm-9">@Model.Action</dd>
+                <dt class="col-sm-3">الشاشة</dt><dd class="col-sm-9">@Model.ControllerName / @Model.ActionName</dd>
+                <dt class="col-sm-3">الكيان/السجل</dt><dd class="col-sm-9">@Model.EntityName @Model.EntityId</dd>
+                <dt class="col-sm-3">المسار</dt><dd class="col-sm-9">@Model.HttpMethod @Model.Path</dd>
+                <dt class="col-sm-3">الوصف</dt><dd class="col-sm-9" style="white-space:normal">@Model.Description</dd>
+                <dt class="col-sm-3">التاريخ والوقت</dt><dd class="col-sm-9">@Model.OccurredAtUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt")</dd>
+                <dt class="col-sm-3">IP</dt><dd class="col-sm-9">@Model.IpAddress</dd>
+                <dt class="col-sm-3">User Agent</dt><dd class="col-sm-9" style="white-space:normal">@Model.UserAgent</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">القيم السابقة</div>
+                <div class="card-body table-responsive">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                        @if (Model.OldValues.Count == 0)
+                        {
+                            <tr><td class="text-muted">لا توجد قيم سابقة مسجلة.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.OldValues)
+                            {
+                                <tr><th>@item.Key</th><td>@item.Value</td></tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">القيم الجديدة</div>
+                <div class="card-body table-responsive">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                        @if (Model.NewValues.Count == 0)
+                        {
+                            <tr><td class="text-muted">لا توجد قيم جديدة مسجلة.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.NewValues)
+                            {
+                                <tr><th>@item.Key</th><td>@item.Value</td></tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

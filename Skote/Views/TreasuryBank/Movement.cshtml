@@ -1,0 +1,76 @@
+@using InfrastructureManagmentWebFramework.Models.TreasuryBank
+@model TreasuryBankMovementVm
+@{
+    ViewData["Title"] = "كشف حركة خزينة / بنك";
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="card mb-3">
+        <div class="card-header"><h4 class="mb-0">كشف حركة خزينة / بنك</h4></div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">حساب الخزينة / البنك</label>
+                    <select name="financialAccountId" class="form-select" asp-for="FinancialAccountId" asp-items="Model.CashBankAccounts">
+                        <option value="">-- اختر الحساب --</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">من تاريخ</label>
+                    <input type="date" name="fromDate" value="@Model.FromDate?.ToString("yyyy-MM-dd")" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input type="date" name="toDate" value="@Model.ToDate?.ToString("yyyy-MM-dd")" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" type="submit">عرض</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.FinancialAccountId.HasValue)
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between flex-wrap gap-2">
+                <h5 class="mb-0">@Model.FinancialAccountName</h5>
+                <div>
+                    افتتاحي: <strong>@Model.OpeningBalance.ToString("N2")</strong> |
+                    مدين: <strong>@Model.TotalDebit.ToString("N2")</strong> |
+                    دائن: <strong>@Model.TotalCredit.ToString("N2")</strong> |
+                    ختامي: <strong>@Model.ClosingBalance.ToString("N2")</strong>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>رقم القيد</th>
+                            <th>البيان</th>
+                            <th>المصدر</th>
+                            <th class="text-end">مدين</th>
+                            <th class="text-end">دائن</th>
+                            <th class="text-end">الرصيد</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Rows)
+                        {
+                            <tr>
+                                <td>@row.EntryDate.ToString("yyyy-MM-dd")</td>
+                                <td>@row.EntryNumber</td>
+                                <td>@row.Description</td>
+                                <td>@row.SourceType</td>
+                                <td class="text-end">@row.DebitAmount.ToString("N2")</td>
+                                <td class="text-end">@row.CreditAmount.ToString("N2")</td>
+                                <td class="text-end">@row.RunningBalance.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,70 @@
+﻿@model List<StockBalanceListItemVm>
+@using InfrastructureManagmentWebFramework.Models.Stock
+
+@{
+    ViewData["Title"] = "أرصدة المخزون";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">أرصدة المخزون</h4>
+            <a asp-action="OpeningBalance" class="btn btn-primary btn-sm">إضافة رصيد افتتاحي</a>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>كود الصنف</th>
+                            <th>اسم الصنف</th>
+                            <th>المخزن</th>
+                            <th>الرصيد الفعلي</th>
+                            <th>المحجوز</th>
+                            <th>المتاح</th>
+                            <th>آخر تحديث</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.ItemCode</td>
+                                    <td>@item.ItemNameAr</td>
+                                    <td>@item.WarehouseNameAr</td>
+                                    <td>@item.QuantityOnHand</td>
+                                    <td>@item.ReservedQuantity</td>
+                                    <td>
+                                        @if (item.AvailableQuantity > 0)
+                                        {
+                                            <span class="badge bg-success">@item.AvailableQuantity</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">@item.AvailableQuantity</span>
+                                        }
+                                    </td>
+                                    <td>@item.LastUpdatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">لا توجد أرصدة مخزنية حتى الآن</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

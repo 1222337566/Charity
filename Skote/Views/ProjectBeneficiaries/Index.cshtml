@@ -1,0 +1,181 @@
+@model List<InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Beneficiaries.ProjectBeneficiaryListItemVm>
+@{
+    var header        = ViewBag.ProjectHeader;
+    var groupCounts   = ViewBag.GroupCounts  as Dictionary<string,int> ?? new();
+    var selectedGroup = ViewBag.SelectedGroup as string;
+    var totalCount    = (int)(ViewBag.TotalCount ?? Model.Count);
+    var projectId     = header?.Id;
+}
+
+<partial name="~/Views/Shared/Projects/_ProjectHeader.cshtml" />
+
+<style>
+:root{--teal:#0e6f73}
+.tg-tab{padding:6px 16px;border-radius:20px;font-size:.8rem;font-weight:600;border:.5px solid rgba(14,111,115,.2);text-decoration:none;color:#1e3a5f;background:#fff;transition:all .18s;white-space:nowrap}
+.tg-tab.active,.tg-tab:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.tg-badge{background:rgba(14,111,115,.1);color:var(--teal);padding:1px 8px;border-radius:10px;font-size:.68rem;font-weight:700;margin-right:4px}
+.tg-badge.active{background:#fff;color:var(--teal)}
+.bn-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.bn-table th{padding:10px 14px;font-size:.74rem;font-weight:700;color:#6b7d80;background:#f4f9f9;text-align:right;border-bottom:.5px solid rgba(14,111,115,.1);white-space:nowrap}
+.bn-table td{padding:10px 14px;border-bottom:.5px solid rgba(14,111,115,.04);vertical-align:middle}
+.bn-table tr:hover td{background:rgba(14,111,115,.015)}
+.group-pill{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;background:rgba(14,111,115,.1);color:var(--teal)}
+.group-pill.unset{background:#f0f4f8;color:#adb5bd}
+.search-box{border-radius:20px;border:.5px solid rgba(14,111,115,.2);padding:6px 14px;font-size:.83rem;width:220px;outline:none}
+.search-box:focus{border-color:var(--teal)}
+</style>
+
+<div class="card"><div class="card-body">
+
+    @* ── رأس الصفحة ── *@
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h5 class="mb-0 fw-bold" style="color:#1e3a5f">المستفيدون داخل المشروع</h5>
+            <small class="text-muted">
+                @if (!string.IsNullOrEmpty(selectedGroup))
+                { <span>فئة: <strong style="color:var(--teal)">@selectedGroup</strong> — </span> }
+                إجمالي: <strong>@Model.Count</strong>
+                @if (Model.Count != totalCount)
+                { <span class="text-muted"> من @totalCount</span> }
+            </small>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="ProjectGoals" asp-action="QuickAddBeneficiary"
+               asp-route-projectId="@projectId"
+               class="btn btn-sm btn-warning fw-bold" style="border-radius:10px">
+                <i class="bx bx-user-plus me-1"></i>إضافة سريعة
+            </a>
+            <a asp-action="Create" asp-route-projectId="@projectId"
+               class="btn btn-sm" style="background:var(--teal);color:#fff;border-radius:10px">
+                <i class="bx bx-user-check me-1"></i>إلحاق مستفيد
+            </a>
+        </div>
+    </div>
+
+    @* ── فلاتر الفئات ── *@
+    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center justify-content-between">
+        <div class="d-flex flex-wrap gap-2">
+            @* الكل — نفس شكل الزر في الصورة *@
+            <a asp-action="Index" asp-route-projectId="@projectId"
+               class="tg-tab @(string.IsNullOrEmpty(selectedGroup)?"active":"")">
+                الكل
+                <span class="tg-badge @(string.IsNullOrEmpty(selectedGroup)?"active":"")">@totalCount</span>
+            </a>
+
+            @* فئة لكل مجموعة *@
+            @foreach (var kv in groupCounts.Where(x=>x.Key!="غير محدد").OrderByDescending(x => x.Value))
+            {
+                var isActive = selectedGroup == kv.Key;
+                <a asp-action="Index"
+                   asp-route-projectId="@projectId"
+                   asp-route-targetGroup="@kv.Key"
+                   class="tg-tab @(isActive?"active":"")">
+                    @kv.Key
+                    <span class="tg-badge @(isActive?"active":"")">@kv.Value</span>
+                </a>
+            }
+
+            @* غير محدد — آخراً *@
+            @if (groupCounts.ContainsKey("غير محدد"))
+            {
+                var isActive = selectedGroup == "غير محدد";
+                <a asp-action="Index"
+                   asp-route-projectId="@projectId"
+                   asp-route-targetGroup="غير محدد"
+                   class="tg-tab @(isActive?"active":"")"
+                   style="@(isActive?"":"color:#adb5bd;border-color:#e2e8f0")">
+                    غير محدد
+                    <span class="tg-badge" style="background:#f0f4f8;color:#adb5bd">
+                        @groupCounts["غير محدد"]
+                    </span>
+                </a>
+            }
+        </div>
+
+        @* بحث نصي *@
+        <input type="text" id="searchInput" class="search-box"
+               placeholder="🔍 بحث باسم أو كود..."
+               oninput="filterTable(this.value)" />
+    </div>
+
+    @* ── الجدول ── *@
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bx bx-user-x" style="font-size:2.5rem;opacity:.3;display:block"></i>
+            <p class="mt-2">
+                @if (!string.IsNullOrEmpty(selectedGroup))
+                { <span>لا يوجد مستفيدون في فئة <strong>@selectedGroup</strong></span> }
+                else
+                { <span>لا يوجد مستفيدون مسجّلون بعد</span> }
+            </p>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x:auto">
+            <table class="bn-table" id="bnTable">
+                <thead>
+                    <tr>
+                        <th>الكود</th>
+                        <th>الاسم</th>
+                        <th>الفئة المستهدفة</th>
+                        <th>نوع الاستفادة</th>
+                        <th>تاريخ الإلحاق</th>
+                        <th>الخروج</th>
+                        <th style="width:130px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold" style="color:var(--teal)">@item.BeneficiaryCode</td>
+                        <td class="fw-semibold">@item.BeneficiaryName</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.TargetGroupName))
+                            {
+                                <span class="group-pill">@item.TargetGroupName</span>
+                            }
+                            else
+                            {
+                                <span class="group-pill unset">غير محدد</span>
+                            }
+                        </td>
+                        <td class="text-muted">@(item.BenefitType ?? "—")</td>
+                        <td>@item.EnrollmentDate.ToString("yyyy-MM-dd")</td>
+                        <td>@(item.ExitDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a asp-action="Edit" asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   style="border-radius:8px;font-size:.72rem;padding:3px 9px">
+                                    <i class="bx bx-edit"></i>
+                                </a>
+                                <a asp-action="BeneficiaryActivities"
+                                   asp-route-projectBeneficiaryId="@item.Id"
+                                   class="btn btn-sm"
+                                   style="border-radius:8px;font-size:.72rem;padding:3px 9px;background:rgba(52,195,143,.12);color:#1a7a55;border:.5px solid rgba(52,195,143,.25)"
+                                   title="إثبات المشاركة في الأنشطة">
+                                    <i class="bx bx-shield-check"></i> إثبات
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div></div>
+
+<script>
+function filterTable(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#bnTable tbody tr').forEach(tr => {
+        const text = tr.textContent.toLowerCase();
+        tr.style.display = text.includes(q) ? '' : 'none';
+    });
+}
+</script>

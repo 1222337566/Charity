@@ -1,0 +1,121 @@
+﻿
+@using InfrastructureManagmentWebFramework.Models.Customer;
+@model CustomerDetailsVm
+@{
+    ViewData["Title"] = "ملف العميل";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">ملف العميل</h4>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-sm">تعديل</a>
+        </div>
+
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">رقم العميل</label>
+                    <input class="form-control" value="@Model.CustomerNumber" readonly />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">الاسم</label>
+                    <input class="form-control" value="@Model.NameAr" readonly />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">النوع</label>
+                    <input class="form-control" value="@Model.GenderText" readonly />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">السن</label>
+                    <input class="form-control" value="@(Model.Age?.ToString() ?? "")" readonly />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">الحالة</label>
+                    <input class="form-control" value="@(Model.IsActive ? "نشط" : "غير نشط")" readonly />
+                </div>
+
+                <div class="col-md-3 mt-3">
+                    <label class="form-label">تليفون</label>
+                    <input class="form-control" value="@Model.Tel" readonly />
+                </div>
+                <div class="col-md-3 mt-3">
+                    <label class="form-label">موبايل</label>
+                    <input class="form-control" value="@Model.MobileNo" readonly />
+                </div>
+                <div class="col-md-6 mt-3">
+                    <label class="form-label">ملاحظات</label>
+                    <input class="form-control" value="@Model.Remarks" readonly />
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">الحساب</h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-warning text-dark">الرصيد: @Model.AccountBalance</span>
+                        <a asp-controller="CustomerReceipts" asp-action="Create" asp-route-customerId="@Model.Id" class="btn btn-sm btn-success">
+                            سند قبض
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 bg-light">
+                                <div class="text-muted">عدد الحركات</div>
+                                <div class="fs-5 fw-bold">@Model.AccountEntries.Count</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 bg-light">
+                                <div class="text-muted">الرصيد الحالي</div>
+                                <div class="fs-5 fw-bold">@Model.AccountBalance</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>النوع</th>
+                                    <th>المرجع</th>
+                                    <th>الوصف</th>
+                                    <th>مدين</th>
+                                    <th>دائن</th>
+                                    <th>الرصيد</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.AccountEntries.Any())
+                                {
+                                    foreach (var item in Model.AccountEntries.Take(20))
+                                    {
+                                        <tr>
+                                            <td>@item.TransactionDateUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                                            <td>@item.TransactionTypeText</td>
+                                            <td>@(item.ReferenceNumber ?? "-")</td>
+                                            <td>@(item.Description ?? "-")</td>
+                                            <td>@item.DebitAmount</td>
+                                            <td>@item.CreditAmount</td>
+                                            <td class="fw-bold">@item.RunningBalance</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">لا توجد حركات على حساب العميل حتى الآن</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

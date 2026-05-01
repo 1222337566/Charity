@@ -1,0 +1,39 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.ProjectFinancialReportVm
+@{
+    ViewData["Title"] = "تقرير المشروعات";
+}
+
+@await Html.PartialAsync("~/Views/Shared/Reports/_ReportsNav.cshtml")
+
+<div class="row mb-3">
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">إجمالي الموازنات</div><h5>@Model.TotalBudget.ToString("N2")</h5></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">إجمالي التمويل المخصص</div><h5>@Model.TotalAllocatedGrants.ToString("N2")</h5></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">إجمالي المنفذ</div><h5>@Model.TotalActual.ToString("N2")</h5></div></div></div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h4 class="card-title mb-0">تقرير المشروعات</h4>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-action="ProjectDetails" class="btn btn-light btn-sm">التقرير التفصيلي</a>
+                <a asp-action="PrintProjects" target="_blank" class="btn btn-outline-secondary btn-sm">طباعة</a>
+                <a asp-action="ExportProjectsExcel" class="btn btn-success btn-sm">Excel</a>
+                <a asp-action="ExportProjectsPdf" class="btn btn-danger btn-sm">PDF</a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead><tr><th>الكود</th><th>المشروع</th><th>الحالة</th><th>الموازنة</th><th>بنود مخططة</th><th>بنود فعلية</th><th>تمويل مخصص</th><th>المستفيدون</th><th>الأنشطة</th></tr></thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@row.ProjectCode</td><td>@row.ProjectName</td><td>@row.Status</td><td>@row.Budget.ToString("N2")</td><td>@row.PlannedBudgetLines.ToString("N2")</td><td>@row.ActualBudgetLines.ToString("N2")</td><td>@row.AllocatedGrants.ToString("N2")</td><td>@row.BeneficiariesCount</td><td>@row.ActivitiesCount</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

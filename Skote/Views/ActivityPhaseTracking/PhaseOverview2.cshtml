@@ -1,0 +1,473 @@
+@model List<Skote.Controllers.PhaseTrackingRow>
+@using InfrastrfuctureManagmentCore.Domains.Charity.Projects
+@{
+    ViewData["Title"] = "متابعة المراحل والأنشطة";
+    var project       = ViewBag.Project as CharityProject;
+    var projProgress  = (decimal)(ViewBag.ProjectProgress ?? 0m);
+    var totalActs     = (int)(ViewBag.TotalActivities ?? 0);
+    var doneActs      = (int)(ViewBag.CompletedActivities ?? 0);
+    var totalPart     = (int)(ViewBag.TotalParticipants ?? 0);
+    var totalBenef    = (int)(ViewBag.TotalBeneficiaries ?? 0);
+
+    string Sc(string s) => s switch {
+        "Completed" => "#34c38f", "InProgress" => "#556ee6",
+        "Planned"   => "#adb5bd", "Cancelled"  => "#f46a6a", _ => "#adb5bd"
+    };
+    string Sa(string s) => s switch {
+        "Completed" => "مكتمل", "InProgress" => "جارٍ",
+        "Planned"   => "مخطط",  "Cancelled"  => "ملغى", _ => s
+    };
+    string Sbg(string s) => s switch {
+        "Completed" => "bg-success", "InProgress" => "bg-primary",
+        "Planned"   => "bg-secondary", "Cancelled" => "bg-danger", _ => "bg-secondary"
+    };
+    string FmtNum(decimal n) => n % 1 == 0 ? ((int)n).ToString() : n.ToString("N1");
+}
+
+<style>
+:root { --teal:#0e6f73; --teal-light:#e1f5f5; }
+
+/* ── Hero ── */
+.po-hero{background:linear-gradient(135deg,#0a4f63,#0e6f8a);border-radius:18px;padding:20px 28px;color:#fff;margin-bottom:20px}
+.po-stat{background:rgba(255,255,255,.13);border-radius:12px;padding:12px 16px;text-align:center;min-width:80px}
+.po-stat .n{font-size:1.35rem;font-weight:800;line-height:1.1}
+.po-stat .l{font-size:.67rem;opacity:.8;margin-top:3px}
+
+/* ── Project progress ring ── */
+.proj-ring{position:relative;width:80px;height:80px;flex-shrink:0}
+.proj-ring svg{transform:rotate(-90deg)}
+.proj-ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:800;color:#fff}
+
+/* ── Phase card ── */
+.phase-card{background:#fff;border-radius:18px;border:.5px solid rgba(14,111,115,.12);box-shadow:0 2px 14px rgba(14,111,115,.06);margin-bottom:20px;overflow:hidden}
+.phase-head{padding:14px 20px;display:flex;align-items:center;gap:12px}
+.phase-num{width:46px;height:46px;border-radius:12px;background:var(--teal);color:#fff;font-size:.9rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.phase-prog-wrap{flex:1}
+.phase-prog{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:4px}
+.phase-fill{height:100%;border-radius:999px;transition:width .4s}
+.phase-meta span{font-size:.72rem;color:#6b7d80;margin-left:12px}
+
+/* ── Activity table ── */
+.act-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.act-table th{padding:8px 14px;font-size:.73rem;font-weight:700;color:#6b7d80;background:#f4f9f9;text-align:right;border-bottom:.5px solid rgba(14,111,115,.1);white-space:nowrap}
+.act-table td{padding:10px 14px;border-bottom:.5px solid rgba(14,111,115,.04);vertical-align:middle}
+.act-table tr:last-child td{border-bottom:none}
+.act-table tr:hover td{background:rgba(14,111,115,.02)}
+.act-table .total-row td{background:rgba(14,111,115,.05);font-weight:700}
+
+/* ── Mini progress bar ── */
+.mini-bar{height:6px;border-radius:999px;background:#e2e8f0;width:70px;display:inline-block;vertical-align:middle;overflow:hidden}
+.mini-fill{height:100%;border-radius:999px}
+
+/* ── Chips ── */
+.chip-part{background:rgba(85,110,230,.1);color:#3145a3;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.chip-benef{background:rgba(52,195,143,.12);color:#1a7a55;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.chip-verify{background:rgba(241,180,76,.12);color:#8a5c00;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.chip-attach{background:rgba(14,111,115,.1);color:#0e6f73;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+
+/* ── Inline update ── */
+.upd-row td{background:#f4f9f9!important;padding:10px 14px}
+.upd-row .form-control,.upd-row .form-select{font-size:.8rem;padding:4px 8px;height:32px;border-color:rgba(14,111,115,.2)}
+.upd-btn{padding:4px 12px;font-size:.78rem;border-radius:8px;cursor:pointer;border:none;background:var(--teal);color:#fff;transition:opacity .2s}
+.upd-btn:hover{opacity:.85}
+
+/* ── Goal breadcrumb ── */
+.goal-crumb{font-size:.68rem;color:#adb5bd;line-height:1.3;margin-top:2px}
+.no-acts{padding:28px;text-align:center;color:#adb5bd;font-size:.83rem}
+
+/* ── Expand toggle ── */
+.expand-btn{background:none;border:none;cursor:pointer;color:var(--teal);padding:2px 6px;font-size:1rem;line-height:1}
+</style>
+
+<div class="container-fluid">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* ══ Hero: ملخص المشروع ══ *@
+    <div class="po-hero">
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+
+            @* Ring *@
+            <div class="proj-ring">
+                <svg viewBox="0 0 80 80" width="80" height="80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="8"/>
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="#34c38f" stroke-width="8"
+                            stroke-dasharray="@(2*Math.PI*34)" stroke-dashoffset="@(2*Math.PI*34*(1-(double)projProgress/100d))"
+                            stroke-linecap="round"/>
+                </svg>
+                <div class="pct">@projProgress.ToString("N0")%</div>
+            </div>
+
+            @* Info *@
+            <div class="flex-grow-1">
+                <div class="fw-bold" style="font-size:1.15rem">@project?.Name</div>
+                <div style="font-size:.78rem;opacity:.75">@project?.Code &nbsp;|&nbsp; @project?.Status</div>
+                <div style="font-size:.75rem;opacity:.6;margin-top:4px">
+                    @project?.StartDate.ToString("yyyy/MM/dd") → @(project?.EndDate?.ToString("yyyy/MM/dd") ?? "—")
+                </div>
+            </div>
+
+            @* Stats *@
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="po-stat">
+                    <div class="n">@Model.Count</div>
+                    <div class="l">المراحل</div>
+                </div>
+                <div class="po-stat">
+                    <div class="n">@totalActs</div>
+                    <div class="l">الأنشطة</div>
+                </div>
+                <div class="po-stat">
+                    <div class="n" style="color:#34c38f">@doneActs</div>
+                    <div class="l">مكتملة</div>
+                </div>
+                <div class="po-stat">
+                    <div class="n" style="color:#50a5f1">@totalPart</div>
+                    <div class="l">مشاركون</div>
+                </div>
+                <div class="po-stat">
+                    <div class="n" style="color:#f1b44c">@totalBenef</div>
+                    <div class="l">منتفعون</div>
+                </div>
+                <div class="po-stat">
+                    <div class="n" style="color:#34c38f">@project?.Budget.ToString("N0")</div>
+                    <div class="l">الميزانية</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ══ المراحل ══ *@
+    @{ int phIdx = 0; }
+    @foreach (var row in Model)
+    {
+        phIdx++;
+        var ph         = row.Phase;
+        var progress   = row.OverallProgress;
+        var fillColor  = progress >= 100 ? "#34c38f" : progress > 0 ? "#556ee6" : "#adb5bd";
+        var statusAr   = Sa(ph.Status);
+        var collapseId = $"phase-body-{ph.Id}";
+
+        <div class="phase-card">
+
+            @* رأس المرحلة *@
+            <div class="phase-head">
+                <div class="phase-num">@phIdx</div>
+
+                <div class="phase-prog-wrap">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-bold" style="font-size:.92rem;color:#1e3a2a">@ph.Name</span>
+                            <span class="badge @Sbg(ph.Status) ms-2" style="font-size:.67rem">@statusAr</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold" style="font-size:.88rem;color:@fillColor">@progress.ToString("N1")%</span>
+                            <button class="expand-btn" data-bs-toggle="collapse"
+                                    data-bs-target="#@collapseId" aria-expanded="true">
+                                <i class="bx bx-chevron-up" id="icon-@ph.Id"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="phase-prog">
+                        <div class="phase-fill" style="width:@progress%;background:@fillColor"></div>
+                    </div>
+                    <div class="phase-meta mt-1">
+                        <span><i class="bx bx-calendar me-1"></i>@ph.PlannedStartDate.ToString("yyyy/MM/dd") ← @ph.PlannedEndDate.ToString("yyyy/MM/dd")</span>
+                        <span><i class="bx bx-list-check me-1"></i>@row.ActivityRows.Count نشاط</span>
+                        @if (row.TotalParticipants > 0)
+                        {
+                            <span><i class="bx bx-user me-1 text-primary"></i>@row.TotalParticipants مشارك</span>
+                        }
+                        @if (row.TotalBeneficiaries > 0)
+                        {
+                            <span><i class="bx bx-group me-1 text-success"></i>@row.TotalBeneficiaries منتفع</span>
+                        }
+                        @if (row.TotalPlannedCost > 0)
+                        {
+                            <span><i class="bx bx-dollar me-1"></i>@row.TotalActualCost.ToString("N0") / @row.TotalPlannedCost.ToString("N0")</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* جدول الأنشطة *@
+            <div class="collapse show" id="@collapseId">
+                @if (!row.ActivityRows.Any())
+                {
+                    <div class="no-acts"><i class="bx bx-info-circle me-2"></i>لا توجد أنشطة مسكّنة في هذه المرحلة</div>
+                }
+                else
+                {
+                    <div style="overflow-x:auto">
+                        <table class="act-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:24px">#</th>
+                                    <th>النشاط</th>
+                                    <th style="width:130px">نسبة الإنجاز</th>
+                                    <th style="width:80px">الحالة</th>
+                                    <th style="width:90px">ك.مخططة</th>
+                                    <th style="width:90px">ك.فعلية</th>
+                                    <th style="width:95px">المساهمة</th>
+                                    <th style="width:80px">مشاركون</th>
+                                    <th style="width:80px">منتفعون</th>
+                                    <th style="width:80px">مُثبَّت</th>
+                                    <th style="width:75px">مرفقات</th>
+                                    <th style="width:70px">تعديل</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-@ph.Id">
+
+                                @{ int actIdx = 0; }
+                                @foreach (var ar in row.ActivityRows)
+                                {
+                                    actIdx++;
+                                    var pa  = ar.Assignment;
+                                    var act = pa.Activity;
+                                    var trId = $"tr-{pa.Id}";
+                                    var updId = $"upd-{pa.Id}";
+
+                                    <tr id="@trId">
+                                        <td class="text-muted fw-bold">@actIdx</td>
+                                        <td>
+                                            <div class="fw-semibold">@act?.Title</div>
+                                            @if (act?.SubGoal != null)
+                                            {
+                                                <div class="goal-crumb">
+                                                    @act.SubGoal.Goal?.Title → @act.SubGoal.Title
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(act?.ResponsiblePersonName))
+                                            {
+                                                <div style="font-size:.7rem;color:#6b7d80;margin-top:1px">
+                                                    <i class="bx bx-user me-1"></i>@act.ResponsiblePersonName
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="mini-bar">
+                                                    <div class="mini-fill"
+                                                         id="bar-@pa.Id"
+                                                         style="width:@pa.ProgressPercent%;background:@Sc(pa.Status)">
+                                                    </div>
+                                                </div>
+                                                <span id="pct-@pa.Id" class="fw-bold"
+                                                      style="font-size:.8rem;color:@Sc(pa.Status)">
+                                                    @pa.ProgressPercent.ToString("N0")%
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span id="status-badge-@pa.Id"
+                                                  class="badge @Sbg(pa.Status)"
+                                                  style="font-size:.68rem">@Sa(pa.Status)</span>
+                                        </td>
+                                        <td class="text-center">@FmtNum(pa.PlannedQuantity)</td>
+                                        <td class="text-center fw-semibold"
+                                            id="qty-@pa.Id" style="color:var(--teal)">
+                                            @FmtNum(pa.ActualQuantity)
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="chip-part">@pa.ContributionPercent%</span>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (ar.Participants > 0)
+                                            {
+                                                <a href="@Url.Action("Index","ProjectBeneficiaries", new{projectId=project!.Id})"
+                                                   class="chip-part" style="text-decoration:none">
+                                                    <i class="bx bx-user me-1"></i>@ar.Participants
+                                                </a>
+                                            }
+                                            else { <span class="text-muted small">—</span> }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (ar.Beneficiaries > 0)
+                                            {
+                                                <span class="chip-benef">
+                                                    <i class="bx bx-group me-1"></i>@ar.Beneficiaries
+                                                </span>
+                                            }
+                                            else { <span class="text-muted small">—</span> }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (ar.Verified > 0)
+                                            {
+                                                <span class="chip-verify">
+                                                    <i class="bx bx-check me-1"></i>@ar.Verified
+                                                </span>
+                                            }
+                                            else { <span class="text-muted small">—</span> }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (ar.Attachments > 0)
+                                            {
+                                                <span class="chip-attach">
+                                                    <i class="bx bx-paperclip me-1"></i>@ar.Attachments
+                                                </span>
+                                            }
+                                            else { <span class="text-muted small">—</span> }
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="expand-btn" title="تعديل"
+                                                    onclick="toggleUpdate('@pa.Id', '@updId')">
+                                                <i class="bx bx-edit" style="color:var(--teal)"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    @* صف التعديل السريع *@
+                                    <tr class="upd-row d-none" id="@updId">
+                                        <td colspan="12">
+                                            <form onsubmit="quickUpdate(event,'@pa.Id')" class="d-flex align-items-center gap-2 flex-wrap">
+                                                @Html.AntiForgeryToken()
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <label style="font-size:.78rem;color:#6b7d80;white-space:nowrap">نسبة الإنجاز</label>
+                                                    <input type="number" min="0" max="100" step="5" value="@pa.ProgressPercent"
+                                                           class="form-control" style="width:75px" id="inp-prog-@pa.Id" />
+                                                    <span style="font-size:.8rem">%</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <label style="font-size:.78rem;color:#6b7d80;white-space:nowrap">الحالة</label>
+                                                    <select class="form-select" style="width:110px" id="inp-status-@pa.Id">
+                                                        <option value="Planned"   selected=@(pa.Status=="Planned"   ?"selected":"")>مخطط</option>
+                                                        <option value="InProgress selected=@(pa.Status=="InProgress"?"selected":"")>جارٍ</option>
+                                                        <option value="Completed" selected=@(pa.Status=="Completed" ?"selected":"")>مكتمل</option>
+                                                        <option value="Cancelled" selected=@(pa.Status=="Cancelled" ?"selected":"")>ملغى</option>
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="upd-btn">
+                                                    <i class="bx bx-save me-1"></i>حفظ
+                                                </button>
+                                                <button type="button" class="upd-btn"
+                                                        style="background:#adb5bd"
+                                                        onclick="document.getElementById('@updId').classList.add('d-none')">
+                                                    إلغاء
+                                                </button>
+                                                <a href="@Url.Action("Index","ActivityPhaseTracking",new{activityId=pa.ActivityId})"
+                                                   class="upd-btn" style="background:#50a5f1;text-decoration:none;font-size:.78rem">
+                                                    <i class="bx bx-detail me-1"></i>تفصيل أكثر
+                                                </a>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+
+                                @* صف الإجماليات *@
+                                <tr class="total-row">
+                                    <td colspan="2">إجمالي المرحلة</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="mini-bar" style="width:90px">
+                                                <div class="mini-fill"
+                                                     style="width:@row.OverallProgress%;background:@fillColor">
+                                                </div>
+                                            </div>
+                                            <span style="color:@fillColor">@row.OverallProgress.ToString("N1")%</span>
+                                        </div>
+                                    </td>
+                                    <td></td>
+                                    <td class="text-center">@FmtNum(row.TotalPlannedQty)</td>
+                                    <td class="text-center" style="color:var(--teal)">@FmtNum(row.TotalActualQty)</td>
+                                    <td></td>
+                                    <td class="text-center">@row.TotalParticipants</td>
+                                    <td class="text-center">@row.TotalBeneficiaries</td>
+                                    <td colspan="3"></td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+        </div>
+    }
+
+    @* زر الرجوع *@
+    <div class="mt-3">
+        <a asp-action="Index" asp-controller="Projects"
+           asp-route-id="@project?.Id" class="btn btn-light btn-sm">
+            <i class="bx bx-arrow-back me-1"></i>رجوع للمشروع
+        </a>
+    </div>
+
+</div>
+
+@section scripts {
+<script>
+// ── Collapse icon toggle ──
+document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-bs-target');
+        const icon   = btn.querySelector('i');
+        if (!icon) return;
+        const el = document.querySelector(target);
+        if (el) {
+            el.addEventListener('shown.bs.collapse',  () => icon.className = 'bx bx-chevron-up',   {once:true});
+            el.addEventListener('hidden.bs.collapse', () => icon.className = 'bx bx-chevron-down', {once:true});
+        }
+    });
+});
+
+// ── Toggle update row ──
+function toggleUpdate(paId, updId) {
+    const row = document.getElementById(updId);
+    row?.classList.toggle('d-none');
+}
+
+// ── Quick update via AJAX ──
+async function quickUpdate(e, paId) {
+    e.preventDefault();
+    const progress = document.getElementById('inp-prog-'   + paId)?.value;
+    const status   = document.getElementById('inp-status-' + paId)?.value;
+    const token    = document.querySelector('[name=__RequestVerificationToken]')?.value;
+
+    const res = await fetch('/ActivityPhaseTracking/QuickUpdate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `assignmentId=${paId}&progress=${progress}&status=${status}&__RequestVerificationToken=${token}`
+    });
+    const data = await res.json();
+    if (!data.ok) { alert('حدث خطأ'); return; }
+
+    // تحديث الـ UI
+    const colors = {
+        Completed:'#34c38f', InProgress:'#556ee6',
+        Planned:'#adb5bd',   Cancelled:'#f46a6a'
+    };
+    const labels = { Completed:'مكتمل', InProgress:'جارٍ', Planned:'مخطط', Cancelled:'ملغى' };
+    const badgeClasses = { Completed:'bg-success', InProgress:'bg-primary', Planned:'bg-secondary', Cancelled:'bg-danger' };
+    const pct   = parseFloat(data.assignProgress).toFixed(0);
+    const color = colors[status] || '#adb5bd';
+
+    const bar   = document.getElementById('bar-'   + paId);
+    const pctEl = document.getElementById('pct-'   + paId);
+    const badge = document.getElementById('status-badge-' + paId);
+
+    if (bar)   { bar.style.width = pct + '%'; bar.style.background = color; }
+    if (pctEl) { pctEl.textContent = pct + '%'; pctEl.style.color = color; }
+    if (badge) {
+        badge.textContent = labels[status] || status;
+        badge.className   = 'badge ' + (badgeClasses[status] || 'bg-secondary') + ' ' + 'font-size-xs';
+        badge.style.fontSize = '.68rem';
+    }
+
+    // إخفاء صف التعديل
+    document.getElementById('upd-' + paId)?.classList.add('d-none');
+
+    // إشعار بسيط
+    const toast = document.createElement('div');
+    toast.innerHTML = `<div class="alert alert-success alert-dismissible position-fixed" style="top:20px;left:20px;z-index:9999;min-width:220px">
+        تم الحفظ ✓ &nbsp;<button class="btn-close" onclick="this.parentElement.remove()"></button></div>`;
+    document.body.appendChild(toast.firstChild);
+    setTimeout(() => document.querySelector('.alert.position-fixed')?.remove(), 2500);
+}
+</script>
+}

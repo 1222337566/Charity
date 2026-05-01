@@ -1,0 +1,51 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.DonationReportVm
+@{
+    ViewData["Title"] = "تقرير التبرعات";
+}
+
+@await Html.PartialAsync("~/Views/Shared/Reports/_ReportsNav.cshtml")
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3"><label asp-for="FromDate" class="form-label"></label><input asp-for="FromDate" class="form-control" /></div>
+            <div class="col-md-3"><label asp-for="ToDate" class="form-label"></label><input asp-for="ToDate" class="form-control" /></div>
+            <div class="col-md-6 d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary">عرض</button>
+                <a asp-action="Donations" class="btn btn-light">إعادة ضبط</a>
+                <a asp-action="DonorStatements" asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-primary">كشف حساب المتبرعين</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h4 class="card-title mb-0">تقرير التبرعات</h4>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <div class="fw-bold">الإجمالي: @Model.TotalAmount.ToString("N2")</div>
+                <a asp-action="PrintDonations" asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")" target="_blank" class="btn btn-outline-secondary btn-sm">طباعة</a>
+                <a asp-action="ExportDonationsExcel" asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")" class="btn btn-success btn-sm">Excel</a>
+                <a asp-action="ExportDonationsPdf" asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")" class="btn btn-danger btn-sm">PDF</a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th><th>رقم التبرع</th><th>المتبرع</th><th>النوع</th><th>القيمة</th><th>طريقة الدفع</th><th>الحساب</th><th>مقيد؟</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@row.DonationDate.ToString("yyyy-MM-dd")</td><td>@row.DonationNumber</td><td>@row.DonorName</td><td>@row.DonationType</td><td>@row.Amount.ToString("N2")</td><td>@row.PaymentMethodName</td><td>@row.FinancialAccountName</td><td>@(row.IsRestricted ? "نعم" : "لا")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

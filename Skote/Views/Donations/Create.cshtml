@@ -1,0 +1,29 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.DonorProfile
+@model InfrastructureManagmentWebFramework.Models.Charity.DonorProfile.Donations.CreateDonationVm
+@{
+    ViewData["Title"] = "تسجيل تبرع";
+    var donorHeader = ViewBag.DonorHeader as DonorHeaderVm;
+}
+<div class="page-content">
+    <div class="container-fluid">
+        @if (donorHeader != null)
+        {
+            @await Html.PartialAsync("~/Views/Shared/Donors/_DonorHeader.cshtml", donorHeader)
+        }
+        <div class="card">
+            <div class="card-header"><h4 class="card-title mb-0">تسجيل تبرع جديد</h4></div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.Partial("_Form", Model)
+                    <div class="mt-4 d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">حفظ</button>
+                        <a asp-action="Index" asp-route-donorId="@Model.DonorId" class="btn btn-secondary">رجوع</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

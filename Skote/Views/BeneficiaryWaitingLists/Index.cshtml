@@ -1,0 +1,102 @@
+﻿@model IEnumerable<InfrastrfuctureManagmentCore.Domains.Charity.Beneficiaries.BeneficiaryCategoryAssignment>
+@using InfrastrfuctureManagmentCore.Domains.Charity.Beneficiaries
+
+@{
+    ViewData["Title"] = "قوائم انتظار المستفيدين";
+
+    var categories = ViewBag.WaitingCategories as IEnumerable<BeneficiaryCategory>
+        ?? Enumerable.Empty<BeneficiaryCategory>();
+
+    Guid? selectedCategoryId = ViewBag.SelectedCategoryId as Guid?;
+
+    string Read(object? obj, params string[] names)
+    {
+        if (obj == null) return "";
+        var type = obj.GetType();
+        foreach (var name in names)
+        {
+            var prop = type.GetProperty(name);
+            if (prop == null) continue;
+            var value = prop.GetValue(obj);
+            if (value == null) continue;
+            return value.ToString() ?? "";
+        }
+        return "";
+    }
+}
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title mb-0">قوائم انتظار المستفيدين</h4>
+    </div>
+
+    <div class="card-body">
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-md-4">
+                <select name="categoryId" class="form-select">
+                    <option value="">كل قوائم الانتظار</option>
+                    @foreach (var cat in categories)
+                    {
+                        if (selectedCategoryId.HasValue && selectedCategoryId.Value == cat.Id)
+                        {
+                            <option value="@cat.Id" selected>@cat.NameAr</option>
+                        }
+                        else
+                        {
+                            <option value="@cat.Id">@cat.NameAr</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">بحث</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>اسم المتقدم</th>
+                        <th>الرقم القومي</th>
+                        <th>السن</th>
+                        <th>العنوان</th>
+                        <th>التليفون</th>
+                        <th>نوع الإعاقة</th>
+                        <th>التصنيف</th>
+                        <th>الحالة</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var b = item.Beneficiary;
+                        <tr>
+                            <td>
+                                <a asp-controller="Beneficiaries" asp-action="Details" asp-route-id="@item.BeneficiaryId">
+                                    @Read(b, "FullName", "Name", "NameAr", "BeneficiaryName", "DisplayName")
+                                </a>
+                            </td>
+                            <td>@Read(b, "NationalId", "NationalID", "NationalNumber", "IdentityNumber", "NationalNo")</td>
+                            <td>@Read(b, "Age")</td>
+                            <td>@Read(b, "Address", "FullAddress")</td>
+                            <td>@Read(b, "Phone", "PhoneNumber", "Mobile", "MobileNumber")</td>
+                            <td>@Read(b, "DisabilityType", "Disability", "DisabilityName")</td>
+                            <td>@item.Category?.NameAr</td>
+                            <td>@BeneficiaryCategoryAssignmentStatuses.ToArabic(item.Status)</td>
+                            <td>@item.Notes</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info mb-0">
+                لا توجد بيانات في قوائم الانتظار.
+            </div>
+        }
+    </div>
+</div>

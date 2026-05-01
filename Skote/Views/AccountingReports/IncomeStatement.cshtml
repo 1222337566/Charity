@@ -1,0 +1,153 @@
+@using InfrastructureManagmentWebFramework.Models.AccountingReports
+@model IncomeStatementPageVm
+
+@{
+    ViewData["Title"] = "قائمة الدخل";
+}
+
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header"><h4 class="mb-0">قائمة الدخل</h4></div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="fiscalPeriodId">الفترة المالية</label>
+                    <select name="fiscalPeriodId" id="fiscalPeriodId" class="form-select">
+                        <option value="">الكل</option>
+                        @foreach (var period in Model.Filter.FiscalPeriods)
+                        {
+                            <option value="@period.Value" selected="@(Model.Filter.FiscalPeriodId?.ToString() == period.Value ? "selected" : null)">@period.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="fromDate">من تاريخ</label>
+                    <input name="fromDate" id="fromDate" class="form-control" type="date" value="@(Model.Filter.FromDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="toDate">إلى تاريخ</label>
+                    <input name="toDate" id="toDate" class="form-control" type="date" value="@(Model.Filter.ToDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">عرض</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card border-success h-100"><div class="card-body"><div class="text-muted">إجمالي الإيرادات</div><h4>@Model.Result.TotalRevenue.ToString("N2")</h4></div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-danger h-100"><div class="card-body"><div class="text-muted">إجمالي المصروفات</div><h4>@Model.Result.TotalExpense.ToString("N2")</h4></div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary h-100"><div class="card-body"><div class="text-muted">صافي الفائض / العجز</div><h4>@Model.Result.NetSurplusOrDeficit.ToString("N2")</h4></div></div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-light"><h5 class="mb-0">الإيرادات</h5></div>
+        <div class="card-body">
+            @if (Model.Result.RevenueRows.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>كود الحساب</th>
+                                <th>اسم الحساب</th>
+                                <th>مدين</th>
+                                <th>دائن</th>
+                                <th>صافي الإيراد</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.Result.RevenueRows)
+                            {
+                                <tr>
+                                    <td>@row.AccountCode</td>
+                                    <td>@row.AccountNameAr</td>
+                                    <td>@row.TotalDebit.ToString("N2")</td>
+                                    <td>@row.TotalCredit.ToString("N2")</td>
+                                    <td>@row.Amount.ToString("N2")</td>
+                                    <td>
+                                        <a asp-action="AccountStatement"
+                                           asp-route-accountId="@row.AccountId"
+                                           asp-route-fiscalPeriodId="@Model.Filter.FiscalPeriodId"
+                                           asp-route-fromDate="@(Model.Filter.FromDate?.ToString("yyyy-MM-dd"))"
+                                           asp-route-toDate="@(Model.Filter.ToDate?.ToString("yyyy-MM-dd"))"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            كشف الحساب
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr><td colspan="4">إجمالي الإيرادات</td><td>@Model.Result.TotalRevenue.ToString("N2")</td><td>-</td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">لا توجد إيرادات ضمن الفلاتر المحددة.</div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-light"><h5 class="mb-0">المصروفات</h5></div>
+        <div class="card-body">
+            @if (Model.Result.ExpenseRows.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>كود الحساب</th>
+                                <th>اسم الحساب</th>
+                                <th>مدين</th>
+                                <th>دائن</th>
+                                <th>صافي المصروف</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.Result.ExpenseRows)
+                            {
+                                <tr>
+                                    <td>@row.AccountCode</td>
+                                    <td>@row.AccountNameAr</td>
+                                    <td>@row.TotalDebit.ToString("N2")</td>
+                                    <td>@row.TotalCredit.ToString("N2")</td>
+                                    <td>@row.Amount.ToString("N2")</td>
+                                    <td>
+                                        <a asp-action="AccountStatement"
+                                           asp-route-accountId="@row.AccountId"
+                                           asp-route-fiscalPeriodId="@Model.Filter.FiscalPeriodId"
+                                           asp-route-fromDate="@(Model.Filter.FromDate?.ToString("yyyy-MM-dd"))"
+                                           asp-route-toDate="@(Model.Filter.ToDate?.ToString("yyyy-MM-dd"))"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            كشف الحساب
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr><td colspan="4">إجمالي المصروفات</td><td>@Model.Result.TotalExpense.ToString("N2")</td><td>-</td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">لا توجد مصروفات ضمن الفلاتر المحددة.</div>
+            }
+        </div>
+    </div>
+</div>

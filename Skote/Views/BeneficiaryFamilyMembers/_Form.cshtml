@@ -1,0 +1,58 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.FamilyMembers
+@model CreateBeneficiaryFamilyMemberVm
+
+<input type="hidden" asp-for="BeneficiaryId" />
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Relationship" class="form-label"></label>
+        <input asp-for="Relationship" class="form-control" />
+        <span asp-validation-for="Relationship" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="NationalId" class="form-label"></label>
+        <input asp-for="NationalId" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="BirthDate" class="form-label"></label>
+        <input asp-for="BirthDate" type="date" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="GenderId" class="form-label"></label>
+        <select asp-for="GenderId" asp-items="Model.Genders" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="EducationStatus" class="form-label"></label>
+        <input asp-for="EducationStatus" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="WorkStatus" class="form-label"></label>
+        <input asp-for="WorkStatus" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="MonthlyIncome" class="form-label"></label>
+        <input asp-for="MonthlyIncome" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="HealthCondition" class="form-label"></label>
+        <input asp-for="HealthCondition" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Notes" class="form-label"></label>
+        <input asp-for="Notes" class="form-control" />
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="IsDependent" class="form-check-input" />
+            <label asp-for="IsDependent" class="form-check-label"></label>
+        </div>
+    </div>
+</div>

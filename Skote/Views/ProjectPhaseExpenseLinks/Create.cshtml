@@ -1,0 +1,257 @@
+@model InfrastructureManagmentWebFramework.Models.AccountingProjects.Phases.CreateProjectPhaseExpenseLinkVm
+@{ ViewData["Title"] = "ربط مصروف بمرحلة"; }
+@await Html.PartialAsync("~/Views/Shared/Projects/_ProjectHeader.cshtml")
+
+<style>
+:root {
+    --teal:      #0e6f73;
+    --teal-dark: #0a5558;
+    --teal-soft: rgba(14,111,115,.07);
+    --border:    rgba(14,111,115,.14);
+    --text-main: #1a2e35;
+    --text-muted:#5a7a80;
+}
+
+.create-wrapper { max-width:760px; }
+
+.create-card {
+    background:#fff; border-radius:18px;
+    border:.5px solid var(--border);
+    box-shadow:0 3px 16px rgba(14,111,115,.07);
+    overflow:hidden;
+}
+.create-head {
+    background:linear-gradient(135deg,#065f46,var(--teal));
+    padding:18px 24px; color:#fff;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.create-head-title { font-size:1rem; font-weight:800; }
+.create-head-sub   { font-size:.75rem; opacity:.75; margin-top:2px; }
+
+.create-body { padding:26px 28px; }
+
+.field-group { margin-bottom:20px; }
+.field-label {
+    display:block; font-size:.8rem; font-weight:700;
+    color:var(--text-main); margin-bottom:6px;
+}
+.field-label .req { color:#e8534a; margin-right:2px; }
+.field-label .hint { font-size:.7rem; color:var(--text-muted); font-weight:500; margin-right:6px; }
+
+.form-control-custom, .form-select-custom {
+    width:100%; padding:10px 14px;
+    border-radius:11px; border:.5px solid var(--border);
+    background:#fff; color:var(--text-main); font-size:.85rem;
+    transition:border .15s, box-shadow .15s;
+    appearance:none; -webkit-appearance:none;
+}
+.form-control-custom:focus, .form-select-custom:focus {
+    outline:none; border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(14,111,115,.1);
+}
+.form-select-custom {
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230e6f73' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:left 12px center;
+    padding-left:36px;
+}
+
+.divider-label {
+    font-size:.72rem; font-weight:800; color:var(--teal);
+    text-transform:uppercase; letter-spacing:.8px;
+    display:flex; align-items:center; gap:8px;
+    margin:22px 0 16px;
+}
+.divider-label::after {
+    content:''; flex:1; height:1px; background:var(--border);
+}
+
+/* Toggle switch */
+.toggle-row {
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--teal-soft); border-radius:12px;
+    padding:14px 16px; border:.5px solid var(--border);
+}
+.toggle-label { font-size:.85rem; font-weight:700; color:var(--text-main); }
+.toggle-sub   { font-size:.74rem; color:var(--text-muted); margin-top:2px; }
+.toggle-switch { position:relative; width:46px; height:24px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider {
+    position:absolute; inset:0; background:#d0dde0; border-radius:24px; cursor:pointer;
+    transition:background .2s;
+}
+.toggle-slider::before {
+    content:''; position:absolute; width:18px; height:18px;
+    left:3px; top:3px; background:#fff; border-radius:50%;
+    transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.15);
+}
+.toggle-switch input:checked + .toggle-slider { background:var(--teal); }
+.toggle-switch input:checked + .toggle-slider::before { transform:translateX(22px); }
+
+/* Validation */
+.val-error { font-size:.74rem; color:#e8534a; margin-top:4px; display:block; }
+.alert-danger-custom {
+    background:rgba(232,83,74,.07); border:.5px solid rgba(232,83,74,.2);
+    border-radius:12px; padding:12px 16px; color:#c0392b;
+    font-size:.83rem; margin-bottom:18px;
+}
+
+/* Footer btns */
+.form-footer {
+    display:flex; gap:10px; align-items:center;
+    padding:18px 28px; background:#f8fbfb;
+    border-top:.5px solid var(--border);
+}
+.btn-save {
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--teal); color:#fff; border:none;
+    border-radius:12px; padding:10px 24px;
+    font-size:.88rem; font-weight:800; cursor:pointer;
+    box-shadow:0 3px 12px rgba(14,111,115,.28);
+    transition:background .15s, transform .12s;
+}
+.btn-save:hover { background:var(--teal-dark); transform:translateY(-1px); }
+.btn-cancel {
+    display:inline-flex; align-items:center; gap:5px;
+    color:var(--text-muted); text-decoration:none;
+    font-size:.85rem; font-weight:600;
+    padding:10px 16px; border-radius:12px;
+    transition:background .12s;
+}
+.btn-cancel:hover { background:rgba(0,0,0,.04); color:var(--text-main); }
+</style>
+
+<div class="create-wrapper">
+
+    <div class="create-card">
+        
+        <div class="create-head">
+            <div>
+                <div class="create-head-title">
+                    <i class="bx bx-link-alt me-2"></i>ربط مصروف بمرحلة المشروع
+                </div>
+                <div class="create-head-sub">اختر المصروف والمرحلة وبند الموازنة المناسب</div>
+            </div>
+            <a asp-action="Index" asp-route-projectId="@Model.ProjectId"
+               style="background:rgba(255,255,255,.15);color:#fff;border-radius:10px;
+                      padding:6px 14px;font-size:.8rem;font-weight:700;text-decoration:none">
+                ← رجوع
+            </a>
+        </div>
+
+   
+        <div class="create-body">
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ProjectId" />
+
+                <div asp-validation-summary="ModelOnly" class="alert-danger-custom"></div>
+
+                
+                <div class="divider-label">
+                    <i class="bx bx-receipt" style="font-size:.85rem"></i>
+                    بيانات الربط الأساسية
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="field-group">
+                            <label class="field-label">
+                                المصروف <span class="req">*</span>
+                            </label>
+                            <select asp-for="ExpenseId" asp-items="Model.Expenses"
+                                    class="form-select-custom">
+                                <option value="">— اختر المصروف —</option>
+                            </select>
+                            <span asp-validation-for="ExpenseId" class="val-error"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="field-group">
+                            <label class="field-label">
+                                المرحلة <span class="req">*</span>
+                            </label>
+                            <select asp-for="ProjectPhaseId" asp-items="Model.Phases"
+                                    class="form-select-custom">
+                                <option value="">— اختر المرحلة —</option>
+                            </select>
+                            <span asp-validation-for="ProjectPhaseId" class="val-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider-label">
+                    <i class="bx bx-category" style="font-size:.85rem"></i>
+                    التصنيف المالي
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="field-group">
+                            <label class="field-label">
+                                بند الموازنة
+                                <span class="hint">(اختياري)</span>
+                            </label>
+                            <select asp-for="ProjectBudgetLineId" asp-items="Model.BudgetLines"
+                                    class="form-select-custom">
+                                <option value="">— اختر البند —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="field-group">
+                            <label class="field-label">
+                                مركز التكلفة
+                                <span class="hint">(اختياري)</span>
+                            </label>
+                            <select asp-for="CostCenterId" asp-items="Model.CostCenters"
+                                    class="form-select-custom">
+                                <option value="">— اختر المركز —</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+               
+                <div class="toggle-row mb-4">
+                    <div>
+                        <div class="toggle-label">احتساب هذا الربط ضمن التكلفة الفعلية</div>
+                        <div class="toggle-sub">سيُضاف هذا المصروف إلى إجمالي التكلفة الفعلية للمشروع</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input asp-for="IncludeInActualCost" type="checkbox" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                
+                <div class="field-group">
+                    <label class="field-label">
+                        ملاحظات <span class="hint">(اختياري)</span>
+                    </label>
+                    <textarea asp-for="Notes" rows="3" class="form-control-custom"
+                              placeholder="أي ملاحظات إضافية حول هذا الربط..."></textarea>
+                </div>
+
+            
+
+            
+            <div class="form-footer">
+                <button type="submit" class="btn-save">
+                    <i class="bx bx-save" style="font-size:.95rem"></i>
+                    حفظ الربط
+                </button>
+                <a asp-action="Index" asp-route-projectId="@Model.ProjectId" class="btn-cancel">
+                    <i class="bx bx-x" style="font-size:.95rem"></i>
+                    إلغاء
+                </a>
+            </div>
+
+            </form>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

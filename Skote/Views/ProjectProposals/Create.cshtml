@@ -1,0 +1,43 @@
+@model Skote.Models.Charity.ProjectProposals.ProjectProposalVm
+@{
+    ViewData["Title"] = "إضافة مقترح مشروع";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="mb-3">إضافة مقترح / ميثاق مشروع</h4>
+
+            @* ── ملخص أخطاء الـ Validation ── *@
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h6 class="alert-heading fw-bold mb-2"><i class="bx bx-error-circle me-1"></i>يوجد أخطاء يجب تصحيحها:</h6>
+                    <div asp-validation-summary="All" class="mb-0 small"></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <form asp-action="Create" method="post" enctype="multipart/form-data" id="createForm">
+                <input type="hidden" name="IsDraftSave" id="isDraftSave" value="false" />
+
+                @await Html.PartialAsync("_Form", Model)
+
+                <div class="mt-4 d-flex gap-2 flex-wrap border-top pt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bx bx-save me-1"></i>حفظ المقترح
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.getElementById('isDraftSave').value='true'; document.getElementById('createForm').submit()">
+                        <i class="bx bx-file me-1"></i>حفظ كمسودة
+                    </button>
+                    <a asp-action="Index" class="btn btn-light">إلغاء</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

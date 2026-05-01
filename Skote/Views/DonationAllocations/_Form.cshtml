@@ -1,0 +1,166 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.DonorProfile.Donations.CreateDonationAllocationVm
+<div class="row g-3">
+    <div class="col-12">
+        <div class="alert alert-secondary mb-0">
+            <strong>حالة التخصيص:</strong> @(Model.ApprovalStatusName ?? "بانتظار الاعتماد")
+            <div class="small text-muted mt-1">لن يُحتسب هذا التخصيص كتمويل فعّال للطلب ولن يصبح متاحًا للصرف إلا بعد اعتماده.</div>
+        </div>
+    </div>
+
+    @if (Model.DonationRemainingAmount > 0 || Model.RequestedAmount > 0 || Model.AlreadyAllocatedAmount > 0 || Model.RemainingNeedAmount > 0)
+    {
+        <div class="col-12">
+            <div class="alert alert-info mb-0">
+                <div class="row g-3">
+                    <div class="col-md-3"><strong>المتبقي من التبرع:</strong> @Model.DonationRemainingAmount.ToString("N2")</div>
+                    <div class="col-md-3"><strong>المطلوب في الطلب:</strong> @Model.RequestedAmount.ToString("N2")</div>
+                    <div class="col-md-3"><strong>المحجوز/الممول للطلب:</strong> @Model.AlreadyAllocatedAmount.ToString("N2")</div>
+                    <div class="col-md-3"><strong>المتبقي على الطلب:</strong> @Model.RemainingNeedAmount.ToString("N2")</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="col-12">
+        <div class="alert alert-light border mb-0">
+            <div><strong>نطاق توجيه التبرع:</strong> @(Model.TargetingScopeName ?? "عام على حساب التبرعات العام")</div>
+            @if (!string.IsNullOrWhiteSpace(Model.GeneralPurposeName))
+            {
+                <div class="mt-1"><strong>الغرض/الباب العام:</strong> @Model.GeneralPurposeName</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.AllocationPolicyMessage))
+            {
+                <div class="small text-muted mt-1">@Model.AllocationPolicyMessage</div>
+            }
+        </div>
+    </div>
+
+    @if (!Model.CanAllocateToRequests || Model.AidRequests == null || !Model.AidRequests.Any())
+    {
+        <div class="col-12">
+            <div class="alert alert-warning mb-0">
+                @(Model.AllocationPolicyMessage ?? "لا توجد طلبات مؤهلة للتخصيص على هذا التبرع حاليًا.")
+            </div>
+        </div>
+    }
+
+    <div class="col-md-4">
+        <label asp-for="AllocatedDate" class="form-label"></label>
+        <input asp-for="AllocatedDate" class="form-control" />
+        <span asp-validation-for="AllocatedDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-8">
+        <label asp-for="AidRequestId" class="form-label"></label>
+        <select asp-for="AidRequestId" asp-items="Model.AidRequests" class="form-select">
+            <option value="">اختر طلب المساعدة المعتمد</option>
+        </select>
+        <span asp-validation-for="AidRequestId" class="text-danger"></span>
+        <small class="text-muted">يظهر داخل كل اختيار: المطلوب، المحجوز/الممول، والمتبقي على الطلب.</small>
+    </div>
+    <div class="col-md-12">
+        <label asp-for="AidRequestLineId" class="form-label"></label>
+        <select asp-for="AidRequestLineId" asp-items="Model.AidRequestLines" class="form-select">
+            <option value="">اختر بند طلب المساعدة، إن وجد</option>
+        </select>
+        <span asp-validation-for="AidRequestLineId" class="text-danger"></span>
+        <small class="text-muted">
+            لو طلب المساعدة يحتوي على بنود، يجب اختيار البند المطلوب تمويله أو صرفه.
+        </small>
+    </div>
+    <div class="col-md-12">
+        <label asp-for="AidRequestLineId" class="form-label"></label>
+        <select asp-for="AidRequestLineId" asp-items="Model.AidRequestLines" class="form-select">
+            <option value="">اختر بند طلب المساعدة</option>
+        </select>
+        <span asp-validation-for="AidRequestLineId" class="text-danger"></span>
+        <small class="text-muted">اختيار البند يربط التخصيص بصنف/خدمة محددة داخل طلب المساعدة، ويتيح رقابة الكمية أو القيمة على مستوى البند.</small>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Amount" class="form-label"></label>
+        <input asp-for="Amount" class="form-control" />
+        <span asp-validation-for="Amount" class="text-danger"></span>
+        <small class="text-muted">يستخدم هذا الحقل للتبرعات النقدية فقط.</small>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="DonationInKindItemId" class="form-label"></label>
+        <select asp-for="DonationInKindItemId" asp-items="Model.DonationInKindItems" class="form-select">
+            <option value="">اختر الصنف العيني</option>
+        </select>
+        <span asp-validation-for="DonationInKindItemId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="AllocatedQuantity" class="form-label"></label>
+        <input asp-for="AllocatedQuantity" class="form-control" />
+        <span asp-validation-for="AllocatedQuantity" class="text-danger"></span>
+        <small class="text-muted">يستخدم مع التبرعات العينية فقط.</small>
+    </div>
+    @if (Model.SelectedRequestHasLines)
+    {
+        <div class="col-12">
+            <div class="alert alert-warning mb-0">
+                <div class="fw-semibold mb-2">ملخص بند طلب المساعدة المختار</div>
+                <div class="row g-2 small">
+                    <div class="col-md-3">الكمية المطلوبة: @Model.SelectedLineRequestedQuantity.ToString("N2")</div>
+                    <div class="col-md-3">الكمية المعتمدة: @Model.SelectedLineApprovedQuantity.ToString("N2")</div>
+                    <div class="col-md-3">المخصص كمية: @Model.SelectedLineAllocatedQuantity.ToString("N2")</div>
+                    <div class="col-md-3">المتبقي كمية: @Model.SelectedLineRemainingQuantity.ToString("N2")</div>
+                    <div class="col-md-3">القيمة التقديرية: @Model.SelectedLineEstimatedTotal.ToString("N2")</div>
+                    <div class="col-md-3">المخصص قيمة: @Model.SelectedLineAllocatedAmount.ToString("N2")</div>
+                    <div class="col-md-3">المتبقي قيمة: @Model.SelectedLineRemainingAmount.ToString("N2")</div>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="col-md-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+</div>
+<input type="hidden" asp-for="DonationId" />
+<input type="hidden" asp-for="BeneficiaryId" />
+
+
+<script>
+(function () {
+    const requestSelect = document.getElementById('AidRequestId');
+    const lineSelect = document.getElementById('AidRequestLineId');
+    if (!requestSelect || !lineSelect) return;
+
+    const selectedLine = lineSelect.value;
+
+    async function loadLines() {
+        const requestId = requestSelect.value;
+        lineSelect.innerHTML = '<option value="">اختر بند طلب المساعدة</option>';
+        if (!requestId) return;
+
+        try {
+            const response = await fetch(`/DonationAllocations/AidRequestLines?aidRequestId=${encodeURIComponent(requestId)}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) return;
+
+            const lines = await response.json();
+            for (const line of lines) {
+                const option = document.createElement('option');
+                option.value = line.value;
+                option.textContent = line.text;
+                if (selectedLine && selectedLine === line.value) {
+                    option.selected = true;
+                }
+                lineSelect.appendChild(option);
+            }
+        } catch {
+            // keep form usable even if ajax fails
+        }
+    }
+
+    requestSelect.addEventListener('change', loadLines);
+    if (requestSelect.value && lineSelect.options.length <= 1) {
+        loadLines();
+    }
+})();
+</script>

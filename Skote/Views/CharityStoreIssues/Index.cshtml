@@ -1,0 +1,46 @@
+@model IEnumerable<InfrastructureManagmentWebFramework.Models.Charity.Stores.Issues.StoreIssueListItemVm>
+@using Skote.Helpers
+@await Html.PartialAsync("~/Views/Shared/Stores/_StoresNav.cshtml")
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">إذن الصرف المخزني</h4>
+    <authz policy="StoresManage">
+        <a asp-action="Create" class="btn btn-primary">إضافة إذن جديد</a>
+    </authz>
+</div>
+<table class="table table-bordered table-striped align-middle">
+    <thead>
+        <tr>
+            <th>رقم الإذن</th>
+            <th>التاريخ</th>
+            <th>المخزن</th>
+            <th>نوع الصرف</th>
+            <th>المستفيد/المشروع</th>
+            <th>الحالة</th>
+            <th>عدد البنود</th>
+            <th>الإجمالي</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        var badge = item.ApprovalStatus switch
+        {
+            "Approved" => "bg-success-subtle text-success",
+            "Rejected" => "bg-danger-subtle text-danger",
+            _ => "bg-warning-subtle text-warning"
+        };
+        <tr>
+            <td>@item.IssueNumber</td>
+            <td>@item.IssueDate.ToString("yyyy-MM-dd")</td>
+            <td>@item.WarehouseName</td>
+            <td>@item.IssueType</td>
+            <td>@item.BeneficiaryName @item.ProjectName @item.IssuedToName</td>
+            <td><span class="badge @badge">@item.ApprovalStatusName</span></td>
+            <td>@item.LinesCount</td>
+            <td>@item.TotalAmount.ToString("N2")</td>
+            <td><a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">تفاصيل</a></td>
+        </tr>
+    }
+    </tbody>
+</table>

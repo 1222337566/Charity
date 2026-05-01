@@ -1,0 +1,44 @@
+@model List<InfrastructureManagmentWebFramework.Models.AccountingProjects.Phases.ProjectPhaseStoreIssueLinkListItemVm>
+@{ ViewData["Title"] = "ربط أذون الصرف بمراحل المشروع"; }
+@await Html.PartialAsync("~/Views/Shared/Projects/_ProjectHeader.cshtml")
+@{
+    var showProjectColumn = ViewBag.ShowProjectColumn as bool? == true;
+}
+<div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+    <div>
+        <h4>ربط أذون الصرف المخزني بمراحل المشروع</h4>
+        @if (ViewBag.ProjectId == null)
+        {
+            <div class="text-muted">عرض عام للربوط الحالية. اختر مشروعًا لإضافة ربط جديد.</div>
+        }
+    </div>
+    @if (ViewBag.ProjectId != null)
+    {
+        <a asp-action="Create" asp-route-projectId="@ViewBag.ProjectId" class="btn btn-primary">ربط إذن صرف</a>
+    }
+    else
+    {
+        <a asp-controller="CharityProjects" asp-action="Index" class="btn btn-outline-primary">اختيار مشروع</a>
+    }
+</div>
+<table class="table table-bordered table-striped">
+    <thead><tr>@if (showProjectColumn) { <th>المشروع</th> }<th>رقم الإذن</th><th>التاريخ</th><th>القيمة</th><th>المرحلة</th><th>مركز التكلفة</th><th>يحسب فعليًا</th><th>إجراء</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            @if (showProjectColumn) { <td>@item.ProjectName</td> }
+            <td>@item.IssueNumber</td><td>@item.IssueDate.ToString("yyyy-MM-dd")</td><td>@item.Amount.ToString("N2")</td>
+            <td>@item.PhaseName</td><td>@item.CostCenterName</td><td>@(item.IncludeInActualCost ? "نعم" : "لا")</td>
+            <td>
+                <form method="post" asp-action="Delete" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@item.Id" />
+                    <input type="hidden" name="projectId" value="@(ViewBag.ProjectId ?? item.ProjectId)" />
+                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('تأكيد حذف الربط؟')">حذف</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

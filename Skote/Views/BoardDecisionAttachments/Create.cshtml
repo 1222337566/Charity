@@ -1,0 +1,52 @@
+@model Skote.Models.Charity.MinutesAndDecisions.BoardDecisionAttachmentVm
+@{
+    ViewData["Title"] = "رفع ملف للقرار";
+    var decision = ViewBag.Decision as InfrastrfuctureManagmentCore.Domains.Charity.MinutesAndDecisions.BoardDecision;
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h4 class="mb-1">رفع ملف للقرار</h4>
+            <div class="text-muted">@decision?.Title - @decision?.DecisionNumber</div>
+        </div>
+        <a asp-action="Index" asp-route-boardDecisionId="@Model.BoardDecisionId" class="btn btn-light">العودة</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input asp-for="BoardDecisionId" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="AttachmentType" class="form-label"></label>
+                        <input asp-for="AttachmentType" class="form-control" placeholder="مثال: نسخة موقعة / مرفق تنفيذي / خطاب" />
+                        <span asp-validation-for="AttachmentType" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="File" class="form-label"></label>
+                        <input asp-for="File" class="form-control" type="file" />
+                        <span asp-validation-for="File" class="text-danger"></span>
+                        <div class="form-text">الأنواع المسموحة: PDF, Word, Excel, JPG, PNG</div>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">رفع الملف</button>
+                    <a asp-action="Index" asp-route-boardDecisionId="@Model.BoardDecisionId" class="btn btn-light">إلغاء</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,192 @@
+:root {
+  --joud-teal:       #0e6f73;
+  --joud-teal-dark:  #0a5659;
+  --joud-teal-mid:   #0c8387;
+  --joud-teal-light: #19a1a6;
+  --joud-gold:       #d9a44a;
+  --joud-ink:        #15363a;
+}
+
+/* ── Body ── */
+body.joud-theme {
+  background:
+    radial-gradient(circle at top left,  rgba(217,164,74,.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(14,111,115,.07), transparent 30%),
+    linear-gradient(135deg, #f5faf9 0%, #eef7f6 52%, #fdfcf8 100%) !important;
+}
+
+/* ── Topbar ── */
+body.joud-theme #page-topbar,
+body.joud-theme .navbar-header {
+  background: linear-gradient(90deg,
+    #0a5659 0%,
+    #0e6f73 60%,
+    #0c8387 100%) !important;
+  box-shadow: 0 4px 20px rgba(10,86,89,.30) !important;
+  border-bottom: none !important;
+}
+
+body.joud-theme #page-topbar .header-item,
+body.joud-theme #page-topbar .nav-link,
+body.joud-theme #page-topbar i,
+body.joud-theme #page-topbar .noti-icon i {
+  color: rgba(255,255,255,.90) !important;
+}
+
+body.joud-theme #page-topbar .app-search .form-control,
+body.joud-theme #page-topbar .app-search input {
+  background: rgba(255,255,255,.15) !important;
+  border-color: rgba(255,255,255,.20) !important;
+  color: #fff !important;
+}
+
+body.joud-theme #page-topbar .app-search .form-control::placeholder,
+body.joud-theme #page-topbar .app-search input::placeholder {
+  color: rgba(255,255,255,.58) !important;
+}
+
+body.joud-theme #page-topbar .app-search span {
+  color: rgba(255,255,255,.65) !important;
+}
+
+/* ── Sidebar ── */
+body.joud-theme .vertical-menu,
+body.joud-theme .app-menu,
+body.joud-theme #sidebar-menu,
+body.joud-theme .left-side-menu {
+  background: linear-gradient(160deg,
+    #0e6f73 0%,
+    #0c8387 55%,
+    #19a1a6 100%) !important;
+  box-shadow: 4px 0 24px rgba(10,86,89,.18) !important;
+}
+
+body.joud-theme .navbar-brand-box,
+body.joud-theme .logo-box {
+  background: #0a5659 !important;
+  border-bottom: 1px solid rgba(255,255,255,.10) !important;
+}
+
+/* section titles */
+body.joud-theme #sidebar-menu ul li.menu-title,
+body.joud-theme .vertical-menu .menu-title {
+  color: rgba(255,255,255,.55) !important;
+  letter-spacing: .05em;
+  font-size: .72rem;
+  text-transform: uppercase;
+}
+
+/* normal links */
+body.joud-theme #sidebar-menu ul li a,
+body.joud-theme .vertical-menu ul li a {
+  color: rgba(255,255,255,.88) !important;
+  border-inline-start: 3px solid transparent;
+}
+
+body.joud-theme #sidebar-menu ul li a i,
+body.joud-theme #sidebar-menu ul li a svg,
+body.joud-theme .vertical-menu ul li a i {
+  color: rgba(255,255,255,.72) !important;
+}
+
+/* hover */
+body.joud-theme #sidebar-menu ul li a:hover,
+body.joud-theme #sidebar-menu ul li ul.sub-menu li a:hover {
+  background: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+  border-inline-start-color: rgba(217,164,74,.60) !important;
+}
+
+body.joud-theme #sidebar-menu ul li a:hover i {
+  color: #ffe3ad !important;
+}
+
+/* active */
+body.joud-theme #sidebar-menu ul li.mm-active > a,
+body.joud-theme #sidebar-menu ul li a.active,
+body.joud-theme #sidebar-menu ul li ul.sub-menu li.mm-active > a,
+body.joud-theme #sidebar-menu ul li ul.sub-menu li a.active {
+  background: rgba(255,255,255,.18) !important;
+  color: #fff !important;
+  border-inline-start-color: #d9a44a !important;
+}
+
+body.joud-theme #sidebar-menu ul li.mm-active > a i,
+body.joud-theme #sidebar-menu ul li a.active i {
+  color: #ffe3ad !important;
+}
+
+/* sub-menu */
+body.joud-theme #sidebar-menu ul li ul.sub-menu li a {
+  color: rgba(255,255,255,.80) !important;
+  background: transparent;
+}
+
+body.joud-theme .simplebar-scrollbar:before {
+  background: rgba(255,255,255,.35) !important;
+}
+
+/* ── Cards ── */
+body.joud-theme .card {
+  border: 1px solid rgba(14,111,115,.09) !important;
+  box-shadow: 0 8px 24px rgba(10,86,89,.05) !important;
+}
+
+/* ── Buttons ── */
+body.joud-theme .btn-primary {
+  background: linear-gradient(135deg, #0a5659, #0e6f73) !important;
+  border-color: #0a5659 !important;
+}
+
+body.joud-theme .btn-primary:hover,
+body.joud-theme .btn-primary:focus {
+  background: linear-gradient(135deg, #0e6f73, #0c8387) !important;
+  border-color: #0e6f73 !important;
+}
+
+/* ── Page title ── */
+body.joud-theme .page-title-box h4 {
+  color: var(--joud-ink);
+  font-weight: 700;
+}
+
+body.joud-theme .page-content {
+  padding-top: calc(70px + 24px);
+}
+
+@media (max-width: 767.98px) {
+  body.joud-theme .page-content {
+    padding-top: calc(70px + 16px);
+  }
+}
+
+/* ── Brand logo block ── */
+.joud-brand-box  { width: 280px !important; background: transparent; }
+.joud-brand-link { display:flex; align-items:center; gap:.85rem; height:70px; padding:0 1rem; text-decoration:none; }
+.joud-brand-mark { width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.12); flex-shrink:0; }
+.joud-brand-mark img { width:40px; height:40px; display:block; }
+.joud-brand-copy { display:flex; flex-direction:column; line-height:1.05; }
+.joud-brand-ar   { color:#fff; font-size:1.95rem; font-weight:800; }
+.joud-brand-en   { color:rgba(255,255,255,.90); font-size:1rem; font-weight:600; }
+
+@media (max-width: 991.98px) {
+  .joud-brand-box  { width:auto !important; }
+  .joud-brand-copy { display:none; }
+}
+
+/* ── Brand copy hide/show transition ── */
+.joud-brand-copy {
+  transition: opacity .2s ease, width .2s ease;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+body[data-sidebar-hidden="true"] .joud-brand-copy {
+  opacity: 0;
+  width: 0 !important;
+  pointer-events: none;
+}
+
+body[data-sidebar-hidden="false"] .joud-brand-copy {
+  opacity: 1;
+}

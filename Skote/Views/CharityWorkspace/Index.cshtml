@@ -1,0 +1,218 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.Dashboard.CharityWorkspaceVm
+@{
+    ViewData["Title"] = "مساحة العمل";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="mb-1">مساحة العمل اليومية</h4>
+        <p class="text-muted mb-0">شاشة تشغيل سريعة للمهام والتنبيهات والمواعيد القريبة.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="CharityDashboard" asp-action="Index" class="btn btn-light">لوحة التحكم</a>
+        <a asp-controller="CharityReports" asp-action="Index" class="btn btn-primary">التقارير</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-start border-warning border-4 h-100"><div class="card-body"><p class="text-muted mb-1">طلبات مساعدة معلقة</p><h3 class="mb-0">@Model.PendingAidRequestsCount</h3></div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-start border-primary border-4 h-100"><div class="card-body"><p class="text-muted mb-1">حالات جديدة آخر 7 أيام</p><h3 class="mb-0">@Model.NewBeneficiariesCount</h3></div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-start border-danger border-4 h-100"><div class="card-body"><p class="text-muted mb-1">دفعات تمويل قريبة</p><h3 class="mb-0">@Model.DueGrantInstallmentsCount</h3></div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-start border-info border-4 h-100"><div class="card-body"><p class="text-muted mb-1">حضور غير مكتمل اليوم</p><h3 class="mb-0">@Model.MissingAttendanceCount</h3></div></div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-xl-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">إجراءات سريعة</h4>
+                    <span class="text-muted">أكثر العمليات استخدامًا</span>
+                </div>
+                <div class="row g-3">
+                    @foreach (var action in Model.QuickActions)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <authz any-policy="@action.Policy">
+                                <a asp-controller="@action.Controller" asp-action="@action.Action" class="card border border-@action.ColorClass text-decoration-none h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="avatar-sm rounded-circle bg-@action.ColorClass-subtle d-flex align-items-center justify-content-center">
+                                                <i class="@action.IconClass text-@action.ColorClass font-size-22"></i>
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(action.BadgeText))
+                                            {
+                                                <span class="badge bg-light text-dark">@action.BadgeText</span>
+                                            }
+                                        </div>
+                                        <h5 class="mb-1 text-dark">@action.Title</h5>
+                                        <p class="mb-0 text-muted">@action.Description</p>
+                                    </div>
+                                </a>
+                            </authz>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h4 class="card-title mb-3">تنبيهات تشغيلية</h4>
+                @if (Model.Alerts.Any())
+                {
+                    foreach (var alert in Model.Alerts)
+                    {
+                        <div class="alert alert-@alert.Severity d-flex justify-content-between align-items-start" role="alert">
+                            <div>
+                                <div class="fw-bold">@alert.Title</div>
+                                <div class="small">@alert.Details</div>
+                            </div>
+                            <div class="ms-3 text-end">
+                                <div class="fw-bold">@alert.Count</div>
+                                @if (!string.IsNullOrWhiteSpace(alert.Controller) && !string.IsNullOrWhiteSpace(alert.Action))
+                                {
+                                    if (alert.RouteId.HasValue && !string.IsNullOrWhiteSpace(alert.RouteKey))
+                                    {
+                                        <a class="small text-decoration-underline" asp-controller="@alert.Controller" asp-action="@alert.Action" asp-route-id="@alert.RouteId">فتح</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="small text-decoration-underline" asp-controller="@alert.Controller" asp-action="@alert.Action">فتح</a>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="alert alert-success mb-0">لا توجد تنبيهات حرجة حاليًا.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-xl-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h4 class="card-title mb-3">المواعيد القريبة</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>العنصر</th>
+                                <th>الفئة</th>
+                                <th>التاريخ</th>
+                                <th>المتبقي</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var row in Model.Deadlines)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@row.Title</div>
+                                    @if (!string.IsNullOrWhiteSpace(row.Notes))
+                                    {
+                                        <div class="text-muted small">@row.Notes</div>
+                                    }
+                                </td>
+                                <td>@row.Category</td>
+                                <td>@row.DueDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <span class="badge @(row.DaysRemaining <= 3 ? "bg-danger" : row.DaysRemaining <= 7 ? "bg-warning text-dark" : "bg-info")">
+                                        @row.DaysRemaining يوم
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(row.Controller) && !string.IsNullOrWhiteSpace(row.Action))
+                                    {
+                                        if (row.RouteId.HasValue && row.RouteKey == "grantAgreementId")
+                                        {
+                                            <a asp-controller="@row.Controller" asp-action="@row.Action" asp-route-grantAgreementId="@row.RouteId" class="btn btn-sm btn-light">فتح</a>
+                                        }
+                                        else if (row.RouteId.HasValue)
+                                        {
+                                            <a asp-controller="@row.Controller" asp-action="@row.Action" asp-route-id="@row.RouteId" class="btn btn-sm btn-light">فتح</a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="@row.Controller" asp-action="@row.Action" class="btn btn-sm btn-light">فتح</a>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Deadlines.Any())
+                        {
+                            <tr><td colspan="5" class="text-center text-muted">لا توجد مواعيد قريبة.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h4 class="card-title mb-3">آخر النشاطات</h4>
+                <div class="list-group list-group-flush">
+                    @foreach (var item in Model.RecentActivities)
+                    {
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@item.Title</div>
+                                    <div class="text-muted small">@item.Subtitle</div>
+                                    <div class="small text-primary">@item.Source</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-muted">@item.EventDate.ToString("yyyy-MM-dd")</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.Controller) && !string.IsNullOrWhiteSpace(item.Action))
+                                    {
+                                        if (item.RouteId.HasValue && item.RouteKey == "beneficiaryId")
+                                        {
+                                            <a asp-controller="@item.Controller" asp-action="@item.Action" asp-route-beneficiaryId="@item.RouteId" class="small text-decoration-underline">فتح</a>
+                                        }
+                                        else if (item.RouteId.HasValue && item.RouteKey == "payrollMonthId")
+                                        {
+                                            <a asp-controller="@item.Controller" asp-action="@item.Action" asp-route-payrollMonthId="@item.RouteId" class="small text-decoration-underline">فتح</a>
+                                        }
+                                        else if (item.RouteId.HasValue)
+                                        {
+                                            <a asp-controller="@item.Controller" asp-action="@item.Action" asp-route-id="@item.RouteId" class="small text-decoration-underline">فتح</a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="@item.Controller" asp-action="@item.Action" class="small text-decoration-underline">فتح</a>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!Model.RecentActivities.Any())
+                    {
+                        <div class="text-muted">لا توجد نشاطات حديثة.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

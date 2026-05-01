@@ -1,0 +1,13 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Volunteers.CreateVolunteerProjectAssignmentVm
+@await Html.PartialAsync("~/Skote/Views/Shared/Volunteers/_VolunteerHeader.cshtml")
+<div class="card">
+    <div class="card-header"><h4 class="mb-0">إضافة إسناد</h4></div>
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <input asp-for="VolunteerId" type="hidden" />
+            <partial name="_Form" model="Model" />
+            <button type="submit" class="btn btn-primary">حفظ</button>
+            <a asp-action="Index" asp-route-volunteerId="@Model.VolunteerId" class="btn btn-light">رجوع</a>
+        </form>
+    </div>
+</div>

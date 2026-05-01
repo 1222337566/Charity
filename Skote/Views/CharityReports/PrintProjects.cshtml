@@ -1,0 +1,3 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.ProjectFinancialReportVm
+@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة تقرير المشروعات"; }
+<h3>تقرير المشروعات</h3><table class="table"><thead><tr><th>الكود</th><th>المشروع</th><th>الحالة</th><th>الموازنة</th><th>المنفذ</th><th>التمويل</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@row.ProjectCode</td><td>@row.ProjectName</td><td>@row.Status</td><td>@row.Budget.ToString("N2")</td><td>@row.ActualBudgetLines.ToString("N2")</td><td>@row.AllocatedGrants.ToString("N2")</td></tr>}</tbody></table>

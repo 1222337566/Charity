@@ -1,0 +1,27 @@
+﻿.sale-section {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 16px;
+    background: #fff;
+}
+
+    .sale-section h5 {
+        margin-bottom: 12px;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+.prescription-box {
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 12px;
+    background: #f8fafc;
+    min-height: 120px;
+}
+
+@media (min-width: 992px) {
+    .sticky-sale-card {
+        position: sticky;
+        top: 12px;
+    }
+}

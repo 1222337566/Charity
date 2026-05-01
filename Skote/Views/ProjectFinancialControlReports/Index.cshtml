@@ -1,0 +1,236 @@
+@model InfrastructureManagmentWebFramework.Models.ProjectFinancialControl.ProjectFinancialControlPageVm
+
+@{
+    ViewData["Title"] = "الرقابة المالية للمشروعات";
+}
+
+<style>
+.pf-hero{background:linear-gradient(135deg,#1f2937,#2563eb);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.pf-stat{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:130px}
+.pf-stat .n{font-size:1.2rem;font-weight:800;line-height:1}
+.pf-stat .l{font-size:.7rem;opacity:.85;margin-top:2px}
+.pf-card{background:#fff;border-radius:16px;border:.5px solid rgba(37,99,235,.12);box-shadow:0 2px 8px rgba(37,99,235,.05);overflow:hidden;margin-bottom:16px}
+.pf-head{padding:12px 18px;border-bottom:.5px solid rgba(37,99,235,.08);font-size:.9rem;font-weight:700;color:#1d4ed8;background:rgba(37,99,235,.03)}
+.pf-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.pf-table th{background:#f8fafc;color:#64748b;font-size:.75rem;font-weight:700;padding:9px;border-bottom:1px solid #e5e7eb}
+.pf-table td{padding:9px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.pf-table tr:hover td{background:#f8fafc}
+.badge-soft{border-radius:999px;padding:4px 9px;font-size:.7rem;font-weight:700;background:#eff6ff;color:#1d4ed8}
+.badge-store{background:#ecfdf5;color:#047857}
+.badge-phase{background:#fff7ed;color:#c2410c}
+.badge-direct{background:#f1f5f9;color:#475569}
+.amount-red{color:#dc2626;font-weight:800}
+.amount-green{color:#059669;font-weight:800}
+.util-wrap{height:7px;background:#e5e7eb;border-radius:20px;overflow:hidden}
+.util-bar{height:100%;background:#2563eb;border-radius:20px}
+</style>
+
+<div class="pf-hero">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold mb-1 text-white">
+                <i class="bx bx-line-chart me-2"></i>الرقابة المالية للمشروعات
+            </h4>
+            <div style="opacity:.78;font-size:.8rem">
+                متابعة بند الصرف، المبلغ، التاريخ، المستند، واسم المشروع
+            </div>
+        </div>
+        <a asp-controller="ProjectExpenseLinks" asp-action="Create"
+           class="btn btn-warning btn-sm fw-bold" style="border-radius:10px">
+            <i class="bx bx-link me-1"></i>ربط مصروف بمشروع
+        </a>
+    </div>
+
+    <div class="d-flex gap-3 flex-wrap">
+        <div class="pf-stat">
+            <div class="n">@Model.Summaries.Count</div>
+            <div class="l">مشروعات</div>
+        </div>
+        <div class="pf-stat">
+            <div class="n">@Model.TotalBudget.ToString("N0")</div>
+            <div class="l">إجمالي الموازنات</div>
+        </div>
+        <div class="pf-stat" style="background:rgba(244,106,106,.18)">
+            <div class="n" style="color:#fecaca">@Model.TotalActual.ToString("N0")</div>
+            <div class="l">إجمالي المصروفات</div>
+        </div>
+        <div class="pf-stat" style="background:rgba(16,185,129,.18)">
+            <div class="n" style="color:#bbf7d0">@Model.TotalRemaining.ToString("N0")</div>
+            <div class="l">المتبقي</div>
+        </div>
+    </div>
+</div>
+
+<div class="pf-card">
+    <div class="pf-head">فلاتر التقرير</div>
+    <div class="p-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">المشروع</label>
+                <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                    <option value="">كل المشروعات</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">من تاريخ</label>
+                <input asp-for="FromDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">إلى تاريخ</label>
+                <input asp-for="ToDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">نوع المصدر</label>
+                <select asp-for="SourceKind" asp-items="Model.SourceKinds" class="form-select"></select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100 fw-bold">عرض</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="pf-card">
+    <div class="pf-head">ملخص المشروعات</div>
+    <div class="table-responsive">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>المشروع</th>
+                    <th>الموازنة</th>
+                    <th>مصروفات مباشرة</th>
+                    <th>مصروفات مراحل</th>
+                    <th>صرف مخزني</th>
+                    <th>الإجمالي الفعلي</th>
+                    <th>المتبقي</th>
+                    <th>نسبة الاستخدام</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.Summaries)
+            {
+                var width = Math.Min(100, Math.Max(0, row.UtilizationPercent));
+                <tr>
+                    <td>
+                        <div class="fw-bold">@row.ProjectName</div>
+                        <div style="font-size:.7rem;color:#94a3b8">@row.ProjectCode</div>
+                    </td>
+                    <td>@row.ProjectBudget.ToString("N2")</td>
+                    <td>@row.DirectCashExpenses.ToString("N2")</td>
+                    <td>@row.PhaseCashExpenses.ToString("N2")</td>
+                    <td>@row.StoreIssueExpenses.ToString("N2")</td>
+                    <td class="amount-red">@row.TotalActualCost.ToString("N2")</td>
+                    <td class="@(row.RemainingBudget >= 0 ? "amount-green" : "amount-red")">@row.RemainingBudget.ToString("N2")</td>
+                    <td>
+                        <div class="d-flex justify-content-between" style="font-size:.72rem">
+                            <span>@row.UtilizationPercent.ToString("N2")%</span>
+                        </div>
+                        <div class="util-wrap"><div class="util-bar" style="width:@width%"></div></div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="pf-card">
+    <div class="pf-head">استخدام بنود الموازنة</div>
+    <div class="table-responsive">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>المشروع</th>
+                    <th>بند الموازنة</th>
+                    <th>النوع</th>
+                    <th>المخطط</th>
+                    <th>الفعلي</th>
+                    <th>المتبقي</th>
+                    <th>نسبة الاستخدام</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.BudgetRows)
+            {
+                var width = Math.Min(100, Math.Max(0, row.UtilizationPercent));
+                <tr>
+                    <td>@row.ProjectName</td>
+                    <td>@row.BudgetLineName</td>
+                    <td>@row.LineType</td>
+                    <td>@row.PlannedAmount.ToString("N2")</td>
+                    <td class="amount-red">@row.ActualAmount.ToString("N2")</td>
+                    <td class="@(row.RemainingAmount >= 0 ? "amount-green" : "amount-red")">@row.RemainingAmount.ToString("N2")</td>
+                    <td>
+                        <div style="font-size:.72rem">@row.UtilizationPercent.ToString("N2")%</div>
+                        <div class="util-wrap"><div class="util-bar" style="width:@width%"></div></div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="pf-card">
+    <div class="pf-head">سجل مصروفات المشروعات حسب متطلبات RFP</div>
+    <div class="table-responsive">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>اسم المشروع</th>
+                    <th>بند الصرف</th>
+                    <th>المبلغ</th>
+                    <th>تاريخ الصرف</th>
+                    <th>المستند</th>
+                    <th>المصدر</th>
+                    <th>المرحلة</th>
+                    <th>مركز التكلفة</th>
+                    <th>يدخل في الفعلي</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.StatementRows)
+            {
+                var cls = row.SourceKind switch
+                {
+                    "StoreIssue" => "badge-store",
+                    "PhaseExpense" => "badge-phase",
+                    _ => "badge-direct"
+                };
+
+                <tr>
+                    <td>@row.ProjectName</td>
+                    <td>
+                        <div class="fw-semibold">@row.ExpenseItem</div>
+                        @if (!string.IsNullOrWhiteSpace(row.BudgetLineName))
+                        {
+                            <div style="font-size:.72rem;color:#94a3b8">بند الموازنة: @row.BudgetLineName</div>
+                        }
+                    </td>
+                    <td class="amount-red">@row.Amount.ToString("N2")</td>
+                    <td>@row.DocumentDateUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                    <td>@row.DocumentNumber</td>
+                    <td><span class="badge-soft @cls">@row.SourceKindAr</span></td>
+                    <td>@row.PhaseName</td>
+                    <td>@row.CostCenterName</td>
+                    <td>
+                        @if (row.IncludeInActualCost)
+                        {
+                            <span class="badge bg-success">نعم</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">لا</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!Model.StatementRows.Any())
+    {
+        <div class="p-4 text-center text-muted">لا توجد مصروفات مرتبطة بالمشروعات حسب الفلاتر الحالية.</div>
+    }
+</div>

@@ -1,0 +1,118 @@
+﻿@model List<InfrastructureManagmentWebFramework.Models.AccountingIntegration.AccountingIntegrationProfileListItemVm>
+@{
+    ViewData["Title"] = "Profiles الربط المحاسبي";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-1">Profiles الربط المحاسبي</h4>
+            <div class="text-muted">تحديد الحسابات الافتراضية وقواعد المطابقة الديناميكية لكل حركة تشغيلية قبل إنشاء القيود التلقائية.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="AccountingIntegrationSources" asp-action="Index" class="btn btn-outline-secondary">مصادر الربط</a>
+            <a asp-action="Create" class="btn btn-primary">إضافة Profile</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>المصدر</th>
+                        <th>الحدث / الربط</th>
+                        <th>شروط المطابقة</th>
+                        <th>المدين</th>
+                        <th>الدائن</th>
+                        <th>مركز التكلفة</th>
+                        <th>الأولوية</th>
+                        <th>الحالة</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    var matchParts = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(item.MatchDonationType)) matchParts.Add($"تبرع: {item.MatchDonationType}");
+                    if (!string.IsNullOrWhiteSpace(item.MatchTargetingScopeCode)) matchParts.Add($"نطاق: {item.MatchTargetingScopeCode}");
+                    if (!string.IsNullOrWhiteSpace(item.MatchPurposeName)) matchParts.Add($"غرض: {item.MatchPurposeName}");
+                    if (!string.IsNullOrWhiteSpace(item.MatchAidTypeNameAr)) matchParts.Add($"نوع مساعدة: {item.MatchAidTypeNameAr}");
+                    if (!string.IsNullOrWhiteSpace(item.MatchStoreMovementType)) matchParts.Add($"مخزن: {item.MatchStoreMovementType}");
+
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(item.SourceTypeNameAr) ? item.SourceTypeNameAr : item.SourceType)</div>
+                            <div class="text-muted small">@item.SourceType</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">@item.ProfileNameAr</div>
+                            @if (!string.IsNullOrWhiteSpace(item.EventCode) || !string.IsNullOrWhiteSpace(item.EventNameAr))
+                            {
+                                <div class="text-muted small">@item.EventCode @(!string.IsNullOrWhiteSpace(item.EventNameAr) ? $"- {item.EventNameAr}" : "")</div>
+                            }
+                        </td>
+                        <td>
+                            @if (matchParts.Count == 0)
+                            {
+                                <span class="badge bg-secondary">عام</span>
+                            }
+                            else
+                            {
+                                foreach (var part in matchParts)
+                                {
+                                    <span class="badge bg-light text-dark border me-1 mb-1">@part</span>
+                                }
+                            }
+                        </td>
+                        <td>
+                            @if (item.UseSourceFinancialAccountAsDebit)
+                            {
+                                <span class="badge bg-info">من الحركة</span>
+                            }
+                            else
+                            {
+                                <span>@item.DebitAccountCode - @item.DebitAccountName</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.UseSourceFinancialAccountAsCredit)
+                            {
+                                <span class="badge bg-info">من الحركة</span>
+                            }
+                            else
+                            {
+                                <span>@item.CreditAccountCode - @item.CreditAccountName</span>
+                            }
+                        </td>
+                        <td>@item.CostCenterNameAr</td>
+                        <td>@item.Priority</td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-success">نشط</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">موقوف</span>
+                            }
+                            @if (item.AutoPost)
+                            {
+                                <span class="badge bg-primary">Auto</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Draft</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">تعديل</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

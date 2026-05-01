@@ -1,0 +1,16 @@
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\bin\Debug\net8.0\InfrastructureManagmentWebFramework.deps.json
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\bin\Debug\net8.0\InfrastructureManagmentWebFramework.dll
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\bin\Debug\net8.0\InfrastructureManagmentWebFramework.pdb
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\bin\Debug\net8.0\InfrastrfuctureManagmentCore.dll
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\bin\Debug\net8.0\InfrastrfuctureManagmentCore.pdb
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.csproj.AssemblyReference.cache
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.AssemblyInfoInputs.cache
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.AssemblyInfo.cs
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.csproj.CoreCompileInputs.cache
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.sourcelink.json
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\Infrastr.7837F6B4.Up2Date
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.dll
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\refint\InfrastructureManagmentWebFramework.dll
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\InfrastructureManagmentWebFramework.pdb
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastructureManagmentWebFramework\obj\Debug\net8.0\ref\InfrastructureManagmentWebFramework.dll

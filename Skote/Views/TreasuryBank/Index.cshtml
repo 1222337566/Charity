@@ -1,0 +1,120 @@
+@using InfrastructureManagmentWebFramework.Models.TreasuryBank
+@model TreasuryBankDashboardVm
+@{
+    ViewData["Title"] = "الخزينة والبنك";
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h4 class="mb-0">الخزينة والبنك</h4>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-action="Receipt" class="btn btn-success">سند قبض</a>
+                <a asp-action="Payment" class="btn btn-danger">سند صرف</a>
+                <a asp-action="Transfer" class="btn btn-primary">تحويل خزينة/بنك</a>
+                <a asp-action="Movement" class="btn btn-outline-secondary">كشف الحركة</a>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning">@TempData["Warning"]</div>
+            }
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">حسابات النقدية</div>
+                        <h4>@Model.CashBankAccountCount</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">خزائن</div>
+                        <h4>@Model.TreasuryAccountCount</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">بنوك</div>
+                        <h4>@Model.BankAccountCount</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">إجمالي الرصيد</div>
+                        <h4>@Model.TotalCashBankBalance.ToString("N2")</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">آخر سندات القبض والصرف</h5></div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>الرقم</th>
+                        <th>التاريخ</th>
+                        <th>النوع</th>
+                        <th>حساب الخزينة/البنك</th>
+                        <th>الحساب المقابل</th>
+                        <th class="text-end">المبلغ</th>
+                        <th>القيد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.RecentVouchers)
+                    {
+                        <tr>
+                            <td>@item.VoucherNumber</td>
+                            <td>@item.VoucherDate.ToString("yyyy-MM-dd")</td>
+                            <td>@item.VoucherTypeName</td>
+                            <td>@item.FinancialAccountName</td>
+                            <td>@item.OppositeAccountName</td>
+                            <td class="text-end">@item.Amount.ToString("N2")</td>
+                            <td>@(item.JournalEntryId.HasValue ? "مرحل" : "بدون قيد")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h5 class="mb-0">آخر التحويلات</h5></div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>الرقم</th>
+                        <th>التاريخ</th>
+                        <th>من</th>
+                        <th>إلى</th>
+                        <th class="text-end">المبلغ</th>
+                        <th>القيد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.RecentTransfers)
+                    {
+                        <tr>
+                            <td>@item.TransferNumber</td>
+                            <td>@item.TransferDate.ToString("yyyy-MM-dd")</td>
+                            <td>@item.FromAccountName</td>
+                            <td>@item.ToAccountName</td>
+                            <td class="text-end">@item.Amount.ToString("N2")</td>
+                            <td>@(item.JournalEntryId.HasValue ? "مرحل" : "بدون قيد")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

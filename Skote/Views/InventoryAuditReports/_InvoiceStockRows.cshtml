@@ -1,0 +1,46 @@
+@model IEnumerable<InfrastructureManagmentWebFramework.Models.InventoryAuditReports.InvoiceStockReconciliationRowVm>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead>
+            <tr>
+                <th>رقم الفاتورة</th>
+                <th>التاريخ</th>
+                <th>الطرف</th>
+                <th>المخزن</th>
+                <th>كمية الفاتورة</th>
+                <th>رقم الإذن</th>
+                <th>حالة الإذن</th>
+                <th>كمية الإذن</th>
+                <th>كمية حركة المخزون</th>
+                <th>حالة المطابقة</th>
+                <th>ملاحظات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model)
+            {
+                <tr>
+                    <td>@row.InvoiceNumber</td>
+                    <td>@row.InvoiceDateUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                    <td>@row.PartyName</td>
+                    <td>@row.WarehouseName</td>
+                    <td>@row.InvoiceQuantity.ToString("N2")</td>
+                    <td>@(row.VoucherNumber ?? "-")</td>
+                    <td>@(row.VoucherApprovalStatus ?? "-")</td>
+                    <td>@row.VoucherQuantity.ToString("N2")</td>
+                    <td>@row.StockTransactionQuantity.ToString("N2")</td>
+                    <td>
+                        <span class="badge bg-@row.StatusCssClass">@row.StatusNameAr</span>
+                    </td>
+                    <td>@row.Notes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info mb-0">لا توجد بيانات في هذه الفترة.</div>
+}

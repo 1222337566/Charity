@@ -1,0 +1,80 @@
+﻿@model InfrastructureManagmentWebFramework.Models.InventoryAccountingReconciliation.InventoryAccountingReconciliationPageVm
+
+@{
+    ViewData["Title"] = "مطابقة المخزون مع الحسابات";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title mb-0">مطابقة قيمة المخزون مع الحسابات</h4>
+    </div>
+
+    <div class="card-body">
+        <form method="get" class="row g-2 mb-4">
+            <div class="col-md-3">
+                <label class="form-label">حتى تاريخ</label>
+                <input type="date" name="asOfDate" value="@Model.AsOfDate.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+
+            <div class="col-md-5">
+                <label class="form-label">حساب المخزون</label>
+                <select name="inventoryAccountId" asp-items="Model.InventoryAccounts" class="form-select">
+                    <option value="">-- اختر حساب المخزون --</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 align-self-end">
+                <button type="submit" class="btn btn-primary w-100">عرض</button>
+            </div>
+        </form>
+
+        <div class="row mb-4">
+            <div class="col-md-3"><div class="border rounded p-3 bg-light"><div class="text-muted">قيمة المخزون من الحركات</div><h4>@Model.StockValueFromInventory.ToString("N2")</h4></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 bg-light"><div class="text-muted">رصيد حساب المخزون</div><h4>@Model.InventoryAccountBalance.ToString("N2")</h4></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 @(Model.IsBalanced ? "bg-success text-white" : "bg-danger text-white")"><div>فرق المطابقة</div><h4>@Model.Difference.ToString("N2")</h4></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 bg-light"><div class="text-muted">الحالة</div>@if (Model.IsBalanced)
+                    {
+                        <h4 class="text-success">مطابق</h4>
+                    }
+                    else
+                    {
+                        <h4 class="text-danger">يوجد فرق</h4>
+                    }</div></div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>الصنف</th>
+                        <th>المخزن</th>
+                        <th class="text-end">الكمية</th>
+                        <th class="text-end">متوسط التكلفة</th>
+                        <th class="text-end">قيمة المخزون</th>
+                        <th>آخر حركة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td>@(row.ItemName ?? row.ItemId?.ToString())</td>
+                            <td>@(row.WarehouseName ?? row.WarehouseId?.ToString())</td>
+                            <td class="text-end">@row.QuantityOnHand.ToString("N2")</td>
+                            <td class="text-end">@row.AverageCost.ToString("N2")</td>
+                            <td class="text-end">@row.StockValue.ToString("N2")</td>
+                            <td>@row.LastTransactionDateUtc?.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td colspan="4" class="text-end">الإجمالي</td>
+                        <td class="text-end">@Model.StockValueFromInventory.ToString("N2")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

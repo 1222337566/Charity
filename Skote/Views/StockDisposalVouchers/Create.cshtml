@@ -1,0 +1,11 @@
+@model InfrastrfuctureManagmentCore.Domains.Charity.StockAdvanced.StockDisposalVoucher
+<h4 class="mb-3">إعدام / هالك</h4>
+<form method="post"><div class="row g-3">
+<div class="col-md-3"><label class="form-label">التاريخ</label><input asp-for="VoucherDate" type="date" class="form-control" /></div>
+<div class="col-md-3"><label class="form-label">المخزن</label><select asp-for="WarehouseId" class="form-select" asp-items="ViewBag.Warehouses"></select></div>
+<div class="col-md-3"><label class="form-label">نوع الإعدام</label><input asp-for="DisposalType" class="form-control" /></div>
+<div class="col-md-12"><label class="form-label">السبب</label><textarea asp-for="Reason" class="form-control"></textarea></div>
+<div class="col-md-6"><label class="form-label">الصنف</label><select name="Lines[0].ItemId" class="form-select" asp-items="ViewBag.Items"></select></div>
+<div class="col-md-3"><label class="form-label">الكمية</label><input name="Lines[0].Quantity" class="form-control" /></div>
+<div class="col-md-3"><label class="form-label">تكلفة الوحدة</label><input name="Lines[0].UnitCost" class="form-control" /></div>
+<div class="col-md-12"><button class="btn btn-danger">حفظ</button></div></div></form>

@@ -1,0 +1,43 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Volunteers.VolunteerProfileVm
+@{ ViewData["Title"] = "ملف المتطوع"; }
+<div class="card mb-3"><div class="card-body">
+    <div class="d-flex justify-content-between flex-wrap gap-2">
+        <div>
+            <h4 class="mb-1">@Model.FullName</h4>
+            <div class="text-muted">كود: @Model.VolunteerCode | هاتف: @Model.PhoneNumber | مجال: @Model.PreferredArea</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Volunteers" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">تعديل</a>
+            <a asp-controller="VolunteerSkills" asp-action="Index" asp-route-volunteerId="@Model.Id" class="btn btn-outline-info">المهارات</a>
+            <a asp-controller="VolunteerAvailabilitySlots" asp-action="Index" asp-route-volunteerId="@Model.Id" class="btn btn-outline-dark">التوفر</a>
+        </div>
+    </div>
+</div></div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card mb-3"><div class="card-body">
+            <h5>ملخص</h5>
+            <ul class="list-unstyled mb-0">
+                <li>البريد: @Model.Email</li>
+                <li>الحالة: @(Model.IsActive ? "نشط" : "موقوف")</li>
+                <li>عدد الإسنادات: @Model.AssignmentsCount</li>
+                <li>إجمالي الساعات: @Model.TotalHours</li>
+            </ul>
+        </div></div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card mb-3"><div class="card-body">
+            <h5>المهارات</h5>
+            <div class="table-responsive"><table class="table table-sm"><thead><tr><th>المهارة</th><th>الفئة</th><th>المستوى</th></tr></thead><tbody>
+            @foreach (var s in Model.Skills) { <tr><td>@s.SkillName</td><td>@s.Category</td><td>@s.SkillLevel</td></tr> }
+            </tbody></table></div>
+        </div></div>
+        <div class="card"><div class="card-body">
+            <h5>أوقات التوفر</h5>
+            <div class="table-responsive"><table class="table table-sm"><thead><tr><th>اليوم</th><th>الوقت</th><th>النوع</th><th>المنطقة</th></tr></thead><tbody>
+            @foreach (var a in Model.Availability) { <tr><td>@a.DayOfWeekName</td><td>@a.TimeText</td><td>@a.AvailabilityType</td><td>@a.Area</td></tr> }
+            </tbody></table></div>
+        </div></div>
+    </div>
+</div>

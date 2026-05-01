@@ -1,0 +1,25 @@
+@model InfrastructureManagmentWebFramework.Models.RfpReports.MonthlyAidPageVm
+@{
+    ViewData["Title"] = "تقرير المساعدات الشهرية";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>تقرير المساعدات الشهرية</h3>
+    <a class="btn btn-outline-secondary" asp-action="ExportWord" asp-route-reportName="monthlyaid" asp-route-fromDate="@Model.Filter.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.Filter.ToDate?.ToString("yyyy-MM-dd")">تصدير Word</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3"><input type="date" class="form-control" asp-for="Filter.FromDate" /></div>
+    <div class="col-md-3"><input type="date" class="form-control" asp-for="Filter.ToDate" /></div>
+    <div class="col-md-3"><button class="btn btn-primary">عرض</button></div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead><tr><th>الكود</th><th>المستفيد</th><th>نوع المساعدة</th><th>تاريخ الصرف</th><th>المبلغ</th><th>طريقة الدفع</th><th>ملاحظات</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model.Rows)
+    {
+        <tr><td>@item.BeneficiaryCode</td><td>@item.BeneficiaryName</td><td>@item.AidTypeName</td><td>@item.DisbursementDate.ToString("yyyy-MM-dd")</td><td>@item.Amount.ToString("N2")</td><td>@item.PaymentMethodName</td><td>@item.CycleName</td></tr>
+    }
+    </tbody>
+</table>

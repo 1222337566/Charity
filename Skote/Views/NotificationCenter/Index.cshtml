@@ -1,0 +1,230 @@
+@{
+    ViewData["Title"] = "مركز التنبيهات";
+}
+
+<style>
+.nc-hero{background:linear-gradient(135deg,#0a5659,#0e6f73);border-radius:18px;padding:20px 24px;color:#fff;margin-bottom:20px}
+.nc-card{background:#fff;border-radius:16px;border:.5px solid rgba(14,111,115,.12);box-shadow:0 2px 12px rgba(14,111,115,.06);padding:0;overflow:hidden}
+.nc-item{display:flex;gap:14px;align-items:flex-start;padding:14px 18px;border-bottom:.5px solid rgba(14,111,115,.07);cursor:pointer;transition:.12s}
+.nc-item:last-child{border-bottom:none}
+.nc-item:hover{background:#f5faf9}
+.nc-item.unread{background:rgba(14,111,115,.03)}
+.nc-item.unread::before{content:'';width:6px;background:#0e6f73;border-radius:0 4px 4px 0;position:absolute;right:0;top:0;bottom:0}
+.nc-item{position:relative}
+.nc-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.nc-title{font-size:.9rem;font-weight:600;color:#15363a}
+.nc-msg{font-size:.8rem;color:#6b7d80;margin-top:2px;line-height:1.4}
+.nc-time{font-size:.72rem;color:#adb5bd;margin-top:4px}
+.nc-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:700}
+.nc-empty{text-align:center;padding:60px 24px;color:#adb5bd}
+.nc-filter-btn{border-radius:10px;padding:6px 14px;font-size:.82rem;font-weight:600;border:.5px solid rgba(14,111,115,.2);background:#fff;cursor:pointer;transition:.12s}
+.nc-filter-btn.active{background:#0e6f73;color:#fff;border-color:#0e6f73}
+.nc-filter-btn:hover:not(.active){background:#f5faf9}
+</style>
+
+<div class="nc-hero">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+    <div>
+      <h4 class="mb-1 text-white fw-bold"><i class="bx bx-bell me-2"></i>مركز التنبيهات</h4>
+      <div style="opacity:.75;font-size:.82rem">التنبيهات الفورية وسجل جميع الإشعارات</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button id="nc-refresh" class="btn btn-light btn-sm fw-bold">
+        <i class="bx bx-refresh me-1"></i>تحديث
+      </button>
+      <button id="nc-mark-all" class="btn btn-outline-light btn-sm fw-bold">
+        <i class="bx bx-check-double me-1"></i>تعليم الكل كمقروء
+      </button>
+      <form asp-action="SendTestToMe" method="post" class="d-inline">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-warning btn-sm fw-bold">
+          <i class="bx bx-test-tube me-1"></i>إشعار تجريبي
+        </button>
+      </form>
+    </div>
+  </div>
+  <div class="d-flex gap-3 flex-wrap" id="nc-stats">
+    <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+      <div style="font-size:1.4rem;font-weight:800" id="stat-total">—</div>
+      <div style="font-size:.68rem;opacity:.8">الإجمالي</div>
+    </div>
+    <div style="background:rgba(244,106,106,.22);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+      <div style="font-size:1.4rem;font-weight:800;color:#fca5a5" id="stat-unread">—</div>
+      <div style="font-size:.68rem;opacity:.8">غير مقروء</div>
+    </div>
+  </div>
+</div>
+
+@if (TempData["NotificationCenterMessage"] != null)
+{
+  <div class="alert alert-success alert-dismissible fade show">
+    <i class="bx bx-check-circle me-2"></i>@TempData["NotificationCenterMessage"]
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+}
+
+@* Filters *@
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <button class="nc-filter-btn active" data-filter="all">الكل</button>
+  <button class="nc-filter-btn" data-filter="unread">غير مقروء</button>
+  <button class="nc-filter-btn" data-filter="info">معلومات</button>
+  <button class="nc-filter-btn" data-filter="warning">تحذيرات</button>
+  <button class="nc-filter-btn" data-filter="error">تنبيهات عاجلة</button>
+  <button class="nc-filter-btn" data-filter="success">موافقات</button>
+</div>
+
+@* Loading *@
+<div id="nc-loading" class="text-center py-5" style="display:none">
+  <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+@* Notifications list *@
+<div class="nc-card" id="nc-list">
+  <div class="nc-empty" id="nc-placeholder">
+    <i class="bx bx-loader-alt bx-spin" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
+    <p>جاري التحميل...</p>
+  </div>
+</div>
+
+@* Load more *@
+<div class="text-center mt-3">
+  <button id="nc-load-more" class="btn btn-outline-secondary" style="display:none;border-radius:12px">
+    تحميل المزيد
+  </button>
+</div>
+
+@section scripts {
+<script>
+(function(){
+  var skip = 0, take = 20, currentFilter = 'all', hasMore = false;
+  var allData = [];
+
+  function levelConfig(level) {
+    var map = {
+      'info':    { bg:'rgba(80,165,241,.12)',  color:'#50a5f1',  icon:'bx-info-circle'   },
+      'success': { bg:'rgba(52,195,143,.12)',  color:'#34c38f',  icon:'bx-check-circle'  },
+      'warning': { bg:'rgba(241,180,76,.12)',  color:'#f1b44c',  icon:'bx-error'         },
+      'error':   { bg:'rgba(244,106,106,.12)', color:'#f46a6a',  icon:'bx-x-circle'      },
+    };
+    return map[level] || map['info'];
+  }
+
+  function timeAgo(dateStr) {
+    var d = new Date(dateStr), now = new Date();
+    var diff = Math.floor((now - d) / 1000);
+    if (diff < 60)  return 'منذ لحظات';
+    if (diff < 3600) return 'منذ ' + Math.floor(diff/60) + ' دقيقة';
+    if (diff < 86400) return 'منذ ' + Math.floor(diff/3600) + ' ساعة';
+    return 'منذ ' + Math.floor(diff/86400) + ' يوم';
+  }
+
+  function renderItem(n) {
+    var cfg = levelConfig(n.level || 'info');
+    var unread = !n.isRead;
+    var html = '<div class="nc-item' + (unread?' unread':'') + '" data-id="' + n.id + '" data-level="' + (n.level||'info') + '" data-read="' + n.isRead + '">';
+    html += '<div class="nc-icon" style="background:' + cfg.bg + ';color:' + cfg.color + '"><i class="bx ' + cfg.icon + '"></i></div>';
+    html += '<div class="flex-grow-1 min-w-0">';
+    html += '<div class="d-flex justify-content-between align-items-start gap-2">';
+    html += '<span class="nc-title">' + escHtml(n.title) + '</span>';
+    if(unread) html += '<span class="nc-badge" style="background:rgba(14,111,115,.12);color:#0e6f73;flex-shrink:0">جديد</span>';
+    html += '</div>';
+    html += '<div class="nc-msg">' + escHtml(n.message) + '</div>';
+    html += '<div class="nc-time">' + timeAgo(n.createdAt) + '</div>';
+    html += '</div>';
+    if(n.url) html += '<a href="'+n.url+'" class="btn btn-sm btn-outline-primary ms-2" style="border-radius:8px;align-self:center;font-size:.75rem;flex-shrink:0">فتح</a>';
+    html += '</div>';
+    return html;
+  }
+
+  function escHtml(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function applyFilter() {
+    var f = currentFilter;
+    var items = document.querySelectorAll('#nc-list .nc-item');
+    var visible = 0;
+    items.forEach(function(el){
+      var show = f==='all' || (f==='unread' && el.dataset.read==='false') || el.dataset.level===f;
+      el.style.display = show ? '' : 'none';
+      if(show) visible++;
+    });
+    var ph = document.getElementById('nc-placeholder');
+    if(ph) ph.style.display = visible===0 ? '' : 'none';
+  }
+
+  function loadNotifications(reset) {
+    if(reset){ skip=0; document.getElementById('nc-list').innerHTML='<div id="nc-placeholder" class="nc-empty"><p>جاري التحميل...</p></div>'; }
+    document.getElementById('nc-load-more').style.display='none';
+
+    fetch('/api/notifications?skip='+skip+'&take='+take)
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+      .then(function(data){
+        var list = document.getElementById('nc-list');
+        var ph   = document.getElementById('nc-placeholder');
+        if(ph) ph.remove();
+
+        if(!data.items || data.items.length===0){
+          if(reset){ list.innerHTML = '<div class="nc-empty"><i class="bx bx-bell-off" style="font-size:2.5rem;display:block;margin-bottom:12px"></i><p>لا توجد تنبيهات</p></div>'; }
+          return;
+        }
+
+        data.items.forEach(function(n){
+          list.insertAdjacentHTML('beforeend', renderItem(n));
+        });
+
+        document.getElementById('stat-total').textContent  = data.total  || '—';
+        document.getElementById('stat-unread').textContent = data.unread || '0';
+
+        hasMore = data.hasMore;
+        skip += data.items.length;
+        if(hasMore) document.getElementById('nc-load-more').style.display='';
+        applyFilter();
+      })
+      .catch(function(){ 
+        var list = document.getElementById('nc-list');
+        list.innerHTML = '<div class="nc-empty"><i class="bx bx-error" style="font-size:2rem;color:#f46a6a;display:block;margin-bottom:8px"></i><p>تعذّر تحميل التنبيهات</p></div>';
+      });
+  }
+
+  // Mark read on click
+  document.getElementById('nc-list').addEventListener('click', function(e){
+    var item = e.target.closest('.nc-item[data-id]');
+    if(!item || item.dataset.read==='true') return;
+    var id = item.dataset.id;
+    fetch('/api/notifications/'+id+'/read', {method:'POST', headers:{'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value||''}})
+      .then(function(){
+        item.classList.remove('unread');
+        item.dataset.read='true';
+        var badge = item.querySelector('.nc-badge');
+        if(badge) badge.remove();
+        var unread = parseInt(document.getElementById('stat-unread').textContent)||0;
+        document.getElementById('stat-unread').textContent = Math.max(0, unread-1);
+      });
+  });
+
+  // Mark all
+  document.getElementById('nc-mark-all').addEventListener('click', function(){
+    fetch('/api/notifications/read-all', {method:'POST'}).then(function(){ loadNotifications(true); });
+  });
+
+  // Refresh
+  document.getElementById('nc-refresh').addEventListener('click', function(){ loadNotifications(true); });
+
+  // Load more
+  document.getElementById('nc-load-more').addEventListener('click', function(){ loadNotifications(false); });
+
+  // Filters
+  document.querySelectorAll('.nc-filter-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nc-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applyFilter();
+    });
+  });
+
+  loadNotifications(true);
+})();
+</script>
+}

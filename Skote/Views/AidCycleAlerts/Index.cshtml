@@ -1,0 +1,63 @@
+@model IReadOnlyList<InfrastructureManagmentServices.Notification.AidCycleAlertItem>
+@{
+    ViewData["Title"] = "تنبيهات دورات الصرف";
+}
+
+<div class="page-title-box d-sm-flex align-items-center justify-content-between">
+    <h4 class="mb-sm-0">تنبيهات دورات الصرف الشهرية</h4>
+    <div class="page-title-right">
+        <form asp-action="RunNow" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary btn-sm">تشغيل الفحص الآن</button>
+        </form>
+    </div>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+
+<div class="card">
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-success mb-0">لا توجد تنبيهات على دورات الصرف حاليًا.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>الرسالة</th>
+                            <th>المستوى</th>
+                            <th>الرابط</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Title</td>
+                            <td>@item.Message</td>
+                            <td>
+                                <span class="badge @(item.Level == "error" ? "bg-danger" : item.Level == "warning" ? "bg-warning text-dark" : "bg-info")">
+                                    @item.Level
+                                </span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.Url))
+                                {
+                                    <a href="@item.Url" class="btn btn-soft-primary btn-sm">فتح</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

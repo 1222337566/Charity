@@ -1,0 +1,237 @@
+@model List<InfrastructureManagmentWebFramework.Models.Expenses.ExpenseListItemVm>
+@using InfrastructureManagmentWebFramework.Models.Expenses
+@{
+    ViewData["Title"] = "المصروفات";
+    var total      = Model.Sum(x => x.Amount);
+    var thisMonth  = Model.Count(x => x.ExpenseDateUtc.Month == DateTime.UtcNow.Month && x.ExpenseDateUtc.Year == DateTime.UtcNow.Year);
+    var monthTotal = Model.Where(x => x.ExpenseDateUtc.Month == DateTime.UtcNow.Month && x.ExpenseDateUtc.Year == DateTime.UtcNow.Year).Sum(x => x.Amount);
+}
+
+<style>
+:root {
+    --teal:      #0e6f73;
+    --teal-dark: #0a5558;
+    --teal-soft: rgba(14,111,115,.07);
+    --border:    rgba(14,111,115,.12);
+    --gold:      #f5a623;
+    --danger:    #e8534a;
+    --success:   #34c38f;
+    --text-main: #1a2e35;
+    --text-muted:#5a7a80;
+}
+
+/* Stats */
+.exp-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.exp-stat {
+    background:#fff; border-radius:14px; border:.5px solid var(--border);
+    padding:16px 20px; display:flex; align-items:center; gap:14px;
+    box-shadow:0 2px 8px rgba(14,111,115,.04);
+}
+.exp-stat-icon {
+    width:46px; height:46px; border-radius:13px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+}
+.exp-stat-label { font-size:.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px; }
+.exp-stat-value { font-size:1.1rem; font-weight:800; color:var(--text-main); }
+
+/* Toolbar */
+.exp-toolbar {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:10px; margin-bottom:16px;
+}
+.exp-title { font-size:1rem; font-weight:800; color:var(--text-main); }
+.exp-title small { font-size:.73rem; color:var(--text-muted); font-weight:500; margin-right:6px; }
+
+.btn-add-exp {
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--teal); color:#fff; border:none;
+    border-radius:12px; padding:9px 20px;
+    font-size:.85rem; font-weight:700; text-decoration:none;
+    box-shadow:0 3px 12px rgba(14,111,115,.28);
+    transition:background .15s, transform .12s;
+}
+.btn-add-exp:hover { background:var(--teal-dark); color:#fff; transform:translateY(-2px); }
+.btn-add-exp .icon-wrap {
+    width:26px; height:26px; background:rgba(255,255,255,.2);
+    border-radius:7px; display:flex; align-items:center; justify-content:center;
+}
+
+/* Search */
+.srch-wrap { position:relative; }
+.srch-wrap input {
+    padding:8px 12px 8px 34px; border-radius:10px;
+    border:.5px solid var(--border); background:#fff;
+    font-size:.82rem; color:var(--text-main); width:210px;
+    transition:border .15s, box-shadow .15s;
+}
+.srch-wrap input:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(14,111,115,.1); }
+.srch-wrap .si { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:.9rem; pointer-events:none; }
+
+/* Table */
+.exp-card { background:#fff; border-radius:16px; border:.5px solid var(--border); box-shadow:0 2px 10px rgba(14,111,115,.05); overflow:hidden; }
+.exp-table { width:100%; border-collapse:collapse; font-size:.83rem; }
+.exp-table thead tr { background:var(--teal); }
+.exp-table thead th { color:#fff; font-weight:700; padding:12px 14px; text-align:right; font-size:.77rem; white-space:nowrap; border:none; }
+.exp-table tbody tr { border-bottom:.5px solid rgba(14,111,115,.06); transition:background .1s; }
+.exp-table tbody tr:hover { background:var(--teal-soft); }
+.exp-table tbody tr:last-child { border-bottom:none; }
+.exp-table td { padding:11px 14px; color:var(--text-main); vertical-align:middle; }
+
+.exp-num-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--teal-soft); border:.5px solid var(--border);
+    border-radius:8px; padding:3px 10px;
+    font-size:.78rem; font-weight:700; color:var(--teal);
+}
+.cat-pill { display:inline-block; background:rgba(85,110,230,.08); color:#3a4fc0; border-radius:20px; padding:3px 11px; font-size:.75rem; font-weight:700; }
+.pay-tag  { display:inline-block; background:rgba(245,166,35,.09); color:#a07010; border-radius:6px; padding:2px 8px; font-size:.72rem; font-weight:600; }
+.amount-v { font-weight:800; font-size:.9rem; color:var(--text-main); }
+.amount-v small { font-size:.67rem; color:var(--text-muted); font-weight:500; margin-right:2px; }
+
+/* Empty */
+.empty-state { text-align:center; padding:52px 20px; color:var(--text-muted); }
+.empty-icon { width:68px; height:68px; border-radius:20px; background:var(--teal-soft); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.7rem; color:var(--teal); }
+
+/* Alerts */
+.alert-ok  { background:rgba(52,195,143,.09); border:.5px solid rgba(52,195,143,.25); border-radius:12px; padding:11px 16px; color:#1a7a5e; font-size:.85rem; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.alert-wrn { background:rgba(245,166,35,.09); border:.5px solid rgba(245,166,35,.25); border-radius:12px; padding:11px 16px; color:#7a5a10; font-size:.85rem; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+
+@@media(max-width:768px){ .exp-stats{grid-template-columns:1fr;} .srch-wrap input{width:150px;} }
+</style>
+
+<div>
+
+@if (TempData["Success"] != null)
+{ <div class="alert-ok"><i class="bx bx-check-circle"></i>@TempData["Success"]</div> }
+@if (TempData["Warning"] != null)
+{ <div class="alert-wrn"><i class="bx bx-error-circle"></i>@TempData["Warning"]</div> }
+
+
+<div class="exp-stats">
+    <div class="exp-stat">
+        <div class="exp-stat-icon" style="background:rgba(14,111,115,.09)">
+            <i class="bx bx-receipt" style="color:var(--teal)"></i>
+        </div>
+        <div>
+            <div class="exp-stat-label">إجمالي المصروفات</div>
+            <div class="exp-stat-value">@Model.Count</div>
+        </div>
+    </div>
+    <div class="exp-stat">
+        <div class="exp-stat-icon" style="background:rgba(245,166,35,.1)">
+            <i class="bx bx-money" style="color:var(--gold)"></i>
+        </div>
+        <div>
+            <div class="exp-stat-label">إجمالي القيم</div>
+            <div class="exp-stat-value" style="font-size:.92rem">
+                @total.ToString("N2") <span style="font-size:.63rem;color:var(--text-muted)">ج.م</span>
+            </div>
+        </div>
+    </div>
+    <div class="exp-stat">
+        <div class="exp-stat-icon" style="background:rgba(52,195,143,.1)">
+            <i class="bx bx-calendar-check" style="color:var(--success)"></i>
+        </div>
+        <div>
+            <div class="exp-stat-label">الشهر الحالي (@thisMonth)</div>
+            <div class="exp-stat-value" style="font-size:.92rem">
+                @monthTotal.ToString("N2") <span style="font-size:.63rem;color:var(--text-muted)">ج.م</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="exp-toolbar">
+    <span class="exp-title">
+        المصروفات
+        <small>(@Model.Count سجل)</small>
+    </span>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="srch-wrap">
+            <i class="bx bx-search si"></i>
+            <input type="text" placeholder="بحث سريع..." oninput="filterExp(this.value)" />
+        </div>
+        <a asp-action="Create" class="btn-add-exp">
+            <span class="icon-wrap"><i class="bx bx-plus"></i></span>
+            تسجيل مصروف جديد
+        </a>
+    </div>
+</div>
+
+
+<div class="exp-card">
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bx bx-receipt"></i></div>
+            <div style="font-size:.9rem;font-weight:700;color:#2a4a50;margin-bottom:6px">لا توجد مصروفات حتى الآن</div>
+            <div style="font-size:.8rem;margin-bottom:20px">اضغط الزر أدناه لتسجيل أول مصروف</div>
+            <a asp-action="Create" class="btn-add-exp" style="display:inline-flex">
+                <span class="icon-wrap"><i class="bx bx-plus"></i></span>
+                تسجيل مصروف جديد
+            </a>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x:auto">
+        <table class="exp-table" id="expTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>رقم المصروف</th>
+                    <th>التاريخ</th>
+                    <th>التصنيف</th>
+                    <th>البيان</th>
+                    <th>طريقة الدفع</th>
+                    <th>المبلغ</th>
+                </tr>
+            </thead>
+            <tbody>
+            @{ int i = 0; }
+            @foreach (var item in Model)
+            {
+                i++;
+                <tr>
+                    <td style="color:#a0b0b5;font-size:.74rem;font-weight:700">@i</td>
+                    <td>
+                        <span class="exp-num-badge">
+                            <i class="bx bx-receipt" style="font-size:.78rem"></i>
+                            @item.ExpenseNumber
+                        </span>
+                    </td>
+                    <td style="font-size:.8rem;color:var(--text-muted)">
+                        @item.ExpenseDateUtc.ToLocalTime().ToString("yyyy/MM/dd")
+                    </td>
+                    <td><span class="cat-pill">@item.CategoryName</span></td>
+                    <td style="max-width:200px;font-size:.82rem">@item.Description</td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.PaymentMethodName))
+                        { <span class="pay-tag">@item.PaymentMethodName</span> }
+                        else { <span style="color:#c8d5d8;font-size:.75rem">—</span> }
+                    </td>
+                    <td>
+                        <span class="amount-v">
+                            @item.Amount.ToString("N2")
+                            <small>ج.م</small>
+                        </span>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</div>
+
+</div>
+
+<script>
+function filterExp(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#expTable tbody tr').forEach(function(r) {
+        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+</script>

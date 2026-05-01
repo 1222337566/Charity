@@ -1,0 +1,132 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Beneficiaries.CreateBeneficiaryVm
+
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <label asp-for="Code" class="form-label"></label>
+        <input asp-for="Code" class="form-control" readonly />
+        <input type="hidden" asp-for="Code" />
+        <div class="form-text">يتم توليد الكود تلقائيًا ولا يتم إدخاله يدويًا.</div>
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-5 mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="NationalId" class="form-label"></label>
+        <input asp-for="NationalId" class="form-control" />
+        <span asp-validation-for="NationalId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="BirthDate" class="form-label"></label>
+        <input asp-for="BirthDate" class="form-control" type="date" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="GenderId" class="form-label"></label>
+        <select asp-for="GenderId" asp-items="Model.Genders" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="MaritalStatusId" class="form-label"></label>
+        <select asp-for="MaritalStatusId" asp-items="Model.MaritalStatuses" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="RegistrationDate" class="form-label"></label>
+        <input asp-for="RegistrationDate" class="form-control" type="date" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="PhoneNumber" class="form-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="AlternatePhoneNumber" class="form-label"></label>
+        <input asp-for="AlternatePhoneNumber" class="form-control" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="GovernorateId" class="form-label"></label>
+        <select asp-for="GovernorateId" asp-items="Model.Governorates" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="CityId" class="form-label"></label>
+        <select asp-for="CityId" asp-items="Model.Cities" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="AreaId" class="form-label"></label>
+        <select asp-for="AreaId" asp-items="Model.Areas" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="FamilyMembersCount" class="form-label"></label>
+        <input asp-for="FamilyMembersCount" class="form-control" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="MonthlyIncome" class="form-label"></label>
+        <input asp-for="MonthlyIncome" class="form-control" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="StatusId" class="form-label"></label>
+        <select asp-for="StatusId" asp-items="Model.Statuses" class="form-select" disabled>
+            <option value="">-- اختر --</option>
+        </select>
+        <input type="hidden" asp-for="StatusId" />
+        <div class="form-text">حالة الملف تتغير تلقائيًا من دورة البحث الإنساني.</div>
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label asp-for="AddressLine" class="form-label"></label>
+        <textarea asp-for="AddressLine" class="form-control" rows="2"></textarea>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="IncomeSource" class="form-label"></label>
+        <input asp-for="IncomeSource" class="form-control" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="HealthStatus" class="form-label"></label>
+        <input asp-for="HealthStatus" class="form-control" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="EducationStatus" class="form-label"></label>
+        <input asp-for="EducationStatus" class="form-control" />
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="WorkStatus" class="form-label"></label>
+        <input asp-for="WorkStatus" class="form-control" />
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label asp-for="HousingStatus" class="form-label"></label>
+        <input asp-for="HousingStatus" class="form-control" />
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+    </div>
+</div>

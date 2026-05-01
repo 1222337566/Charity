@@ -1,0 +1,109 @@
+@using InfrastrfuctureManagmentCore.Domains.Charity.ProjectProposals
+@model ProjectProposal
+@{
+    ViewData["Title"] = "تحويل المقترح إلى مشروع";
+    var startDate = DateTime.Today;
+    var endDate   = startDate.AddMonths(Model.DurationMonths > 0 ? Model.DurationMonths : 8);
+}
+
+<style>
+.cv-hero{background:linear-gradient(135deg,#2d4a8a,#3d5fa0);border-radius:16px;padding:18px 24px;color:#fff;margin-bottom:18px}
+.cv-card{background:#fff;border-radius:16px;border:.5px solid rgba(45,74,138,.1);box-shadow:0 2px 10px rgba(45,74,138,.05);margin-bottom:16px}
+.cv-head{padding:13px 18px;border-bottom:.5px solid rgba(45,74,138,.08);font-size:.9rem;font-weight:700;color:#2d4a8a}
+.cv-body{padding:16px 18px}
+.info-row{display:flex;gap:8px;padding:7px 0;border-bottom:.5px dashed rgba(45,74,138,.08);font-size:.84rem}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:#6b7d80;min-width:140px;flex-shrink:0;font-weight:600}
+.will-create{background:rgba(52,195,143,.07);border-radius:10px;padding:10px 14px;border:.5px solid rgba(52,195,143,.2);font-size:.8rem;color:#065f46;margin-bottom:12px}
+</style>
+
+<div class="cv-hero">
+  <h5 class="fw-bold mb-1 text-white">
+    <i class="bx bx-transfer me-2"></i>تحويل المقترح إلى مشروع فعلي
+  </h5>
+  <div style="opacity:.75;font-size:.8rem">
+    سيتم نقل الأهداف والأنشطة من المقترح إلى المشروع تلقائياً
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="cv-card">
+      <div class="cv-head"><i class="bx bx-file me-2"></i>بيانات المقترح</div>
+      <div class="cv-body">
+        <div class="info-row"><span class="info-lbl">العنوان</span><span>@Model.Title</span></div>
+        <div class="info-row"><span class="info-lbl">الموقع</span><span>@(Model.ProjectLocation ?? "—")</span></div>
+        <div class="info-row"><span class="info-lbl">المدة</span><span>@Model.DurationMonths شهر</span></div>
+        <div class="info-row"><span class="info-lbl">الميزانية</span><span>@Model.RequestedBudget.ToString("N0") @Model.Currency</span></div>
+        <div class="info-row"><span class="info-lbl">الهدف العام</span><span style="flex:1">@(Model.GeneralGoal ?? "—")</span></div>
+        <div class="info-row"><span class="info-lbl">الأهداف الفرعية</span><span>@Model.Objectives.Count(o => o.ObjectiveType == "Specific")</span></div>
+        <div class="info-row"><span class="info-lbl">خطة العمل</span><span>@Model.WorkPlanItems.Count نشاط</span></div>
+      </div>
+    </div>
+
+    <div class="will-create">
+      <i class="bx bx-magic me-2"></i>
+      <strong>سيتم إنشاؤه تلقائياً:</strong>
+      <ul style="margin:6px 0 0 16px;padding:0">
+        <li>مشروع جديد بالبيانات المحددة</li>
+        @if (!string.IsNullOrWhiteSpace(Model.GeneralGoal))
+        { <li>هدف رئيسي: @Model.GeneralGoal[..Math.Min(40, Model.GeneralGoal.Length)]...</li> }
+        <li>@Model.Objectives.Count(o => o.ObjectiveType == "Specific") هدف فرعي</li>
+        <li>@Model.WorkPlanItems.Count نشاط مرتبط بالأهداف</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="cv-card">
+      <div class="cv-head"><i class="bx bx-cog me-2"></i>إعدادات المشروع الجديد</div>
+      <div class="cv-body">
+        <form asp-action="ConvertProposal" asp-route-proposalId="@Model.Id" method="post">
+          @Html.AntiForgeryToken()
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold" style="font-size:.82rem">اسم المشروع *</label>
+              <input name="projectName" class="form-control" style="border-radius:10px"
+                     value="@Model.Title" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:.82rem">كود المشروع</label>
+              <input name="code" class="form-control" style="border-radius:10px"
+                     placeholder="P-@DateTime.Today.ToString("yyMM")-001"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:.82rem">تاريخ البداية *</label>
+              <input name="startDate" type="date" class="form-control" style="border-radius:10px"
+                     value="@startDate.ToString("yyyy-MM-dd")" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:.82rem">تاريخ النهاية *</label>
+              <input name="endDate" type="date" class="form-control" style="border-radius:10px"
+                     value="@endDate.ToString("yyyy-MM-dd")" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:.82rem">الميزانية</label>
+              <div class="input-group">
+                <input name="budget" type="number" step="0.01"
+                       class="form-control" style="border-radius:10px 0 0 10px"
+                       value="@Model.RequestedBudget"/>
+                <span class="input-group-text" style="border-radius:0 10px 10px 0">@Model.Currency</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.82rem">موقع المشروع</label>
+              <input name="location" class="form-control" style="border-radius:10px"
+                     value="@Model.ProjectLocation" placeholder="الموقع الجغرافي للمشروع"/>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-success fw-bold" style="border-radius:12px;min-width:160px">
+              <i class="bx bx-transfer me-1"></i>تحويل إلى مشروع
+            </button>
+            <a href="javascript:history.back()" class="btn btn-light fw-bold" style="border-radius:12px">إلغاء</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

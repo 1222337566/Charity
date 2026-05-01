@@ -1,0 +1,43 @@
+@model List<InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Activities.ProjectPhaseActivityListItemVm>
+@await Html.PartialAsync("~/Views/Shared/Projects/_ProjectHeader.cshtml")
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="mb-1">أنشطة المرحلة</h4>
+                <div class="text-muted">@(ViewBag.PhaseName ?? "جميع أنشطة مراحل المشروعات")</div>
+            </div>
+            @if (ViewBag.ProjectId != null && ViewBag.PhaseId != null)
+            {
+                <a class="btn btn-primary" asp-action="Create" asp-route-projectId="@ViewBag.ProjectId" asp-route-phaseId="@ViewBag.PhaseId">إضافة نشاط</a>
+            }
+            else
+            {
+                <a class="btn btn-outline-secondary" asp-controller="ProjectPhases" asp-action="Index">اختيار مرحلة أولاً</a>
+            }
+        </div>
+        <table class="table table-striped table-bordered align-middle">
+            <thead><tr><th>العنوان</th><th>الحالة</th><th>الأولوية</th><th>الإنجاز</th><th>المسؤول</th><th>المهام المفتوحة</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@item.Title</strong><br />
+                        <small class="text-muted">@item.Code</small>
+                    </td>
+                    <td>@item.Status</td>
+                    <td>@item.Priority</td>
+                    <td>@item.ProgressPercent %</td>
+                    <td>@item.ResponsiblePersonName</td>
+                    <td>@item.OpenTasksCount</td>
+                    <td class="text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" asp-controller="ProjectPhaseTasks" asp-action="Index" asp-route-phaseId="@item.PhaseId" asp-route-activityId="@item.Id">المهام</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@item.Id">تعديل</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

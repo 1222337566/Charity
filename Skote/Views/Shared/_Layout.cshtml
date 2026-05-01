@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+
+    @Html.Partial("~/Views/Shared/_title_meta1.cshtml")
+    @RenderSection("styles", false)
+    @Html.Partial("~/Views/Shared/_head_css1.cshtml")
+</head>
+
+
+    @{
+        var darkMode = Context.Request.Cookies["pref_darkmode"] == "True";
+    }
+    <body data-sidebar-hidden="false" class="joud-theme @(darkMode ? "dark-mode" : "")" data-bs-theme="@(darkMode ? "dark" : "light")">
+    <!-- Begin page -->
+    <div id="layout-wrapper">
+        @Html.Partial("~/Views/Shared/_topbar1.cshtml")
+        @Html.Partial("~/Views/Shared/_sidebar4.cshtml")
+        
+
+        <!-- ============================================================== dsada-->
+        <!-- Start right Content here -->
+        <!-- ============================================================== -->
+
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid">
+                    @Html.Partial("~/Views/Shared/_page_title.cshtml")
+
+                    @RenderBody()
+                </div> <!-- container-fluid -->
+            </div>
+            <!-- End Page-content -->
+            @Html.Partial("~/Views/Shared/_footer.cshtml")
+        </div>
+        <!-- end main content-->
+
+    </div>
+
+    @RenderSection("externalhtml", required: false)
+
+    <!-- END layout-wrapper -->
+    @Html.Partial("~/Views/Shared/_right_sidebar.cshtml")
+    @Html.Partial("~/Views/Shared/_RealtimeBootstrap.cshtml")
+
+    @Html.Partial("~/Views/Shared/_vendor_scripts.cshtml")
+    @Html.Partial("~/Views/Shared/_notification_scripts.cshtml")
+    @RenderSection("scripts", required: false)
+    
+    <script src="~/assets/js/joud-layout.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,91 @@
+@model InfrastructureManagmentWebFramework.Models.InventoryAuditReports.InvoiceStockReconciliationVm
+
+@{
+    ViewData["Title"] = "مطابقة الفواتير مع أذون المخزن";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="card-title mb-1">مطابقة الفواتير مع أذون المخزن وحركات المخزون</h4>
+                    <p class="text-muted mb-0">تقرير رقابي للتأكد من وجود إذن إضافة/صرف وحركة مخزون لكل فاتورة.</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-2 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">من تاريخ</label>
+                        <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">إلى تاريخ</label>
+                        <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">عرض التقرير</button>
+                        <a asp-action="InvoiceStockReconciliation" class="btn btn-light">إلغاء الفلتر</a>
+                    </div>
+                </form>
+
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border shadow-none mb-0">
+                            <div class="card-body">
+                                <p class="text-muted mb-1">شراء مطابق</p>
+                                <h4 class="mb-0 text-success">@Model.PurchaseMatchedCount</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border shadow-none mb-0">
+                            <div class="card-body">
+                                <p class="text-muted mb-1">مشاكل شراء</p>
+                                <h4 class="mb-0 text-danger">@Model.PurchaseIssueCount</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border shadow-none mb-0">
+                            <div class="card-body">
+                                <p class="text-muted mb-1">بيع مطابق</p>
+                                <h4 class="mb-0 text-success">@Model.SalesMatchedCount</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border shadow-none mb-0">
+                            <div class="card-body">
+                                <p class="text-muted mb-1">مشاكل بيع</p>
+                                <h4 class="mb-0 text-danger">@Model.SalesIssueCount</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#purchase-tab" type="button" role="tab">
+                            فواتير الشراء
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sales-tab" type="button" role="tab">
+                            فواتير البيع
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content pt-3">
+                    <div class="tab-pane fade show active" id="purchase-tab" role="tabpanel">
+                        @await Html.PartialAsync("_InvoiceStockRows", Model.PurchaseRows)
+                    </div>
+                    <div class="tab-pane fade" id="sales-tab" role="tabpanel">
+                        @await Html.PartialAsync("_InvoiceStockRows", Model.SalesRows)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

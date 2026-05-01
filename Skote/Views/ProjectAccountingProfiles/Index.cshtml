@@ -1,0 +1,24 @@
+@model List<InfrastructureManagmentWebFramework.Models.AccountingProjects.ProjectAccountingProfileListItemVm>
+@{
+    ViewData["Title"] = "Profiles محاسبية للمشروعات";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Profiles محاسبية للمشروعات</h4>
+    <a asp-action="Create" class="btn btn-primary">إضافة Profile</a>
+</div>
+<table class="table table-bordered table-striped">
+    <thead><tr><th>المشروع</th><th>مركز التكلفة</th><th>إيرادات</th><th>مصروفات</th><th>مفعل</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.ProjectName</td>
+            <td>@item.CostCenterName</td>
+            <td>@item.RevenueAccountName</td>
+            <td>@item.ExpenseAccountName</td>
+            <td>@(item.IsActive ? "نعم" : "لا")</td>
+            <td><a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">تعديل</a></td>
+        </tr>
+    }
+    </tbody>
+</table>

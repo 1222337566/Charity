@@ -1,0 +1,158 @@
+@model List<InfrastrfuctureManagmentCore.Domains.Charity.MinutesAndDecisions.BoardDecision>
+@{
+    ViewData["Title"] = "البحث في القرارات";
+    var q        = ViewBag.Query      as string ?? "";
+    var total    = ViewBag.TotalCount as int?   ?? 0;
+    string Highlight(string? text, string query)
+    {
+        if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(query)) return text ?? "";
+        return System.Text.RegularExpressions.Regex.Replace(
+            System.Net.WebUtility.HtmlEncode(text),
+            System.Text.RegularExpressions.Regex.Escape(query),
+            m => $"<mark style='background:#fef08a;border-radius:3px;padding:0 2px'>{m.Value}</mark>",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase
+        );
+    }
+    string StatusAr(string s) => s switch {
+        "Open" => "مفتوح", "InProgress" => "جاري", "Closed" => "منتهي",
+        "Cancelled" => "ملغى", _ => s
+    };
+    string StatusBg(string s) => s switch {
+        "Open" => "#dbeafe", "InProgress" => "#fef3c7",
+        "Closed" => "#d1fae5", "Cancelled" => "#fee2e2", _ => "#f3f4f6"
+    };
+    string StatusFg(string s) => s switch {
+        "Open" => "#1e40af", "InProgress" => "#92400e",
+        "Closed" => "#065f46", "Cancelled" => "#991b1b", _ => "#6b7d80"
+    };
+}
+
+<style>
+.sr-hero{background:linear-gradient(135deg,#1e3a5f,#2d5282);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.sr-card{background:#fff;border-radius:16px;border:.5px solid rgba(30,58,95,.1);box-shadow:0 2px 10px rgba(30,58,95,.05);margin-bottom:12px;overflow:hidden;transition:.12s}
+.sr-card:hover{box-shadow:0 6px 20px rgba(30,58,95,.1);transform:translateY(-1px)}
+.sr-head{padding:12px 18px;border-bottom:.5px solid rgba(30,58,95,.07);display:flex;align-items:center;gap:10px;background:rgba(30,58,95,.03)}
+.sr-body{padding:12px 18px}
+.sr-badge{padding:2px 8px;border-radius:5px;font-size:.7rem;font-weight:700}
+.search-box{background:#fff;border-radius:14px;border:.5px solid rgba(30,58,95,.2);padding:8px 14px;font-size:1rem;width:100%;transition:.15s}
+.search-box:focus{outline:none;border-color:#2d5282;box-shadow:0 0 0 3px rgba(45,82,130,.15)}
+.highlight-snippet{font-size:.83rem;color:#374151;line-height:1.7;margin-top:6px}
+.dec-number{font-size:.78rem;font-weight:700;color:#2d5282;background:rgba(45,82,130,.1);padding:2px 8px;border-radius:5px}
+.meeting-link{font-size:.75rem;color:#6b7d80}
+.meeting-link:hover{color:#2d5282}
+mark{background:#fef08a;border-radius:3px;padding:0 2px}
+</style>
+
+<div class="sr-hero">
+  <h5 class="fw-bold mb-2 text-white">
+    <i class="bx bx-search-alt me-2"></i>البحث الذكي في القرارات
+  </h5>
+  <form method="get" asp-action="Search" asp-controller="BoardDecisions">
+    <div class="input-group">
+      <input name="q" value="@q" class="search-box" id="search-input"
+             placeholder="ابحث بأي كلمة في القرار... (مثال: تدريب، موافقة، استقالة)"
+             autocomplete="off" autofocus/>
+      <button type="submit" class="btn text-white fw-bold"
+              style="border-radius:0 12px 12px 0;background:#2d5282;border:none;padding:8px 20px">
+        <i class="bx bx-search me-1"></i>بحث
+      </button>
+    </div>
+  </form>
+  @if (!string.IsNullOrWhiteSpace(q))
+  {
+    <div style="margin-top:10px;font-size:.82rem;opacity:.8">
+      نتائج البحث عن: <strong>"@q"</strong> — وُجد @total قرار
+    </div>
+  }
+</div>
+
+@if (!string.IsNullOrWhiteSpace(q) && !Model.Any())
+{
+  <div class="text-center py-5" style="background:#fff;border-radius:16px;color:#adb5bd">
+    <i class="bx bx-search" style="font-size:3rem;display:block;margin-bottom:12px"></i>
+    <p>لم يُعثر على قرارات تحتوي على كلمة <strong>"@q"</strong></p>
+    <p class="small">حاول البحث بكلمات أخرى</p>
+  </div>
+}
+else if (string.IsNullOrWhiteSpace(q))
+{
+  <div class="text-center py-4" style="background:#fff;border-radius:16px;color:#adb5bd">
+    <i class="bx bx-search-alt" style="font-size:3rem;display:block;margin-bottom:10px;color:#c7d2fe"></i>
+    <p>اكتب كلمة في مربع البحث أعلاه لإيجاد القرارات</p>
+  </div>
+}
+else
+{
+  @foreach (var dec in Model)
+  {
+    var meeting = dec.BoardMeeting;
+    <div class="sr-card">
+      <div class="sr-head">
+        <span class="dec-number">ق-@dec.DecisionNumber</span>
+        <div class="flex-grow-1 min-w-0">
+          <span style="font-size:.9rem;font-weight:700;color:#1e3a5f">
+            @Html.Raw(Highlight(dec.Title, q))
+          </span>
+        </div>
+        <span class="sr-badge" style="background:@StatusBg(dec.Status);color:@StatusFg(dec.Status)">
+          @StatusAr(dec.Status)
+        </span>
+        @if (meeting != null)
+        {
+          <a asp-controller="BoardMeetings" asp-action="Details"
+             asp-route-id="@meeting.Id"
+             class="meeting-link d-flex align-items-center gap-1">
+            <i class="bx bx-calendar-event"></i>
+            محضر @meeting.MeetingNumber / @meeting.MeetingDate.Year
+          </a>
+        }
+        @if (meeting != null)
+        {
+          <a asp-controller="BoardMeetings" asp-action="Print"
+             asp-route-id="@meeting.Id"
+             target="_blank"
+             class="btn btn-sm"
+             style="border-radius:8px;background:rgba(30,58,95,.1);color:#1e3a5f;border:none;font-size:.72rem">
+            <i class="bx bx-printer me-1"></i>طباعة المحضر
+          </a>
+        }
+      </div>
+
+      <div class="sr-body">
+        @if (!string.IsNullOrWhiteSpace(dec.Description))
+        {
+          <div class="highlight-snippet">
+            @Html.Raw(Highlight(dec.Description, q))
+          </div>
+        }
+        <div class="d-flex gap-3 flex-wrap mt-2" style="font-size:.75rem;color:#6b7d80">
+          @if (!string.IsNullOrWhiteSpace(dec.ResponsibleParty))
+          {
+            <span><i class="bx bx-user me-1"></i>@Html.Raw(Highlight(dec.ResponsibleParty, q))</span>
+          }
+          @if (dec.DueDate.HasValue)
+          {
+            <span><i class="bx bx-calendar me-1"></i>@dec.DueDate.Value.ToString("d/M/yyyy")</span>
+          }
+          @if (!string.IsNullOrWhiteSpace(dec.DecisionKind))
+          {
+            <span><i class="bx bx-tag me-1"></i>@dec.DecisionKind</span>
+          }
+          @if (meeting != null)
+          {
+            <span><i class="bx bx-buildings me-1"></i>@meeting.Location</span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+}
+
+@section Scripts {
+<script>
+// Live search hint
+document.getElementById('search-input')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') this.closest('form').submit();
+});
+</script>
+}

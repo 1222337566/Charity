@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "ربط بمستخدم موجود";
+    var emp   = ViewBag.Employee as InfrastrfuctureManagmentCore.Domains.HR.HrEmployee;
+    var users = ViewBag.Users as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+}
+
+<div style="background:linear-gradient(135deg,#1e3a5f,#2d5282);border-radius:16px;padding:16px 22px;color:#fff;margin-bottom:18px">
+  <h5 class="fw-bold mb-1 text-white"><i class="bx bx-link me-2"></i>ربط بمستخدم موجود</h5>
+  <div style="opacity:.7;font-size:.8rem">الموظف: <strong>@emp?.FullName</strong></div>
+</div>
+
+<div class="card" style="border-radius:16px;border:.5px solid rgba(30,58,95,.1)">
+  <div class="card-body p-4">
+    <form asp-action="LinkExistingUser" asp-route-employeeId="@emp?.Id" method="post">
+      @Html.AntiForgeryToken()
+      <div class="mb-3">
+        <label class="form-label fw-semibold">اختر المستخدم</label>
+        <select name="userId" class="form-select" style="border-radius:10px" required>
+          <option value="">-- اختر مستخدماً --</option>
+          @if (users != null)
+          {
+            @foreach (var u in users)
+            { <option value="@u.Value">@u.Text</option> }
+          }
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">الدور (اختياري)</label>
+        <select name="role" class="form-select" style="border-radius:10px">
+          <option value="">-- لا تغيير في الأدوار --</option>
+          @foreach (var r in Skote.Helpers.CharityRoles.All)
+          { <option value="@r">@r</option> }
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary fw-bold" style="border-radius:12px">
+          <i class="bx bx-link me-1"></i>ربط
+        </button>
+        <a asp-action="Index" class="btn btn-light fw-bold" style="border-radius:12px">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>

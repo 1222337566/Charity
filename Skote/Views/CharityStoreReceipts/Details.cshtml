@@ -1,0 +1,60 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Stores.Receipts.StoreReceiptDetailsVm
+@using Skote.Helpers
+@await Html.PartialAsync("~/Views/Shared/Stores/_StoresNav.cshtml")
+<h4 class="mb-3">تفاصيل إذن الإضافة</h4>
+<div class="card mb-3"><div class="card-body">
+    <div class="row g-3">
+        <div class="col-md-3"><strong>رقم الإذن:</strong> @Model.ReceiptNumber</div>
+        <div class="col-md-3"><strong>التاريخ:</strong> @Model.ReceiptDate.ToString("yyyy-MM-dd")</div>
+        <div class="col-md-3"><strong>المخزن:</strong> @Model.WarehouseName</div>
+        <div class="col-md-3"><strong>المصدر:</strong> @Model.SourceType</div>
+        <div class="col-md-3"><strong>الحالة:</strong> <span class="badge @(Model.ApprovalStatus == "Approved" ? "bg-success-subtle text-success" : Model.ApprovalStatus == "Rejected" ? "bg-danger-subtle text-danger" : "bg-warning-subtle text-warning")">@Model.ApprovalStatusName</span></div>
+        <div class="col-md-3"><strong>اعتمد بواسطة:</strong> @(Model.ApprovedByUserId ?? "-")</div>
+        <div class="col-md-3"><strong>تاريخ الاعتماد:</strong> @(Model.ApprovedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+        <div class="col-md-3"><strong>تاريخ الرفض:</strong> @(Model.RejectedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+        <div class="col-md-12"><strong>اسم المصدر:</strong> @Model.SourceName</div>
+        <div class="col-md-12"><strong>ملاحظات المستند:</strong> @Model.Notes</div>
+        <div class="col-md-12"><strong>ملاحظات الاعتماد:</strong> @Model.ApprovalNotes</div>
+    </div>
+</div></div>
+
+<authz policy="StoresApprove">
+    @if (Model.CanApprove || Model.CanReject)
+    {
+        <div class="card mb-3"><div class="card-body">
+            <h5 class="mb-3">اعتماد / رفض الإذن</h5>
+            <form asp-action="Approve" method="post" class="mb-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <label class="form-label">ملاحظات الاعتماد</label>
+                <textarea name="approvalNotes" class="form-control" rows="2"></textarea>
+                <button type="submit" class="btn btn-success mt-2">اعتماد إذن الإضافة</button>
+            </form>
+            <form asp-action="Reject" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <label class="form-label">سبب الرفض</label>
+                <textarea name="approvalNotes" class="form-control" rows="2"></textarea>
+                <button type="submit" class="btn btn-outline-danger mt-2">رفض الإذن</button>
+            </form>
+        </div></div>
+    }
+</authz>
+
+<table class="table table-bordered table-striped align-middle">
+    <thead><tr><th>الكود</th><th>الصنف</th><th>الكمية</th><th>التكلفة</th><th>الإجمالي</th><th>الصلاحية</th><th>التشغيلة</th></tr></thead>
+    <tbody>
+    @foreach (var line in Model.Lines)
+    {
+        <tr>
+            <td>@line.ItemCode</td>
+            <td>@line.ItemName</td>
+            <td>@line.Quantity</td>
+            <td>@line.UnitCost.ToString("N2")</td>
+            <td>@line.Total.ToString("N2")</td>
+            <td>@(line.ExpiryDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+            <td>@line.BatchNo</td>
+        </tr>
+    }
+    </tbody>
+</table>

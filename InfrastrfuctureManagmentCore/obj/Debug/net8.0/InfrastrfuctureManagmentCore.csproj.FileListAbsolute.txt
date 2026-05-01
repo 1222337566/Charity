@@ -1,0 +1,13 @@
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\bin\Debug\net8.0\InfrastrfuctureManagmentCore.deps.json
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\bin\Debug\net8.0\InfrastrfuctureManagmentCore.dll
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\bin\Debug\net8.0\InfrastrfuctureManagmentCore.pdb
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.csproj.AssemblyReference.cache
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.AssemblyInfoInputs.cache
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.AssemblyInfo.cs
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.csproj.CoreCompileInputs.cache
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.sourcelink.json
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.dll
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\refint\InfrastrfuctureManagmentCore.dll
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\InfrastrfuctureManagmentCore.pdb
+C:\Users\Tareq\source\repos\InfrastructureManagment3\InfrastrfuctureManagmentCore\obj\Debug\net8.0\ref\InfrastrfuctureManagmentCore.dll

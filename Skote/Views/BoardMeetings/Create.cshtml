@@ -1,0 +1,18 @@
+@model Skote.Models.Charity.MinutesAndDecisions.BoardMeetingVm
+@{
+    ViewData["Title"] = "إضافة اجتماع";
+}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header"><h4 class="mb-0">إضافة اجتماع ومحضر</h4></div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @await Html.PartialAsync("_Form", Model)
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                    <a asp-action="Index" class="btn btn-light">رجوع</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

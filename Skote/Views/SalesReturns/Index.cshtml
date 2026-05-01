@@ -1,0 +1,50 @@
+﻿@using InfrastrfuctureManagmentCore.Domains.SalesReturn;
+@model List<SalesReturnInvoice>
+
+@{
+    ViewData["Title"] = "مرتجعات المبيعات والإيرادات";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">مرتجعات المبيعات</h4>
+        </div>
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم المرتجع</th>
+                            <th>التاريخ</th>
+                            <th>الفاتورة الأصلية</th>
+                            <th>العميل</th>
+                            <th>المخزن</th>
+                            <th>الصافي</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.ReturnNumber</td>
+                                <td>@item.ReturnDateUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                                <td>@item.OriginalSalesInvoice?.InvoiceNumber</td>
+                                <td>@item.CustomerName</td>
+                                <td>@item.Warehouse?.WarehouseNameAr</td>
+                                <td>@item.NetAmount</td>
+                                <td>@item.Status</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,289 @@
+@model InfrastrfuctureManagmentCore.Domains.Charity.MinutesAndDecisions.BoardMeeting
+@{
+    Layout = null;
+    // استخرج رقم الاجتماع من MeetingNumber (مثال: "33")
+    var meetingNo = Model.MeetingNumber?.TrimStart('0') ?? "";
+    var year      = Model.MeetingDate.Year;
+    var hijriYear = year - 621; // تقريبي للعرض
+    var presentees = Model.Attendees.Where(a => a.AttendanceStatus == "Present").OrderBy(a => a.FullName).ToList();
+    var chairman   = presentees.FirstOrDefault(a => a.PositionTitle != null &&
+                      (a.PositionTitle.Contains("رئيس") || a.PositionTitle.Contains("Chairman")));
+    var secretary  = presentees.FirstOrDefault(a => a.PositionTitle != null &&
+                      (a.PositionTitle.Contains("سكرتار") || a.PositionTitle.Contains("Secretary")));
+    var members    = presentees.Where(a => a != chairman && a != secretary).ToList();
+    var decisionsList = Model.Decisions.OrderBy(d => d.DecisionNumber).ToList();
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <title>محضر اجتماع مجلس الإدارة رقم @meetingNo</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0 }
+    body {
+      font-family: "Traditional Arabic", "Simplified Arabic", Tahoma, Arial, sans-serif;
+      direction: rtl; font-size: 13.5pt;
+      color: #000; background: #fff;
+      margin: 0; padding: 0;
+    }
+    .page {
+      width: 210mm; min-height: 297mm;
+      margin: 0 auto; padding: 18mm 20mm 18mm 18mm;
+      background: #fff;
+    }
+    /* ── Header ── */
+    .letterhead {
+      display: flex; align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px; margin-bottom: 18px;
+    }
+    .org-info { text-align: right; }
+    .org-name { font-size: 15pt; font-weight: bold; margin-bottom: 4px }
+    .org-reg  { font-size: 10pt; color: #444 }
+    .logo-box {
+      width: 70px; height: 70px; border: 1px solid #ccc;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9pt; color: #999; text-align: center;
+    }
+    /* ── Title ── */
+    .doc-title {
+      text-align: center; font-size: 16pt;
+      font-weight: bold; margin: 14px 0 6px;
+      text-decoration: underline;
+    }
+    .doc-sub {
+      text-align: center; font-size: 11pt;
+      margin-bottom: 14px; color: #333;
+    }
+    /* ── Agenda ── */
+    .section-title { font-weight: bold; font-size: 13pt;
+      margin: 14px 0 6px; text-decoration: underline; }
+    .agenda-list { list-style: none; padding: 0; margin: 0 0 10px }
+    .agenda-list li { padding: 3px 0; line-height: 1.7 }
+    /* ── Body text ── */
+    .body-text { line-height: 1.9; font-size: 13pt; text-align: justify; margin-bottom: 10px }
+    .bold { font-weight: bold }
+    /* ── Attendance ── */
+    .attendance-block { margin: 10px 0 }
+    .attendance-line { line-height: 1.8; font-size: 13pt }
+    /* ── Decisions ── */
+    .decisions-block { margin-top: 10px }
+    .decision-item { margin-bottom: 10px; line-height: 1.8 }
+    .decision-num { font-weight: bold; font-size: 13pt }
+    /* ── Members grid ── */
+    .members-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4px 30px; margin: 8px 0;
+    }
+    .member-item { font-size: 13pt }
+    .member-num { font-weight: bold }
+    /* ── Signatures ── */
+    .sig-row {
+      display: flex; justify-content: space-between;
+      margin-top: 40px; gap: 20px;
+    }
+    .sig-box { text-align: center; flex: 1 }
+    .sig-title { font-weight: bold; font-size: 13pt; margin-bottom: 6px }
+    .sig-name { font-size: 12pt; color: #444; margin-bottom: 30px }
+    .sig-line { border-top: 1px solid #000; margin-top: 8px; width: 80%; margin-left: auto; margin-right: auto }
+    .members-sig {
+      display: flex; flex-wrap: wrap; justify-content: space-around;
+      margin-top: 28px; gap: 12px;
+    }
+    .member-sig { text-align: center; min-width: 130px }
+    .member-sig-name { font-size: 11pt; margin-bottom: 24px }
+    .member-sig-line { border-top: 1px solid #000; width: 100% }
+    /* ── Footer ── */
+    .page-footer {
+      margin-top: 20px; padding-top: 8px;
+      border-top: 1px solid #ccc;
+      font-size: 10pt; color: #666;
+      display: flex; justify-content: space-between;
+    }
+    media print {
+      body { margin: 0 }
+      .page { margin: 0; padding: 15mm 18mm; width: 100% }
+      .no-print { display: none }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+
+<div class="no-print" style="text-align:center;padding:10px;background:#f0f4f8;font-family:Tahoma">
+  <button onclick="window.print()"
+          style="padding:8px 24px;background:#0e6f73;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13pt">
+    🖨️ طباعة / حفظ PDF
+  </button>
+</div>
+
+<div class="page">
+
+  @* ── Letterhead ── *@
+  <div class="letterhead">
+    <div class="logo-box">شعار<br/>الجمعية</div>
+    <div class="org-info">
+      <div class="org-name">جمعية تواصل لتنمية المجتمع المحلي</div>
+      <div class="org-reg">المشهرة برقم 1357 لسنة 2014</div>
+    </div>
+  </div>
+
+  @* ── Document Title ── *@
+  <div class="doc-title">محضر مجلس الإدارة رقم (@meetingNo) لسنة @year</div>
+  @if (!string.IsNullOrWhiteSpace(Model.Title))
+  {
+    <div class="doc-sub">@Model.Title</div>
+  }
+
+  @* ── Agenda ── *@
+  @if (!string.IsNullOrWhiteSpace(Model.Agenda))
+  {
+    <div class="section-title">جدول الأعمال :-</div>
+    <ul class="agenda-list">
+      @{
+        var agendaLines = Model.Agenda.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        for (int ai = 0; ai < agendaLines.Length; ai++)
+        {
+          <li>@((ai+1))- @agendaLines[ai].Trim()</li>
+        }
+      }
+    </ul>
+  }
+
+  @* ── Opening ── *@
+  <div class="body-text">
+    @{
+      var dateStr = Model.MeetingDate.ToString("d/M/yyyy");
+      var timeStr = Model.StartTime.HasValue
+          ? $"الساعة {Model.StartTime.Value.Hours:D2}:{Model.StartTime.Value.Minutes:D2} صباحاً"
+          : "في تمام الساعة العاشرة صباحاً";
+    }
+    إنه في يوم <span class="bold">@Model.MeetingDate.ToString("dddd", new System.Globalization.CultureInfo("ar"))</span>
+    الموافق <span class="bold">@dateStr</span>
+    @timeStr
+    اجتمع مجلس الإدارة بمقر الجمعية
+  </div>
+
+  @* ── Presiding / Secretary ── *@
+  <div class="attendance-line">
+    @if (chairman != null)
+    {
+      <span>برئاسة السيدة / السيد / <span class="bold">@chairman.FullName</span> &nbsp; @chairman.PositionTitle &nbsp;</span>
+    }
+    @if (secretary != null)
+    {
+      <span>وسكرتارية / <span class="bold">@secretary.FullName</span> &nbsp; @secretary.PositionTitle</span>
+    }
+  </div>
+
+  @* ── Members ── *@
+  @if (members.Any())
+  {
+    <div class="body-text" style="margin-top:6px">وعضوية كلاً من:</div>
+    <div class="members-grid">
+      @for (int mi = 0; mi < members.Count; mi++)
+      {
+        <div class="member-item">
+          <span class="member-num">@(mi+1)- </span>
+          @members[mi].FullName
+          @if (!string.IsNullOrWhiteSpace(members[mi].PositionTitle))
+          { <span style="font-size:11pt;color:#555"> / @members[mi].PositionTitle</span> }
+        </div>
+      }
+    </div>
+  }
+
+  @* ── Quorum ── *@
+  <div class="body-text" style="margin-top:10px">
+    بحضور عدد <span class="bold">"@presentees.Count"</span> أعضاء من أجمالي
+    عدد <span class="bold">"@Model.Attendees.Count"</span> أعضاء أصبح الاجتماع قانوني وتم اتخاذ القرارات الآتية:
+  </div>
+
+  @* ── Discussion summary ── *@
+  @if (!string.IsNullOrWhiteSpace(Model.Minute?.DiscussionSummary))
+  {
+    <div class="body-text">@Model.Minute.DiscussionSummary</div>
+  }
+
+  @* ── Decisions ── *@
+  <div class="decisions-block">
+    @if (!string.IsNullOrWhiteSpace(Model.Minute?.LegalOpeningText))
+    {
+      <div class="body-text">@Model.Minute.LegalOpeningText</div>
+    }
+
+    @foreach (var dec in decisionsList)
+    {
+      <div class="decision-item">
+        <span class="decision-num">@dec.DecisionNumber-</span>
+        @if (!string.IsNullOrWhiteSpace(dec.Title))
+        {
+          @dec.Title
+        }
+        @if (!string.IsNullOrWhiteSpace(dec.Description))
+        {
+          <span> @dec.Description</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(dec.ResponsibleParty))
+        {
+          <span> من قِبَل <span class="bold">@dec.ResponsibleParty</span></span>
+        }
+        @if (dec.DueDate.HasValue)
+        {
+          <span> بحلول <span class="bold">@dec.DueDate.Value.ToString("d/M/yyyy")</span></span>
+        }
+      </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Minute?.RecommendationsSummary))
+    {
+      <div class="body-text">@Model.Minute.RecommendationsSummary</div>
+    }
+  </div>
+
+  @* ── Closing ── *@
+  <div class="body-text" style="margin-top:14px">
+    @if (!string.IsNullOrWhiteSpace(Model.Minute?.LegalClosingText))
+    { @Model.Minute.LegalClosingText }
+    else
+    { <text>ما لم يُستجد من أعمال.</text> }
+  </div>
+
+  @* ── Signatures ── *@
+  <div class="sig-row">
+    <div class="sig-box">
+      <div class="sig-title">السكرتارية</div>
+      <div class="sig-name">@(secretary?.FullName ?? "_______________")</div>
+      <div class="sig-line"></div>
+    </div>
+    <div class="sig-box">
+      <div class="sig-title">رئيس مجلس الإدارة</div>
+      <div class="sig-name">@(chairman?.FullName ?? "_______________")</div>
+      <div class="sig-line"></div>
+    </div>
+  </div>
+
+  @if (members.Any())
+  {
+    <div style="font-weight:bold;margin-top:22px;font-size:13pt">الأعضاء</div>
+    <div class="members-sig">
+      @foreach (var m in members)
+      {
+        <div class="member-sig">
+          <div class="member-sig-name">@m.FullName</div>
+          <div class="member-sig-line"></div>
+        </div>
+      }
+    </div>
+  }
+
+  @* ── Footer ── *@
+  <div class="page-footer">
+    <span>محضر اجتماع رقم @meetingNo / @year</span>
+    <span>جمعية تواصل لتنمية المجتمع المحلي</span>
+    <span>@DateTime.Now.ToString("d/M/yyyy")</span>
+  </div>
+
+</div>
+</body>
+</html>

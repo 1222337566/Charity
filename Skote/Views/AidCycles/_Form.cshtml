@@ -1,0 +1,49 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.AidCycles.CreateAidCycleVm
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="CycleNumber" class="form-label"></label>
+        <input asp-for="CycleNumber" class="form-control" />
+        <span asp-validation-for="CycleNumber" class="text-danger"></span>
+    </div>
+    <div class="col-md-8">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="CycleType" class="form-label"></label>
+        <select asp-for="CycleType" asp-items="Model.CycleTypes" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AidTypeId" class="form-label"></label>
+        <select asp-for="AidTypeId" asp-items="Model.AidTypes" class="form-select">
+            <option value="">-- كل الأنواع / حسب القرار --</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="PeriodYear" class="form-label"></label>
+        <input asp-for="PeriodYear" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="PeriodMonth" class="form-label"></label>
+        <input asp-for="PeriodMonth" class="form-control" min="1" max="12" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="FromDate" class="form-label"></label>
+        <input asp-for="FromDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="ToDate" class="form-label"></label>
+        <input asp-for="ToDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="PlannedDisbursementDate" class="form-label"></label>
+        <input asp-for="PlannedDisbursementDate" class="form-control" />
+        <span asp-validation-for="PlannedDisbursementDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+    </div>
+</div>

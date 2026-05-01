@@ -1,0 +1,168 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile
+@{
+    var header  = ViewBag.ProjectHeader as ProjectHeaderVm;
+    var project = ViewBag.Project as InfrastrfuctureManagmentCore.Domains.Charity.Projects.CharityProject;
+
+    // دعم مصدرين: ProjectHeaderVm أو CharityProject مباشرة
+    Guid?    projId     = header?.Id     ?? project?.Id;
+    string   projName   = header?.Name   ?? project?.Name   ?? "";
+    string   projCode   = header?.Code   ?? project?.Code   ?? "";
+    string   projStatus = header?.Status ?? project?.Status ?? "";
+    DateTime projStart  = header?.StartDate  ?? project?.StartDate  ?? DateTime.MinValue;
+    DateTime? projEnd   = header?.EndDate    ?? project?.EndDate;
+    decimal  projBudget = header?.Budget     ?? project?.Budget     ?? 0;
+
+    // الصفحة الحالية لتمييز الـ tab النشط
+    var ctrl   = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString()     ?? "";
+    bool IsActive(params string[] controllers) => controllers.Contains(ctrl, StringComparer.OrdinalIgnoreCase);
+}
+
+@if (projId.HasValue)
+{
+<style>
+.ph-wrap{background:#fff;border:.5px solid rgba(14,111,115,.13);border-radius:16px;box-shadow:0 2px 12px rgba(14,111,115,.06);margin-bottom:18px;overflow:hidden}
+.ph-top{padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:.5px solid rgba(14,111,115,.08)}
+.ph-code{background:rgba(14,111,115,.1);color:#0e6f73;padding:3px 10px;border-radius:8px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.ph-nav{display:flex;flex-wrap:wrap;gap:4px;padding:10px 16px;background:#fafbfc}
+.ph-nav .pn{padding:5px 13px;border-radius:20px;font-size:.78rem;font-weight:600;text-decoration:none;color:#4a6080;border:.5px solid rgba(14,111,115,.12);background:#fff;transition:all .18s;white-space:nowrap;line-height:1.4}
+.ph-nav .pn:hover{background:rgba(14,111,115,.08);color:#0e6f73;border-color:rgba(14,111,115,.25)}
+.ph-nav .pn.active{background:#0e6f73;color:#fff;border-color:#0e6f73}
+.ph-nav .pn.accent{background:rgba(85,110,230,.08);color:#3145a3;border-color:rgba(85,110,230,.2)}
+.ph-nav .pn.accent:hover,.ph-nav .pn.accent.active{background:#556ee6;color:#fff;border-color:#556ee6}
+.ph-nav .pn.warn{background:rgba(241,180,76,.08);color:#8a5c00;border-color:rgba(241,180,76,.3)}
+.ph-nav .pn.warn:hover,.ph-nav .pn.warn.active{background:#f1b44c;color:#fff;border-color:#f1b44c}
+.ph-sep{width:1px;height:22px;background:rgba(14,111,115,.12);margin:0 4px;align-self:center;display:inline-block}
+.ph-stat{font-size:.75rem;color:#6b7d80}
+</style>
+
+<div class="ph-wrap">
+
+    @* ── الشريط العلوي: اسم المشروع + معلومات ── *@
+    <div class="ph-top">
+        <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="fw-bold" style="font-size:.98rem;color:#1e3a5f">@projName</span>
+                <span class="ph-code">@projCode</span>
+                <span class="badge @(projStatus=="Active"||projStatus=="InProgress"?"bg-primary":projStatus=="Planned"?"bg-secondary":"bg-success")"
+                      style="font-size:.65rem">@projStatus</span>
+            </div>
+            <div class="ph-stat mt-1">
+                <span class="me-3"><i class="bx bx-calendar me-1"></i>@projStart.ToString("yyyy/MM/dd") ← @(projEnd?.ToString("yyyy/MM/dd") ?? "—")</span>
+                <span><i class="bx bx-dollar me-1"></i>@projBudget.ToString("N0")</span>
+            </div>
+        </div>
+    </div>
+
+    @* ── شريط التنقل ── *@
+    <div class="ph-nav">
+
+        @* ─ أساسيات ─ *@
+        <a asp-controller="CharityProjects"   asp-action="Details" asp-route-id="@projId"
+           class="pn @(IsActive("CharityProjects")?"active":"")">
+            <i class="bx bx-info-circle me-1"></i>البيانات
+        </a>
+
+        <a asp-controller="ProjectGoals"      asp-action="Index"   asp-route-projectId="@projId"
+           class="pn @(IsActive("ProjectGoals","ProjectSubGoals","ProjectActivities")?"active":"")">
+            🎯 الأهداف والأنشطة
+        </a>
+
+        <a asp-controller="ProjectBudgetLines" asp-action="Index"  asp-route-projectId="@projId"
+           class="pn @(IsActive("ProjectBudgetLines")?"active":"")">
+            <i class="bx bx-money me-1"></i>الموازنة
+        </a>
+
+        <a asp-controller="ProjectGrants"     asp-action="Index"   asp-route-projectId="@projId"
+           class="pn @(IsActive("ProjectGrants")?"active":"")">
+            <i class="bx bx-transfer me-1"></i>التمويل
+        </a>
+
+        <span class="ph-sep"></span>
+
+        @* ─ المراحل والتنفيذ ─ *@
+        <a asp-controller="ProjectPhases"     asp-action="Index"   asp-route-projectId="@projId"
+           class="pn @(IsActive("ProjectPhases","ProjectPhaseMilestones")?"active":"")">
+            <i class="bx bx-git-branch me-1"></i>المراحل
+        </a>
+
+        <a asp-controller="ActivityPhaseTracking" asp-action="PhaseOverview" asp-route-projectId="@projId"
+           class="pn accent @(IsActive("ActivityPhaseTracking")?"active":"")">
+            📊 متابعة الأنشطة
+        </a>
+
+        <span class="ph-sep"></span>
+
+        @* ─ الأشخاص (جديد) ─ *@
+        <a asp-controller="ProjectBeneficiaries" asp-action="Index" asp-route-projectId="@projId"
+           class="pn @(IsActive("ProjectBeneficiaries")?"active":"")">
+            <i class="bx bx-group me-1"></i>المستفيدون
+        </a>
+
+        <a asp-controller="ActivityBeneficiaryAssignment" asp-action="Index" asp-route-projectId="@projId"
+           class="pn @(IsActive("ActivityBeneficiaryAssignment")?"active":"")">
+            <i class="bx bx-transfer-alt me-1"></i>تسكين الأنشطة
+        </a>
+
+        <a asp-controller="ProjectTeamMembers" asp-action="Index"  asp-route-projectId="@projId"
+           class="pn @(IsActive("ProjectTeamMembers")?"active":"")">
+            <i class="bx bx-user-check me-1"></i>الفريق والمتطوعون
+        </a>
+
+        <span class="ph-sep"></span>
+
+        @* ─ التخطيط ─ *@
+        <a asp-controller="ProjectPlanning"   asp-action="Tracking" asp-route-projectId="@projId"
+           class="pn accent @(IsActive("ProjectPlanning")&&action=="Tracking"?"active":"")">
+            <i class="bx bx-radar me-1"></i>Tracking
+        </a>
+
+        <a asp-controller="ProjectPlanning"   asp-action="Timeline" asp-route-projectId="@projId"
+           class="pn accent @(IsActive("ProjectPlanning")&&action=="Timeline"?"active":"")">
+            <i class="bx bx-time-five me-1"></i>Timeline
+        </a>
+
+        <a asp-controller="ProjectPlanning"   asp-action="Calendar" asp-route-projectId="@projId"
+           class="pn accent @(IsActive("ProjectPlanning")&&action=="Calendar"?"active":"")">
+            <i class="bx bx-calendar me-1"></i>Calendar
+        </a>
+
+        <a asp-controller="ProjectTaskTracking" asp-action="Board" asp-route-projectId="@projId"
+           class="pn accent @(IsActive("ProjectTaskTracking")&&action=="Board"?"active":"")">
+            <i class="bx bx-columns me-1"></i>Task Board
+        </a>
+
+        <a asp-controller="ProjectTaskTracking" asp-action="DailyFollowUp" asp-route-projectId="@projId"
+           class="pn accent @(IsActive("ProjectTaskTracking")&&action=="DailyFollowUp"?"active":"")">
+            <i class="bx bx-task me-1"></i>Daily Follow-Up
+        </a>
+
+        <span class="ph-sep"></span>
+
+        @* ─ المالية والمخزن ─ *@
+        <a asp-controller="ProjectPhaseExpenseLinks" asp-action="Index" asp-route-projectId="@projId"
+           class="pn warn @(IsActive("ProjectPhaseExpenseLinks")?"active":"")">
+            <i class="bx bx-receipt me-1"></i>مصروفات
+        </a>
+
+        <a asp-controller="ProjectPhaseStoreIssueLinks" asp-action="Index" asp-route-projectId="@projId"
+           class="pn warn @(IsActive("ProjectPhaseStoreIssueLinks")?"active":"")">
+            <i class="bx bx-package me-1"></i>صرف مخزني
+        </a>
+
+        <a asp-controller="ProjectPhaseAccountingReports" asp-action="PhaseCostSummary" asp-route-projectId="@projId"
+           class="pn warn @(IsActive("ProjectPhaseAccountingReports")?"active":"")">
+            <i class="bx bx-bar-chart-alt me-1"></i>تقارير المراحل
+        </a>
+
+        <span class="ph-sep"></span>
+
+        @* ─ سجلات ─ *@
+        <a asp-controller="ProjectTrackingLogs" asp-action="Index" asp-route-projectId="@projId"
+           class="pn @(IsActive("ProjectTrackingLogs")?"active":"")">
+            <i class="bx bx-history me-1"></i>سجل المتابعة
+        </a>
+
+    </div>
+</div>
+}

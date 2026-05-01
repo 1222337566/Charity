@@ -1,0 +1,11 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.TaskUpdates.CreateProjectTaskDailyUpdateVm
+<input type="hidden" asp-for="TaskId" />
+<div class="row g-3">
+    <div class="col-md-3"><label asp-for="UpdateDate" class="form-label"></label><input asp-for="UpdateDate" type="date" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="Status" class="form-label"></label><select asp-for="Status" class="form-select"><option>InProgress</option><option>Blocked</option><option>Done</option></select></div>
+    <div class="col-md-3"><label asp-for="ProgressPercent" class="form-label"></label><input asp-for="ProgressPercent" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="HoursSpent" class="form-label"></label><input asp-for="HoursSpent" class="form-control" /></div>
+    <div class="col-12"><label asp-for="Note" class="form-label"></label><textarea asp-for="Note" class="form-control"></textarea></div>
+    <div class="col-md-6"><label asp-for="BlockerNote" class="form-label"></label><textarea asp-for="BlockerNote" class="form-control"></textarea></div>
+    <div class="col-md-6"><label asp-for="NextAction" class="form-label"></label><textarea asp-for="NextAction" class="form-control"></textarea></div>
+</div>

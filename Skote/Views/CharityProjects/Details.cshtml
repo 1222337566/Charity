@@ -1,0 +1,53 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Projects.ProjectDetailsVm
+<partial name="~/Views/Shared/Projects/_ProjectHeader.cshtml" />
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <h5 class="mb-3">بيانات المشروع</h5>
+            <table class="table table-sm">
+                <tr><th>الكود</th><td>@Model.Code</td></tr>
+                <tr><th>الاسم</th><td>@Model.Name</td></tr>
+                <tr><th>الوصف</th><td>@Model.Description</td></tr>
+                <tr><th>البداية</th><td>@Model.StartDate.ToString("yyyy-MM-dd")</td></tr>
+                <tr><th>النهاية</th><td>@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "-")</td></tr>
+                <tr><th>الحالة</th><td>@Model.Status</td></tr>
+                <tr><th>الموقع</th><td>@Model.Location</td></tr>
+                <tr><th>نشط</th><td>@(Model.IsActive ? "نعم" : "لا")</td></tr>
+            </table>
+        </div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <h5 class="mb-3">ملخص</h5>
+            <table class="table table-sm">
+                <tr><th>الموازنة</th><td>@Model.Budget.ToString("N2")</td></tr>
+                <tr><th>المستهدف</th><td>@Model.TargetBeneficiariesCount</td></tr>
+                <tr><th>بنود الموازنة</th><td>@Model.BudgetLinesCount</td></tr>
+                <tr><th>الأنشطة</th><td>@Model.ActivitiesCount</td></tr>
+                <tr><th>المستفيدون</th><td>@Model.BeneficiariesCount</td></tr>
+                <tr><th>التمويلات</th><td>@Model.GrantsCount</td></tr>
+                <tr><th>إجمالي المخطط</th><td>@Model.PlannedBudgetLinesTotal.ToString("N2")</td></tr>
+                <tr><th>إجمالي الفعلي</th><td>@Model.ActualBudgetLinesTotal.ToString("N2")</td></tr>
+            </table>
+        </div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <h5 class="mb-2">الأهداف</h5>
+            <div class="text-muted">@Model.Objectives</div>
+        </div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <h5 class="mb-2">المؤشرات</h5>
+            <div class="text-muted">@Model.Kpis</div>
+        </div></div>
+    </div>
+    <div class="col-12">
+        <div class="card"><div class="card-body">
+            <h5 class="mb-2">ملاحظات</h5>
+            <div class="text-muted">@Model.Notes</div>
+        </div></div>
+    </div>
+</div>

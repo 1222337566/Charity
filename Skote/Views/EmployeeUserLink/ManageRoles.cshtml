@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "إدارة الصلاحيات";
+    var emp   = ViewBag.Employee as InfrastrfuctureManagmentCore.Domains.HR.HrEmployee;
+    var user  = ViewBag.User as InfrastructureManagmentCore.Domains.Identity.ApplicationUser;
+    var roles = ViewBag.AllRoles as dynamic;
+    var suggestedRole = ViewBag.SuggestedRole as string;
+}
+
+<div style="background:linear-gradient(135deg,#2d4080,#3d52a0);border-radius:16px;padding:16px 22px;color:#fff;margin-bottom:18px">
+  <h5 class="fw-bold mb-1 text-white"><i class="bx bx-shield me-2"></i>إدارة الصلاحيات</h5>
+  <div style="opacity:.7;font-size:.8rem">
+    الموظف: <strong>@emp?.FullName</strong> | المستخدم: <strong>@user?.UserName</strong>
+  </div>
+</div>
+
+<form asp-action="ManageRoles" asp-route-employeeId="@emp?.Id" method="post">
+  @Html.AntiForgeryToken()
+  <div class="card" style="border-radius:16px;border:.5px solid rgba(45,64,128,.1)">
+    <div class="card-body p-4">
+      @if (!string.IsNullOrWhiteSpace(suggestedRole))
+      {
+        <div class="alert" style="border-radius:12px;background:rgba(45,64,128,.05);border:.5px solid rgba(45,64,128,.15)">
+          <i class="bx bx-bulb me-2" style="color:#3d52a0"></i>
+          الدور المقترح بناءً على الوظيفة «@emp?.JobTitle?.Name»:
+          <strong style="color:#3d52a0">@suggestedRole</strong>
+        </div>
+      }
+      <div class="row g-3">
+        @if (roles != null)
+        {
+          foreach (var r in roles)
+          {
+            <div class="col-md-4">
+              <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:.5px solid @(r.IsAssigned?"rgba(45,64,128,.3)":"rgba(200,200,200,.3)");background:@(r.IsAssigned?"rgba(45,64,128,.05)":"#fff");cursor:pointer">
+                <input type="checkbox" name="selectedRoles" value="@r.Role"
+                       @(r.IsAssigned ? "checked" : "")
+                       style="accent-color:#3d52a0;width:18px;height:18px"/>
+                <div>
+                  <div class="fw-semibold" style="font-size:.87rem">@r.NameAr</div>
+                  <div style="font-size:.7rem;color:#6b7d80">@r.Role</div>
+                </div>
+              </label>
+            </div>
+          }
+        }
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary fw-bold" style="border-radius:12px">
+          <i class="bx bx-save me-1"></i>حفظ الصلاحيات
+        </button>
+        <a asp-action="Index" class="btn btn-light fw-bold" style="border-radius:12px">رجوع</a>
+      </div>
+    </div>
+  </div>
+</form>

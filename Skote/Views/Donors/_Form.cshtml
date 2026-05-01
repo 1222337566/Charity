@@ -1,0 +1,76 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.Donors
+@model CreateDonorVm
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div class="row g-3">
+    <div class="col-md-3">
+        <label asp-for="Code" class="form-label"></label>
+        <input asp-for="Code" class="form-control" />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="DonorType" class="form-label"></label>
+        <select asp-for="DonorType" asp-items="Model.DonorTypes" class="form-select"></select>
+        <span asp-validation-for="DonorType" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ContactPerson" class="form-label"></label>
+        <input asp-for="ContactPerson" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="NationalIdOrTaxNo" class="form-label"></label>
+        <input asp-for="NationalIdOrTaxNo" class="form-control" />
+        <span asp-validation-for="NationalIdOrTaxNo" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PhoneNumber" class="form-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PreferredCommunicationMethod" class="form-label"></label>
+        <select asp-for="PreferredCommunicationMethod" asp-items="Model.CommunicationMethods" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label"></label>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="GovernorateId" class="form-label"></label>
+        <select asp-for="GovernorateId" asp-items="Model.Governorates" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="CityId" class="form-label"></label>
+        <select asp-for="CityId" asp-items="Model.Cities" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AreaId" class="form-label"></label>
+        <select asp-for="AreaId" asp-items="Model.Areas" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-12">
+        <label asp-for="AddressLine" class="form-label"></label>
+        <textarea asp-for="AddressLine" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="col-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+    </div>
+</div>

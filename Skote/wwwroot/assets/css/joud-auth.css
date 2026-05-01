@@ -1,0 +1,253 @@
+/* Joud Charity auth + shared brand layer */
+:root {
+    --joud-teal: #0e6f73;
+    --joud-teal-dark: #0a5659;
+    --joud-teal-soft: #e7f4f3;
+    --joud-gold: #d9a44a;
+    --joud-gold-soft: #f8edd9;
+    --joud-ink: #15363a;
+    --joud-muted: #6b7d80;
+    --joud-border: rgba(14, 111, 115, 0.14);
+    --joud-shadow: 0 16px 40px rgba(14, 111, 115, 0.14);
+}
+
+body.joud-auth-page,
+body.auth-body-bg.joud-auth-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(217, 164, 74, .15), transparent 28%),
+        radial-gradient(circle at top right, rgba(14, 111, 115, .10), transparent 30%),
+        linear-gradient(135deg, #f5faf9 0%, #eef7f6 52%, #fdfcf8 100%);
+}
+
+.joud-auth-shell {
+    min-height: calc(100vh - 2rem);
+    display: flex;
+    align-items: center;
+}
+
+.joud-auth-grid {
+    background: rgba(255,255,255,.88);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,.7);
+    box-shadow: var(--joud-shadow);
+    border-radius: 1.5rem;
+    overflow: hidden;
+}
+
+.joud-brand-panel {
+    background: linear-gradient(160deg, var(--joud-teal) 0%, #0c8387 55%, #19a1a6 100%);
+    color: #fff;
+    min-height: 100%;
+    position: relative;
+}
+
+.joud-brand-panel::before,
+.joud-brand-panel::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,.08);
+}
+
+.joud-brand-panel::before {
+    width: 260px;
+    height: 260px;
+    top: -80px;
+    left: -70px;
+}
+
+.joud-brand-panel::after {
+    width: 180px;
+    height: 180px;
+    bottom: -60px;
+    right: -40px;
+}
+
+.joud-brand-content {
+    position: relative;
+    z-index: 1;
+    padding: 2.5rem 2.25rem;
+}
+
+.joud-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .55rem .85rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.18);
+    margin-bottom: 1rem;
+}
+
+.joud-brand-badge img {
+    width: 42px;
+    height: 42px;
+}
+
+.joud-brand-title {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: .5rem;
+}
+
+.joud-brand-subtitle {
+    color: rgba(255,255,255,.88);
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+}
+
+.joud-brand-list {
+    padding: 0;
+    margin: 1.25rem 0 0;
+    list-style: none;
+}
+
+.joud-brand-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-bottom: .85rem;
+    color: rgba(255,255,255,.92);
+}
+
+.joud-brand-list i {
+    margin-top: .12rem;
+    color: #ffe3ad;
+}
+
+.joud-auth-form-wrap {
+    padding: 2.5rem 2rem;
+}
+
+.joud-auth-logo {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.5rem;
+}
+
+.joud-auth-logo img {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(14,111,115,.12);
+}
+
+.joud-auth-logo h2 {
+    margin: 0;
+    color: var(--joud-ink);
+    font-size: 1.65rem;
+    font-weight: 800;
+}
+
+.joud-auth-logo p {
+    margin: 0;
+    color: var(--joud-muted);
+}
+
+.joud-form-card {
+    border: 1px solid var(--joud-border);
+    background: rgba(255,255,255,.94);
+    border-radius: 1.25rem;
+    padding: 1.35rem;
+}
+
+.joud-form-card .form-label {
+    color: var(--joud-ink);
+    font-weight: 700;
+}
+
+.joud-form-card .form-control,
+.joud-form-card .form-select {
+    border-radius: .9rem;
+    border-color: rgba(14,111,115,.16);
+    min-height: 46px;
+    box-shadow: none;
+}
+
+.joud-form-card .form-control:focus,
+.joud-form-card .form-select:focus {
+    border-color: rgba(14,111,115,.45);
+    box-shadow: 0 0 0 .2rem rgba(14,111,115,.12);
+}
+
+.joud-btn-primary,
+.joud-btn-primary.btn,
+.joud-btn-primary.btn-primary {
+    background: linear-gradient(135deg, var(--joud-teal) 0%, #138b90 100%);
+    border: none;
+    color: #fff;
+    border-radius: .95rem;
+    min-height: 48px;
+    font-weight: 700;
+    box-shadow: 0 10px 24px rgba(14,111,115,.18);
+}
+
+.joud-btn-primary:hover,
+.joud-btn-primary:focus {
+    color: #fff;
+    background: linear-gradient(135deg, var(--joud-teal-dark) 0%, var(--joud-teal) 100%);
+}
+
+.joud-link,
+.joud-link a,
+a.joud-link {
+    color: var(--joud-teal);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.joud-link:hover,
+.joud-link a:hover,
+a.joud-link:hover {
+    color: var(--joud-teal-dark);
+}
+
+.joud-mini-note {
+    background: var(--joud-gold-soft);
+    border: 1px solid rgba(217,164,74,.18);
+    color: #7a5415;
+    border-radius: .9rem;
+    padding: .85rem 1rem;
+    font-size: .92rem;
+}
+
+.joud-auth-footer {
+    color: var(--joud-muted);
+    font-size: .95rem;
+}
+
+.footer .joud-footer-brand {
+    color: var(--joud-teal);
+    font-weight: 800;
+}
+
+.footer .joud-footer-note {
+    color: var(--joud-muted);
+}
+
+@media (max-width: 991.98px) {
+    .joud-brand-panel {
+        min-height: 320px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .joud-auth-shell {
+        padding: 1rem 0;
+    }
+
+    .joud-auth-form-wrap,
+    .joud-brand-content {
+        padding: 1.5rem;
+    }
+
+    .joud-brand-title {
+        font-size: 1.65rem;
+    }
+}

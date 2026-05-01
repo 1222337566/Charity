@@ -1,0 +1,66 @@
+@model IReadOnlyList<InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Tracking.ProjectTrackingLogListItemVm>
+@using InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile
+@await Html.PartialAsync("~/Views/Shared/Projects/_ProjectHeader.cshtml")
+@{
+    var header = ViewBag.ProjectHeader as ProjectHeaderVm;
+    var showProjectColumn = ViewBag.ShowProjectColumn as bool? == true;
+    var projectNamesByLogId = ViewBag.ProjectNamesByLogId as IDictionary<Guid, string>;
+    var projectIdsByLogId = ViewBag.ProjectIdsByLogId as IDictionary<Guid, Guid>;
+    var phaseNamesByLogId = ViewBag.PhaseNamesByLogId as IDictionary<Guid, string>;
+}
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+        <div>
+            <h4 class="mb-0">سجل المتابعة</h4>
+            @if (header == null)
+            {
+                <div class="text-muted">عرض عام لسجلات متابعة جميع المشروعات.</div>
+            }
+        </div>
+        @if (header != null)
+        {
+            <a asp-action="Create" asp-route-projectId="@header.Id" class="btn btn-primary">إضافة متابعة</a>
+        }
+        else
+        {
+            <a asp-controller="CharityProjects" asp-action="Index" class="btn btn-outline-primary">اختيار مشروع لإضافة متابعة</a>
+        }
+    </div>
+    <div class="list-group">
+        @foreach (var item in Model)
+        {
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                    <div>
+                        @if (showProjectColumn)
+                        {
+                            <div class="small text-muted mb-1">
+                                <span class="badge bg-light text-dark border">@(projectNamesByLogId != null && projectNamesByLogId.TryGetValue(item.Id, out var projectName) ? projectName : "-")</span>
+                                @if (phaseNamesByLogId != null && phaseNamesByLogId.TryGetValue(item.Id, out var phaseName))
+                                {
+                                    <span class="badge bg-light text-dark border">@phaseName</span>
+                                }
+                            </div>
+                        }
+                        <div class="fw-semibold">@item.Title</div>
+                        <div class="text-muted small">@item.EntryDate.ToString("yyyy-MM-dd") | @item.EntryType | @(item.Status ?? "-")</div>
+                        <div class="mt-2">@item.Details</div>
+                    </div>
+                    <div class="text-end">
+                        @if (item.ProgressPercent.HasValue)
+                        { <div class="badge bg-primary-subtle text-primary">@item.ProgressPercent.Value %</div> }
+                        @if (item.RequiresAttention)
+                        { <div class="badge bg-danger ms-1">يحتاج انتباه</div> }
+                        <div class="mt-2 d-flex gap-2 justify-content-end flex-wrap">
+                            @if (showProjectColumn && projectIdsByLogId != null && projectIdsByLogId.TryGetValue(item.Id, out var projectId))
+                            {
+                                <a asp-action="Index" asp-route-projectId="@projectId" class="btn btn-sm btn-outline-secondary">ملف المشروع</a>
+                            }
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">تعديل</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div></div>

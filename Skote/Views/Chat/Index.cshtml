@@ -1,0 +1,1016 @@
+﻿@{
+    ViewData["Title"] = "Chat";
+    Layout = "_Layout"; // Skote layout
+}
+
+<div class="row">
+    <!-- left -->
+    <div class="col-xl-3 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-0">Rooms</h5>
+                        <small class="text-muted">اختر غرفة</small>
+                    </div>
+                    <button id="btn-add-room" class="btn btn-sm btn-primary ms-auto">+ Room</button>
+                </div>
+
+                <div id="rooms" class="list-group">
+                    <a href="javascript:void(0)" data-room="general" class="list-group-item list-group-item-action active"># general</a>
+                    <a href="javascript:void(0)" data-room="it" class="list-group-item list-group-item-action"># it</a>
+                    <a href="javascript:void(0)" data-room="security" class="list-group-item list-group-item-action"># security</a>
+                </div>
+
+                <hr class="my-3" />
+
+                <div class="d-flex align-items-center mb-2">
+                    <h6 class="mb-0">Users online</h6>
+                    <span id="online-count" class="badge bg-success ms-2">0</span>
+                </div>
+                <ul id="users" class="list-unstyled mb-0" style="max-height: 220px; overflow:auto;"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- right -->
+    <div class="col-xl-9 col-lg-8">
+        <div class="card">
+            <div class="card-body d-flex flex-column" style="height: 70vh;">
+                <div class="d-flex align-items-center border-bottom pb-2 mb-2">
+                    <div>
+                        <h5 class="mb-0">Room: <span id="roomName" class="badge bg-info">general</span></h5>
+                        <small id="typing" class="text-muted" style="display:none">someone is typing…</small>
+                    </div>
+                    <div class="ms-auto input-group" style="width: 260px;">
+                        <span class="input-group-text"><i class="mdi mdi-account"></i></span>
+                        <input id="me" class="form-control" placeholder="Your name (optional)">
+                    </div>
+                </div>
+
+                <div id="log" class="flex-grow-1 p-2" style="overflow:auto; background:#fafafa; border-radius:.5rem; border:1px solid #eee;"></div>
+
+                <div class="mt-2">
+                    <div class="input-group">
+                        <input id="msg" class="form-control" placeholder="اكتب رسالتك…" />
+                        <button id="btn-send" class="btn btn-primary"><i class="mdi mdi-send"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ~/assets/js/chat.skote.js
+        (function () {
+          "use strict";
+
+          // عناصر الواجهة
+          const ui = {
+            rooms: document.getElementById("rooms"),
+            roomName: document.getElementById("roomName"),
+            users: document.getElementById("users"),
+            onlineCount: document.getElementById("online-count"),
+            log: document.getElementById("log"),
+            typing: document.getElementById("typing"),
+            msg: document.getElementById("msg"),
+            send: document.getElementById("btn-send"),
+          };
+
+          // حالة العميل
+          let chat = null;
+          let currentRoom = "general";
+          let usersInRoom = []; // [{userId, userName}]
+
+          // Utils
+          const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+          const append = (html) => {
+            const d = document.createElement("div");
+            d.innerHTML = html;
+            ui.log?.appendChild(d);
+            if (ui.log) ui.log.scrollTop = ui.log.scrollHeight;
+          };
+
+          function setRoomBadge(name) {
+            if (ui.roomName) ui.roomName.textContent = name;
+          }
+
+          function renderUsers(list) {
+            usersInRoom = Array.from(list || []);
+            if (ui.users) ui.users.innerHTML = "";
+            if (ui.onlineCount) ui.onlineCount.textContent = usersInRoom.length;
+
+            usersInRoom.forEach(u => {
+              const li = document.createElement("li");
+              li.className = "d-flex align-items-center mb-2";
+              li.innerHTML = `
+                <div class="avatar-xs me-2">
+                  <span class="avatar-title rounded-circle bg-soft-success text-success">
+                    ${esc((u.userName || "?")[0])}
+                  </span>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="fw-semibold">${esc(u.userName)}</div>
+                  <small class="text-muted">${esc(u.userId)}</small>
+                </div>
+                <button class="btn btn-sm btn-outline-primary ms-2" type="button">DM</button>
+              `;
+              li.querySelector("button").onclick = async () => {
+                const txt = prompt("رسالة خاصة إلى: " + u.userName);
+                if (txt) {
+                  try {
+                    // hub: SendPrivate(string toUserId, string message)
+                    await chat.invoke("SendPrivate", u.userId, txt);
+                    append(`<span class="badge bg-primary me-1">Private</span> <b>You → ${esc(u.userName)}</b>: ${esc(txt)}`);
+                  } catch (e) {
+                    console.error(e);
+                    append(`<div class="text-danger">Private send failed: ${esc(e?.message||e)}</div>`);
+                  }
+                }
+              };
+              ui.users?.appendChild(li);
+            });
+          }
+
+          // أحداث SignalR (تتطابق مع ChatHub claims-based)
+          function wireEvents() {
+            // ReceiveMessage({ room, fromName, message, at })
+            chat.on("ReceiveMessage", ({ room, fromName, message, at }) => {
+              if (room !== currentRoom) return;
+              append(
+                `<small class="text-muted">${new Date(at).toLocaleTimeString()}</small>
+                 <b class="ms-2">[${esc(room)}] ${esc(fromName)}</b>: ${esc(message)}`
+              );
+            });
+
+            // ReceivePrivate({ fromName, message, at })
+            chat.on("ReceivePrivate", ({ fromName, message, at }) => {
+              append(
+                `<span class="badge bg-info me-1">Private</span>
+                 <small class="text-muted">${new Date(at).toLocaleTimeString()}</small>
+                 <b class="ms-2">${esc(fromName)}</b>: ${esc(message)}`
+              );
+            });
+
+            // UserTyping({ room, userName, isTyping })
+            chat.on("UserTyping", ({ room, userName, isTyping }) => {
+              if (room !== currentRoom || !ui.typing) return;
+              ui.typing.style.display = isTyping ? "inline" : "none";
+              ui.typing.textContent = isTyping ? `${userName} is typing…` : "";
+            });
+
+            // Presence (لو مفعل في الهَب)
+            chat.on("OnlineUsers", renderUsers);
+            chat.on("UserOnline", (u) => { // {userId, userName}
+              if (!usersInRoom.find(x => x.userId === u.userId)) {
+                usersInRoom.push(u);
+                renderUsers(usersInRoom);
+              }
+            });
+            chat.on("UserOffline", (u) => {
+              usersInRoom = usersInRoom.filter(x => x.userId !== u.userId);
+              renderUsers(usersInRoom);
+            });
+          }
+
+          async function join(room) {
+            // hub: JoinRoom(string room)
+            await chat.invoke("JoinRoom", room);
+            setRoomBadge(room);
+            append(`<i class="text-success">Joined room: ${esc(room)}</i>`);
+          }
+          async function leave(room) {
+            try { await chat.invoke("LeaveRoom", room); } catch {}
+          }
+
+          function wireUI() {
+            // إرسال رسالة: SendToRoom(string room, string message)
+            ui.send?.addEventListener("click", async () => {
+              const txt = (ui.msg?.value || "").trim();
+              if (!txt) return;
+              try {
+                await chat.invoke("SendToRoom", currentRoom, txt);
+                if (ui.msg) ui.msg.value = "";
+                try { await chat.invoke("Typing", currentRoom, false); } catch {}
+              } catch (e) {
+                console.error(e);
+                append(`<div class="text-danger">Send failed: ${esc(e?.message||e)}</div>`);
+              }
+            });
+
+            // Enter للإرسال + Typing(room, bool)
+            ui.msg?.addEventListener("keydown", async (e) => {
+              if (e.key === "Enter") { ui.send?.click(); return; }
+              try {
+                await chat.invoke("Typing", currentRoom, true);
+                clearTimeout(window.__typingTimer);
+                window.__typingTimer = setTimeout(() => chat.invoke("Typing", currentRoom, false), 1200);
+              } catch {}
+            });
+
+            // تبديل الغرف (لو عندك قائمة rooms بعناصر data-room)
+            ui.rooms?.addEventListener("click", async (e) => {
+              const a = e.target.closest("[data-room]");
+              if (!a) return;
+              const next = a.getAttribute("data-room");
+              if (!next || next === currentRoom) return;
+              try {
+                await leave(currentRoom);
+                currentRoom = next;
+                await join(currentRoom);
+              } catch (err) {
+                console.error(err);
+                append(`<div class="text-danger">Switch failed: ${esc(err?.message||err)}</div>`);
+              }
+            });
+          }
+
+          async function init() {
+            // 1) احصل على عميل hub باسم 'chat' — الـ Manager هيقرأ URL من window.__SIGNALR_HUBS__
+            chat = await SignalR.get('chat'); // TokenProvider يُستخدم تلقائيًا
+
+            // 2) اربط الأحداث
+            wireEvents();
+
+            // 3) انضم للغرفة الافتراضية
+            await join(currentRoom);
+
+            // 4) هيّئ واجهة المستخدم
+            wireUI();
+          }
+
+          // ابدأ
+          init().catch(err => {
+            console.error(err);
+            append(`<div class="alert alert-danger">Failed to init chat: ${esc(err?.message||err)}</div>`);
+          });
+        })();
+    </script>
+  @*   <script>
+        (async () => {
+          const chat = await SignalR.get('chat');
+          let currentRoom = "general";
+
+          const el = {
+            users: document.getElementById("users"),
+            count: document.getElementById("online-count"),
+            me:    document.getElementById("me"),
+            msg:   document.getElementById("msg"),
+            send:  document.getElementById("btn-send"),
+            log:   document.getElementById("log"),
+            typing:document.getElementById("typing"),
+            rooms: document.getElementById("rooms")
+          };
+
+          const myName = () => (el.me?.value?.trim()) || "Guest";
+          const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+          function append(html){ const d=document.createElement("div"); d.innerHTML=html; el.log.appendChild(d); el.log.scrollTop=el.log.scrollHeight; }
+
+          // ===== Presence =====
+          let currentUsers = []; // [{userId, userName}]
+          function renderUsers(list) {
+            currentUsers = Array.from(list || []);
+            el.users.innerHTML = "";
+            el.count.textContent = currentUsers.length;
+            currentUsers.forEach(u => {
+              const li = document.createElement("li");
+              li.className = "d-flex align-items-center mb-2";
+              li.innerHTML = `
+                <div class="avatar-xs me-2">
+                  <span class="avatar-title rounded-circle bg-soft-success text-success">${esc((u.userName||'?')[0])}</span>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="fw-semibold">${esc(u.userName)}</div>
+                  <small class="text-muted">${esc(u.userId)}</small>
+                </div>
+                <button class="btn btn-sm btn-outline-primary ms-2">DM</button>`;
+              li.querySelector("button").onclick = async () => {
+                const txt = prompt("رسالة خاصة إلى: " + u.userName);
+                if (txt) {
+                  await chat.invoke("SendPrivate", u.userId, myName(), txt);
+                  append(`<span class="badge bg-primary me-1">Private</span> <b>You → ${esc(u.userName)}</b>: ${esc(txt)}`);
+                }
+              };
+              el.users.appendChild(li);
+            });
+          }
+
+          chat.on("OnlineUsers", renderUsers);
+
+          chat.on("UserOnline", (u) => {
+            // دمج سريع (incremental update)
+            const found = currentUsers.find(x => x.userId === u.userId);
+            if (!found) currentUsers.push(u);
+            renderUsers(currentUsers);
+          });
+
+          chat.on("UserOffline", (u) => {
+            currentUsers = currentUsers.filter(x => x.userId !== u.userId);
+            renderUsers(currentUsers);
+          });
+
+          // ===== رسائل/كتابة حسب توقيع الهَب الحالي =====
+          chat.on("ReceiveMessage", ({ room, user, message, at }) => {
+            if (room !== currentRoom) return;
+            append(`<small class="text-muted">${new Date(at).toLocaleTimeString()}</small>
+                    <b class="ms-2">[${esc(room)}] ${esc(user)}</b>: ${esc(message)}`);
+          });
+
+          chat.on("ReceivePrivate", ({ fromUser, message, at }) => {
+            append(`<span class="badge bg-info me-1">Private</span>
+                    <small class="text-muted">${new Date(at).toLocaleTimeString()}</small>
+                    <b class="ms-2">${esc(fromUser)}</b>: ${esc(message)}`);
+          });
+
+          chat.on("UserTyping", ({ room, user, isTyping }) => {
+            if (room !== currentRoom) return;
+            el.typing.style.display = isTyping ? "inline" : "none";
+            el.typing.textContent = isTyping ? `${user} is typing…` : "";
+          });
+
+          // ===== Join/Leave =====
+          await chat.invoke("JoinRoom", currentRoom);
+          append(`<i class="text-success">Joined room: ${esc(currentRoom)}</i>`);
+
+          el.rooms?.addEventListener("click", async (e) => {
+            const a = e.target.closest("[data-room]");
+            if (!a) return;
+            const next = a.getAttribute("data-room");
+            if (!next || next === currentRoom) return;
+
+            try {
+              await chat.invoke("LeaveRoom", currentRoom);
+              currentRoom = next;
+              await chat.invoke("JoinRoom", currentRoom);
+              append(`<i class="text-primary">Switched to room: ${esc(currentRoom)}</i>`);
+            } catch (err) { console.error(err); }
+          });
+
+          // ===== إرسال/تايبنج (3 باراميتر) =====
+          el.send.addEventListener("click", async () => {
+            const txt = el.msg.value.trim();
+            if (!txt) return;
+            await chat.invoke("SendToRoom", currentRoom, myName(), txt);
+            el.msg.value = "";
+            try { await chat.invoke("Typing", currentRoom, myName(), false); } catch {}
+          });
+
+          el.msg.addEventListener("keydown", async (e) => {
+            if (e.key === "Enter") { el.send.click(); return; }
+            try {
+              await chat.invoke("Typing", currentRoom, myName(), true);
+              clearTimeout(window.__typingTimer);
+              window.__typingTimer = setTimeout(() => chat.invoke("Typing", currentRoom, myName(), false), 1200);
+            } catch {}
+          });
+        })();
+    </script> *@
+}
+
+
+@* @{
+    ViewBag.Title = "Chat";
+    ViewBag.pTitle = "Chat";
+    ViewBag.pageTitle = "Skote";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-lg-flex">
+    <div class="chat-leftsidebar me-lg-4">
+        <div class="">
+            <div class="py-4 border-bottom">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 align-self-center me-3">
+                        <img src="~/assets/images/users/avatar-1.jpg" class="avatar-xs rounded-circle" alt="">
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="font-size-15 mb-1">Henry Wells</h5>
+                        <p class="text-muted mb-0"><i class="mdi mdi-circle text-success align-middle me-1"></i> Active</p>
+                    </div>
+
+                    <div>
+                        <div class="dropdown chat-noti-dropdown active">
+                            <button class="btn" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="bx bx-bell bx-tada"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="#">Action</a>
+                                <a class="dropdown-item" href="#">Another action</a>
+                                <a class="dropdown-item" href="#">Something else here</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-box chat-search-box py-4">
+                <div class="position-relative">
+                    <input type="text" class="form-control" placeholder="Search...">
+                    <i class="bx bx-search-alt search-icon"></i>
+                </div>
+            </div>
+
+            <div class="chat-leftsidebar-nav">
+                <ul class="nav nav-pills nav-justified">
+                    <li class="nav-item">
+                        <a href="#chat" data-bs-toggle="tab" aria-expanded="true" class="nav-link active">
+                            <i class="bx bx-chat font-size-20 d-sm-none"></i>
+                            <span class="d-none d-sm-block">Chat</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#groups" data-bs-toggle="tab" aria-expanded="false" class="nav-link">
+                            <i class="bx bx-group font-size-20 d-sm-none"></i>
+                            <span class="d-none d-sm-block">Groups</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#contacts" data-bs-toggle="tab" aria-expanded="false" class="nav-link">
+                            <i class="bx bx-book-content font-size-20 d-sm-none"></i>
+                            <span class="d-none d-sm-block">Contacts</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content py-4">
+                    <div class="tab-pane show active" id="chat">
+                        <div>
+                            <h5 class="font-size-14 mb-3">Recent</h5>
+                            <ul class="list-unstyled chat-list" data-simplebar style="max-height: 410px;">
+                                <li class="active">
+                                    <a href="javascript: void(0);">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <i class="mdi mdi-circle font-size-10"></i>
+                                            </div>
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <img src="~/assets/images/users/avatar-2.jpg" class="rounded-circle avatar-xs" alt="">
+                                            </div>
+
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="text-truncate font-size-14 mb-1">Steven Franklin</h5>
+                                                <p class="text-truncate mb-0">Hey! there I'm available</p>
+                                            </div>
+                                            <div class="font-size-11">05 min</div>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="javascript: void(0);">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <i class="mdi mdi-circle text-success font-size-10"></i>
+                                            </div>
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <img src="~/assets/images/users/avatar-3.jpg" class="rounded-circle avatar-xs" alt="">
+                                            </div>
+
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="text-truncate font-size-14 mb-1">Adam Miller</h5>
+                                                <p class="text-truncate mb-0">I've finished it! See you so</p>
+                                            </div>
+                                            <div class="font-size-11">12 min</div>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="javascript: void(0);">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <i class="mdi mdi-circle text-success font-size-10"></i>
+                                            </div>
+                                            <div class="avatar-xs align-self-center me-3">
+                                                <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                    K
+                                                </span>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="text-truncate font-size-14 mb-1">Keith Gonzales</h5>
+                                                <p class="text-truncate mb-0">This theme is awesome!</p>
+                                            </div>
+                                            <div class="font-size-11">24 min</div>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="javascript: void(0);">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <i class="mdi mdi-circle text-warning font-size-10"></i>
+                                            </div>
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <img src="~/assets/images/users/avatar-4.jpg" class="rounded-circle avatar-xs" alt="">
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="text-truncate font-size-14 mb-1">Jose Vickery</h5>
+                                                <p class="text-truncate mb-0">Nice to meet you</p>
+                                            </div>
+                                            <div class="font-size-11">1 hr</div>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="javascript: void(0);">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <i class="mdi mdi-circle font-size-10"></i>
+                                            </div>
+
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <div class="avatar-xs">
+                                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                        M
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="text-truncate font-size-14 mb-1">Mitchel Givens</h5>
+                                                <p class="text-truncate mb-0">Hey! there I'm available</p>
+                                            </div>
+                                            <div class="font-size-11">3 hrs</div>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="javascript: void(0);">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <i class="mdi mdi-circle text-success font-size-10"></i>
+                                            </div>
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <img src="~/assets/images/users/avatar-6.jpg" class="rounded-circle avatar-xs" alt="">
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="text-truncate font-size-14 mb-1">Stephen Hadley</h5>
+                                                <p class="text-truncate mb-0">I've finished it! See you so</p>
+                                            </div>
+                                            <div class="font-size-11">5hrs</div>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="javascript: void(0);">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <i class="mdi mdi-circle text-success font-size-10"></i>
+                                            </div>
+                                            <div class="flex-shrink-0 align-self-center me-3">
+                                                <div class="avatar-xs">
+                                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                        K
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="text-truncate font-size-14 mb-1">Keith Gonzales</h5>
+                                                <p class="text-truncate mb-0">This theme is awesome!</p>
+                                            </div>
+                                            <div class="font-size-11">24 min</div>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="groups">
+                        <h5 class="font-size-14 mb-3">Groups</h5>
+                        <ul class="list-unstyled chat-list" data-simplebar style="max-height: 410px;">
+                            <li>
+                                <a href="javascript: void(0);">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar-xs">
+                                                <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                    G
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <h5 class="font-size-14 mb-0">General</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="javascript: void(0);">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar-xs">
+                                                <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                    R
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <h5 class="font-size-14 mb-0">Reporting</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="javascript: void(0);">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar-xs">
+                                                <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                    M
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <h5 class="font-size-14 mb-0">Meeting</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="javascript: void(0);">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar-xs">
+                                                <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                    A
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <h5 class="font-size-14 mb-0">Project A</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="javascript: void(0);">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar-xs">
+                                                <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                    B
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <h5 class="font-size-14 mb-0">Project B</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-pane" id="contacts">
+                        <h5 class="font-size-14 mb-3">Contacts</h5>
+
+                        <div data-simplebar style="max-height: 410px;">
+                            <div>
+                                <div class="avatar-xs mb-3">
+                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                        A
+                                    </span>
+                                </div>
+
+                                <ul class="list-unstyled chat-list">
+                                    <li>
+                                        <a href="javascript: void(0);">
+                                            <h5 class="font-size-14 mb-0">Adam Miller</h5>
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a href="javascript: void(0);">
+                                            <h5 class="font-size-14 mb-0">Alfonso Fisher</h5>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="avatar-xs mb-3">
+                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                        B
+                                    </span>
+                                </div>
+
+                                <ul class="list-unstyled chat-list">
+                                    <li>
+                                        <a href="javascript: void(0);">
+                                            <h5 class="font-size-14 mb-0">Bonnie Harney</h5>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="avatar-xs mb-3">
+                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                        C
+                                    </span>
+                                </div>
+
+                                <ul class="list-unstyled chat-list">
+                                    <li>
+                                        <a href="javascript: void(0);">
+                                            <h5 class="font-size-14 mb-0">Charles Brown</h5>
+                                        </a>
+                                        <a href="javascript: void(0);">
+                                            <h5 class="font-size-14 mb-0">Carmella Jones</h5>
+                                        </a>
+                                        <a href="javascript: void(0);">
+                                            <h5 class="font-size-14 mb-0">Carrie Williams</h5>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="avatar-xs mb-3">
+                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                        D
+                                    </span>
+                                </div>
+
+                                <ul class="list-unstyled chat-list">
+                                    <li>
+                                        <a href="javascript: void(0);">
+                                            <h5 class="font-size-14 mb-0">Dolores Minter</h5>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+    <div class="w-100 user-chat">
+        <div class="card">
+            <div class="card-header d-flex justify-between">
+                <div>
+                    <select id="room" class="form-select">
+                        <option value="general">#general</option>
+                        <option value="it">#it</option>
+                        <option value="security">#security</option>
+                    </select>
+                </div>
+                <div>
+                    <span id="typing" class="text-muted" style="display:none;">User is typing...</span>
+                </div>
+            </div>
+            <div id="log" class="card-body" style="height:380px; overflow:auto;"></div>
+            <div class="card-footer d-flex gap-2">
+                <input id="user" class="form-control" placeholder="Your name" />
+                <input id="msg" class="form-control" placeholder="Type a message..." />
+                <button id="send" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+      @*   <div class="card">
+            <div class="p-4 border-bottom ">
+                <div class="row">
+                    <div class="col-md-4 col-9">
+                        <h5 class="font-size-15 mb-1">Steven Franklin</h5>
+                        <p class="text-muted mb-0"><i class="mdi mdi-circle text-success align-middle me-1"></i> Active now</p>
+                    </div>
+                    <div class="col-md-8 col-3">
+                        <ul class="list-inline user-chat-nav text-end mb-0">
+                            <li class="list-inline-item d-none d-sm-inline-block">
+                                <div class="dropdown">
+                                    <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-search-alt-2"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end dropdown-menu-md">
+                                        <form class="p-3">
+                                            <div class="form-group m-0">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" placeholder="Search ..." aria-label="Recipient's username">
+
+                                                    <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i></button>
+
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="list-inline-item  d-none d-sm-inline-block">
+                                <div class="dropdown">
+                                    <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-cog"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">View Profile</a>
+                                        <a class="dropdown-item" href="#">Clear chat</a>
+                                        <a class="dropdown-item" href="#">Muted</a>
+                                        <a class="dropdown-item" href="#">Delete</a>
+                                    </div>
+                                </div>
+                            </li>
+
+                            <li class="list-inline-item">
+                                <div class="dropdown">
+                                    <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-dots-horizontal-rounded"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">Action</a>
+                                        <a class="dropdown-item" href="#">Another action</a>
+                                        <a class="dropdown-item" href="#">Something else</a>
+                                    </div>
+                                </div>
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+
+            <div>
+                <div class="chat-conversation p-3">
+                    <ul class="list-unstyled mb-0" data-simplebar style="max-height: 486px;">
+                        <li>
+                            <div class="chat-day-title">
+                                <span class="title">Today</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="conversation-list">
+                                <div class="dropdown">
+
+                                    <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#">Copy</a>
+                                        <a class="dropdown-item" href="#">Save</a>
+                                        <a class="dropdown-item" href="#">Forward</a>
+                                        <a class="dropdown-item" href="#">Delete</a>
+                                    </div>
+                                </div>
+                                <div class="ctext-wrap">
+                                    <div class="conversation-name">Steven Franklin</div>
+                                    <p>
+                                        Hello!
+                                    </p>
+                                    <p class="chat-time mb-0"><i class="bx bx-time-five align-middle me-1"></i> 10:00</p>
+                                </div>
+
+                            </div>
+                        </li>
+
+                        <li class="right">
+                            <div class="conversation-list">
+                                <div class="dropdown">
+
+                                    <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#">Copy</a>
+                                        <a class="dropdown-item" href="#">Save</a>
+                                        <a class="dropdown-item" href="#">Forward</a>
+                                        <a class="dropdown-item" href="#">Delete</a>
+                                    </div>
+                                </div>
+                                <div class="ctext-wrap">
+                                    <div class="conversation-name">Henry Wells</div>
+                                    <p>
+                                        Hi, How are you? What about our next meeting?
+                                    </p>
+
+                                    <p class="chat-time mb-0"><i class="bx bx-time-five align-middle me-1"></i> 10:02</p>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li>
+                            <div class="conversation-list">
+                                <div class="dropdown">
+
+                                    <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#">Copy</a>
+                                        <a class="dropdown-item" href="#">Save</a>
+                                        <a class="dropdown-item" href="#">Forward</a>
+                                        <a class="dropdown-item" href="#">Delete</a>
+                                    </div>
+                                </div>
+                                <div class="ctext-wrap">
+                                    <div class="conversation-name">Steven Franklin</div>
+                                    <p>
+                                        Yeah everything is fine
+                                    </p>
+
+                                    <p class="chat-time mb-0"><i class="bx bx-time-five align-middle me-1"></i> 10:06</p>
+                                </div>
+
+                            </div>
+                        </li>
+
+                        <li class="last-chat">
+                            <div class="conversation-list">
+                                <div class="dropdown">
+
+                                    <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#">Copy</a>
+                                        <a class="dropdown-item" href="#">Save</a>
+                                        <a class="dropdown-item" href="#">Forward</a>
+                                        <a class="dropdown-item" href="#">Delete</a>
+                                    </div>
+                                </div>
+                                <div class="ctext-wrap">
+                                    <div class="conversation-name">Steven Franklin</div>
+                                    <p>& Next meeting tomorrow 10.00AM</p>
+                                    <p class="chat-time mb-0"><i class="bx bx-time-five align-middle me-1"></i> 10:06</p>
+                                </div>
+
+                            </div>
+                        </li>
+
+                        <li class=" right">
+                            <div class="conversation-list">
+                                <div class="dropdown">
+
+                                    <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#">Copy</a>
+                                        <a class="dropdown-item" href="#">Save</a>
+                                        <a class="dropdown-item" href="#">Forward</a>
+                                        <a class="dropdown-item" href="#">Delete</a>
+                                    </div>
+                                </div>
+                                <div class="ctext-wrap">
+                                    <div class="conversation-name">Henry Wells</div>
+                                    <p>
+                                        Wow that's great
+                                    </p>
+
+                                    <p class="chat-time mb-0"><i class="bx bx-time-five align-middle me-1"></i> 10:07</p>
+                                </div>
+                            </div>
+                        </li>
+
+
+                    </ul>
+                </div>
+                <div class="p-3 chat-input-section">
+                    <div class="row">
+                        <div class="col">
+                            <div class="position-relative">
+                                <input type="text" class="form-control chat-input" placeholder="Enter Message...">
+                                <div class="chat-input-links" id="tooltip-container">
+                                    <ul class="list-inline mb-0">
+                                        <li class="list-inline-item"><a href="javascript: void(0);" title="Emoji"><i class="mdi mdi-emoticon-happy-outline"></i></a></li>
+                                        <li class="list-inline-item"><a href="javascript: void(0);" title="Images"><i class="mdi mdi-file-image-outline"></i></a></li>
+                                        <li class="list-inline-item"><a href="javascript: void(0);" title="Add Files"><i class="mdi mdi-file-document-outline"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary btn-rounded chat-send w-md waves-effect waves-light"><span class="d-none d-sm-inline-block me-2">Send</span> <i class="mdi mdi-send"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> *@
+  @*   </div>
+
+</div> *@
+<!-- end row -->
+<!-- end row -->
+@* @section scripts{
+    <script src="~/assets/js/app.js"></script>
+}
+
+
+
+ *@ 

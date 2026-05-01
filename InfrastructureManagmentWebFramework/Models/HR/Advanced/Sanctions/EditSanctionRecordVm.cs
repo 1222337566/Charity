@@ -1,0 +1,1 @@
+namespace InfrastructureManagmentWebFramework.Models.HR.Advanced.Sanctions { public class EditSanctionRecordVm : CreateSanctionRecordVm { } }

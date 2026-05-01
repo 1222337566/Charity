@@ -1,0 +1,162 @@
+@model Skote.Controllers.ProjectTeamMemberFormVm
+@{ ViewData["Title"] = ViewBag.Title ?? "إضافة عضو فريق"; }
+
+<style>
+:root{--teal:#0e6f73}
+.tm-form{background:#fff;border-radius:16px;border:.5px solid rgba(14,111,115,.12);box-shadow:0 2px 12px rgba(14,111,115,.06);padding:24px}
+.sec-head{font-size:.78rem;font-weight:700;color:var(--teal);border-bottom:1px solid rgba(14,111,115,.1);padding-bottom:6px;margin-bottom:14px}
+.type-btn{padding:12px 24px;border-radius:12px;font-weight:700;font-size:.88rem;cursor:pointer;border:2px solid rgba(14,111,115,.2);background:#fff;transition:all .2s}
+.type-btn.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+</style>
+
+<div class="container-fluid">
+    <div class="tm-form" style="max-width:780px;margin:0 auto">
+        <h5 class="fw-bold mb-4" style="color:#1e3a5f">
+            <i class="bx bx-user-plus me-2" style="color:var(--teal)"></i>@ViewData["Title"]
+        </h5>
+
+        <form asp-action="@(Model.Id.HasValue ? "Edit" : "Create")"
+              method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id"        type="hidden" />
+            <input asp-for="ProjectId" type="hidden" />
+
+            @* ── نوع العضو ── *@
+            <div class="mb-4">
+                <div class="sec-head">نوع العضو</div>
+                <div class="d-flex gap-3">
+                    <button type="button" class="type-btn @(Model.MemberType=="Volunteer"?"active":"")"
+                            onclick="setType('Volunteer')">
+                        <i class="bx bx-heart me-1"></i>متطوع
+                    </button>
+                    <button type="button" class="type-btn @(Model.MemberType=="Employee"?"active":"")"
+                            onclick="setType('Employee')">
+                        <i class="bx bx-briefcase me-1"></i>موظف
+                    </button>
+                </div>
+                <input asp-for="MemberType" type="hidden" id="memberTypeInput" />
+            </div>
+
+            @* ── اختيار الشخص ── *@
+            <div class="mb-3" id="volunteerSection" @(Model.MemberType!="Volunteer"?"style=display:none":"")>
+                <label asp-for="VolunteerId" class="form-label fw-semibold">المتطوع *</label>
+                <select asp-for="VolunteerId" asp-items="Model.Volunteers" class="form-select select2">
+                    <option value="">-- اختر المتطوع --</option>
+                </select>
+            </div>
+            <div class="mb-3" id="employeeSection" @(Model.MemberType!="Employee"?"style=display:none":"")>
+                <label asp-for="EmployeeId" class="form-label fw-semibold">الموظف *</label>
+                <select asp-for="EmployeeId" asp-items="Model.Employees" class="form-select select2">
+                    <option value="">-- اختر الموظف --</option>
+                </select>
+            </div>
+
+            <div class="row g-3 mb-3">
+                @* الدور *@
+                <div class="col-md-6">
+                    <label asp-for="RoleTitle" class="form-label fw-semibold">الدور داخل النشاط *</label>
+                    <input asp-for="RoleTitle" class="form-control" placeholder="مثال: منسق / مدرب / مشرف" />
+                    <span asp-validation-for="RoleTitle" class="text-danger small"></span>
+                </div>
+
+                @* حالة المشاركة *@
+                <div class="col-md-6">
+                    <label asp-for="ParticipationStatus" class="form-label fw-semibold">حالة المشاركة</label>
+                    <select asp-for="ParticipationStatus" class="form-select">
+                        <option value="Assigned">مُكلَّف</option>
+                        <option value="Active">نشط</option>
+                        <option value="Completed">مكتمل</option>
+                        <option value="Cancelled">ملغى</option>
+                        <option value="Absent">غائب</option>
+                    </select>
+                </div>
+
+                @* المرحلة *@
+                <div class="col-md-6">
+                    <label asp-for="PhaseId" class="form-label fw-semibold">المرحلة</label>
+                    <select asp-for="PhaseId" asp-items="Model.Phases" class="form-select"
+                            onchange="loadActivities(this.value)">
+                        <option value="">-- اختر المرحلة --</option>
+                    </select>
+                </div>
+
+                @* النشاط *@
+                <div class="col-md-6">
+                    <label asp-for="ActivityId" class="form-label fw-semibold">النشاط المرتبط</label>
+                    <select asp-for="ActivityId" class="form-select" id="activitySelect">
+                        <option value="">-- اختر النشاط --</option>
+                    </select>
+                    <small class="text-muted">يُحدَّث عند اختيار المرحلة</small>
+                </div>
+
+                @* التواريخ *@
+                <div class="col-md-6">
+                    <label asp-for="StartDate" class="form-label fw-semibold">تاريخ البداية *</label>
+                    <input asp-for="StartDate" type="date" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EndDate" class="form-label fw-semibold">تاريخ الانتهاء</label>
+                    <input asp-for="EndDate" type="date" class="form-control" />
+                </div>
+
+                @* الساعات والأيام *@
+                <div class="col-md-3">
+                    <label asp-for="PlannedHours" class="form-label fw-semibold">ساعات مخططة</label>
+                    <input asp-for="PlannedHours" type="number" min="0" step="0.5" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ActualHours" class="form-label fw-semibold">ساعات فعلية</label>
+                    <input asp-for="ActualHours" type="number" min="0" step="0.5" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="PlannedDays" class="form-label fw-semibold">أيام مخططة</label>
+                    <input asp-for="PlannedDays" type="number" min="0" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ActualDays" class="form-label fw-semibold">أيام فعلية</label>
+                    <input asp-for="ActualDays" type="number" min="0" class="form-control" />
+                </div>
+
+                @* ملاحظات *@
+                <div class="col-12">
+                    <label asp-for="Notes" class="form-label fw-semibold">ملاحظات</label>
+                    <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                </div>
+
+                @* مرفقات *@
+                <div class="col-12">
+                    <label class="form-label fw-semibold">مرفقات</label>
+                    <input asp-for="NewAttachments" type="file" class="form-control"
+                           multiple accept="image/*,.pdf" />
+                    <small class="text-muted">صور أو PDF لإثبات التكليف</small>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 border-top pt-3">
+                <button type="submit" class="btn" style="background:var(--teal);color:#fff;border-radius:10px">
+                    <i class="bx bx-save me-1"></i>حفظ
+                </button>
+                <a asp-action="Index" asp-route-projectId="@Model.ProjectId"
+                   class="btn btn-light" style="border-radius:10px">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function setType(t) {
+    document.getElementById('memberTypeInput').value = t;
+    document.getElementById('volunteerSection').style.display = t==='Volunteer' ? '' : 'none';
+    document.getElementById('employeeSection').style.display  = t==='Employee'  ? '' : 'none';
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+async function loadActivities(phaseId) {
+    const sel = document.getElementById('activitySelect');
+    if (!phaseId) { sel.innerHTML='<option value="">-- اختر النشاط --</option>'; return; }
+    const res  = await fetch(`/ProjectTeamMembers/GetPhaseActivities?phaseId=${phaseId}`);
+    const acts = await res.json();
+    sel.innerHTML = '<option value="">-- اختر النشاط --</option>';
+    acts.forEach(a => { const o=document.createElement('option'); o.value=a.value; o.textContent=a.text; sel.appendChild(o); });
+}
+</script>

@@ -1,0 +1,60 @@
+@model InfrastrfuctureManagmentCore.Domains.Charity.Beneficiaries.BeneficiaryAidDisbursement
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "تنفيذ الصرف من الخزينة";
+    var cashBankAccounts = ViewBag.CashBankAccounts as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="card">
+        <div class="card-header">
+            <h5>تنفيذ الصرف من الخزينة</h5>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning">@TempData["Warning"]</div>
+            }
+
+            <p>
+                <strong>المبلغ:</strong>
+                @Model.Amount?.ToString("N2")
+            </p>
+
+            <p>
+                <strong>الحالة:</strong>
+                @Model.ApprovalStatus / @Model.ExecutionStatus
+            </p>
+
+            <form asp-action="ExecuteFromTreasury" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="beneficiaryId" value="@Model.BeneficiaryId" />
+
+                <div class="mb-3">
+                    <label class="form-label">حساب الخزينة / البنك المنفذ للصرف</label>
+                    <select name="financialAccountId" class="form-select" required>
+                        <option value="">-- اختر حساب الخزينة أو البنك --</option>
+                        @foreach (var account in cashBankAccounts)
+                        {
+                            <option value="@account.Value" selected="@account.Selected">@account.Text</option>
+                        }
+                    </select>
+                    <div class="form-text">سيتم استخدام هذا الحساب في القيد المحاسبي للصرف، مع التحقق من الرصيد إذا لم يسمح الحساب بالرصيد السالب.</div>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    تأكيد التنفيذ من الخزينة
+                </button>
+
+                <a asp-action="Index"
+                   asp-route-beneficiaryId="@Model.BeneficiaryId"
+                   class="btn btn-secondary">
+                    رجوع
+                </a>
+            </form>
+        </div>
+    </div>
+</div>

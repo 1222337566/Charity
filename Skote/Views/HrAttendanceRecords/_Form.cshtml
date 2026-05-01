@@ -1,0 +1,11 @@
+@model InfrastructureManagmentWebFramework.Models.HR.Attendance.CreateAttendanceRecordVm
+<div class="row g-3">
+    <div class="col-md-4"><label asp-for="EmployeeId" class="form-label"></label><select asp-for="EmployeeId" asp-items="Model.Employees" class="form-select"></select></div>
+    <div class="col-md-2"><label asp-for="AttendanceDate" class="form-label"></label><input asp-for="AttendanceDate" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="CheckInTime" class="form-label"></label><input asp-for="CheckInTime" type="time" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="CheckOutTime" class="form-label"></label><input asp-for="CheckOutTime" type="time" class="form-control" /></div>
+    <div class="col-md-2"><label asp-for="ShiftId" class="form-label"></label><select asp-for="ShiftId" asp-items="Model.Shifts" class="form-select"><option value="">بدون</option></select></div>
+    <div class="col-md-3"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Model.Statuses" class="form-select"></select></div>
+    <div class="col-md-3"><label asp-for="Source" class="form-label"></label><select asp-for="Source" asp-items="Model.Sources" class="form-select"></select></div>
+    <div class="col-12"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="3"></textarea></div>
+</div>

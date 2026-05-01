@@ -1,0 +1,579 @@
+@model InfrastrfuctureManagmentCore.Domains.Charity.ProjectProposals.ProjectProposal
+@{ ViewData["Title"] = "تفاصيل مقترح مشروع"; }
+
+<style>
+.det-section { background:#fff; border:1px solid #e8ecef; border-radius:10px; padding:1.25rem 1.5rem; margin-bottom:1.1rem; }
+.det-section .sec-title { font-size:.82rem; font-weight:700; color:#1e3a5f; display:flex; align-items:center; gap:6px; margin-bottom:1rem; padding-bottom:.5rem; border-bottom:2px solid #e8f4f0; }
+.det-label { font-size:.75rem; color:#8a9bb0; font-weight:600; margin-bottom:2px; }
+.det-value { font-size:.85rem; color:#1e2c3a; }
+.det-value.empty { color:#bbb; font-style:italic; }
+.det-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+.det-table th { background:#f0f4f8; color:#4a6080; font-weight:600; padding:7px 10px; border:1px solid #dde3ea; text-align:right; white-space:nowrap; }
+.det-table td { padding:7px 10px; border:1px solid #eaeef2; vertical-align:top; color:#2a3a4a; }
+.det-table tbody tr:hover td { background:#f8fbff; }
+.month-chip { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:4px; font-size:.65rem; font-weight:600; margin:1px; }
+.month-chip.active { background:#0f6e56; color:#fff; }
+.month-chip.inactive { background:#f0f2f4; color:#aaa; border:1px solid #dde; }
+.phase-block { border:1px solid #dde6ee; border-radius:8px; overflow:hidden; margin-bottom:.8rem; }
+.phase-header { background:#f0f6f4; padding:.6rem 1rem; display:flex; align-items:center; gap:1rem; }
+.badge-status { font-size:.7rem; padding:3px 8px; border-radius:20px; font-weight:600; }
+.info-box { background:#f8fafc; border-radius:6px; padding:.75rem 1rem; font-size:.83rem; line-height:1.7; color:#2a3a4a; white-space:pre-wrap; }
+</style>
+
+<div class="container-fluid">
+
+    @** رأس الصفحة  *@
+    <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="mb-1 fw-bold" style="color:#1e3a5f">@Model.Title</h4>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small">رقم المقترح: <strong>@Model.ProposalNumber</strong></span>
+                <span class="text-muted small">|</span>
+                <span class="badge-status @(Model.Status=="Draft"?"bg-secondary":Model.Status=="ConvertedToProject"?"bg-success":"bg-primary") text-white">
+                    @(Model.Status switch { "Draft"=>"مسودة","ConvertedToProject"=>"تم التحويل لمشروع","Submitted"=>"مقدَّم","Approved"=>"معتمد",_=>Model.Status })
+                </span>
+                @if (Model.CharityProjectId.HasValue)
+                {
+                    <span class="text-success small"><i class="bx bx-check-double"></i> مرتبط بمشروع</span>
+                }
+                @if (Model.UpdatedAtUtc.HasValue)
+                {
+                    <span class="text-muted small">آخر تعديل: @Model.UpdatedAtUtc.Value.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</span>
+                }
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            @if (Model.Status is "Draft" or "Returned")
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                    <i class="bx bx-edit me-1"></i>تعديل
+                </a>
+                <form asp-action="SubmitForReview" asp-route-id="@Model.Id" method="post" style="display:inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-warning"
+                            onclick="return confirm('هل تريد إرسال المقترح لمسار الموافقة؟')">
+                        <i class="bx bx-send me-1"></i>إرسال للمراجعة
+                    </button>
+                </form>
+            }
+            @if (!Model.CharityProjectId.HasValue && Model.Status == "Approved")
+            {
+                <form asp-action="ConvertToProject" asp-route-id="@Model.Id" method="post" style="display:inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-success"
+                            onclick="return confirm('هل تريد تحويل المقترح إلى مشروع؟')">
+                        <i class="bx bx-transfer me-1"></i>تحويل إلى مشروع
+                    </button>
+                </form>
+            }
+            <a asp-action="Index" class="btn btn-sm btn-light">رجوع</a>
+        </div>
+    </div>
+
+    @** ════ 1. البيانات الأساسية ════  *@
+    <div class="det-section">
+        <div class="sec-title"><i class="bx bx-info-circle"></i> البيانات الأساسية</div>
+        <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="det-label">الجهة المانحة</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.DonorName)?"empty":"")">@(Model.DonorName ?? "—")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">المنظمة المقدِّمة</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.OrganizationName)?"empty":"")">@(Model.OrganizationName ?? "—")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">موقع المشروع</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.ProjectLocation)?"empty":"")">@(Model.ProjectLocation ?? "—")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">تاريخ التقديم</div><div class="det-value">@Model.SubmissionDate.ToString("yyyy/MM/dd")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">مدة التنفيذ</div><div class="det-value">@Model.DurationMonths شهر</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">الميزانية المطلوبة</div><div class="det-value">@Model.RequestedBudget.ToString("N2") @Model.Currency</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">رقم التسجيل</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.RegistrationNumber)?"empty":"")">@(Model.RegistrationNumber ?? "—") @(Model.RegistrationYear.HasValue ? $"({Model.RegistrationYear})" : "")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">العنوان</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.Address)?"empty":"")">@(Model.Address ?? "—")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">جهة الاتصال</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.ContactPerson)?"empty":"")">@(Model.ContactPerson ?? "—")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">الهاتف</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.ContactPhone)?"empty":"")">@(Model.ContactPhone ?? "—")</div></div>
+            <div class="col-6 col-md-3"><div class="det-label">البريد الإلكتروني</div><div class="det-value @(string.IsNullOrWhiteSpace(Model.ContactEmail)?"empty":"")">@(Model.ContactEmail ?? "—")</div></div>
+            <div class="col-6 col-md-3">
+                <div class="det-label">الموظفون / المتطوعون / سنوات الخبرة</div>
+                <div class="det-value">@(Model.EmployeesCount?.ToString() ?? "—") / @(Model.VolunteersCount?.ToString() ?? "—") / @(Model.YearsOfExperience?.ToString() ?? "—")</div>
+            </div>
+        </div>
+    </div>
+
+    @** ════ 2. نبذة عن المنظمة ════  *@
+    @if (!string.IsNullOrWhiteSpace(Model.Vision) || !string.IsNullOrWhiteSpace(Model.Mission) || !string.IsNullOrWhiteSpace(Model.ExpertiseSummary))
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-building-house"></i> نبذة عن المنظمة</div>
+            <div class="row g-3">
+                @if (!string.IsNullOrWhiteSpace(Model.Vision))
+                {
+                    <div class="col-md-6"><div class="det-label">الرؤية</div><div class="info-box">@Model.Vision</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Mission))
+                {
+                    <div class="col-md-6"><div class="det-label">الرسالة</div><div class="info-box">@Model.Mission</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ExpertiseSummary))
+                {
+                    <div class="col-12"><div class="det-label">ملخص الخبرات</div><div class="info-box">@Model.ExpertiseSummary</div></div>
+                }
+            </div>
+        </div>
+    }
+
+    @** ════ 3. وصف المشروع ════  *@
+    @if (!string.IsNullOrWhiteSpace(Model.ExecutiveSummary) || !string.IsNullOrWhiteSpace(Model.GeneralGoal) ||
+         !string.IsNullOrWhiteSpace(Model.ProblemBackground) || !string.IsNullOrWhiteSpace(Model.ProblemAnalysis) ||
+         !string.IsNullOrWhiteSpace(Model.NationalAlignment) || !string.IsNullOrWhiteSpace(Model.ProposedSolution) ||
+         !string.IsNullOrWhiteSpace(Model.ProposedApproach))
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-file-blank"></i> وصف المشروع</div>
+            <div class="row g-3">
+                @if (!string.IsNullOrWhiteSpace(Model.ExecutiveSummary))
+                {
+                    <div class="col-12"><div class="det-label">الملخص التنفيذي</div><div class="info-box">@Model.ExecutiveSummary</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.GeneralGoal))
+                {
+                    <div class="col-12"><div class="det-label">الهدف العام للمشروع</div><div class="info-box">@Model.GeneralGoal</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ProblemBackground))
+                {
+                    <div class="col-md-6"><div class="det-label">خلفية المشكلة</div><div class="info-box">@Model.ProblemBackground</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ProblemAnalysis))
+                {
+                    <div class="col-md-6"><div class="det-label">تحليل المشكلة</div><div class="info-box">@Model.ProblemAnalysis</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ProposedSolution))
+                {
+                    <div class="col-md-6"><div class="det-label">الحل المقترح / المنهجية</div><div class="info-box">@Model.ProposedSolution</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ProposedApproach))
+                {
+                    <div class="col-md-6"><div class="det-label">نهج التدخل</div><div class="info-box">@Model.ProposedApproach</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.NationalAlignment))
+                {
+                    <div class="col-12"><div class="det-label">الارتباط بالأولويات الوطنية</div><div class="info-box">@Model.NationalAlignment</div></div>
+                }
+            </div>
+        </div>
+    }
+
+    @** ════ 4. الفئات المستهدفة ════  *@
+    @if (Model.TargetGroups.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-group"></i> الفئات المستهدفة</div>
+            <div class="table-responsive">
+                <table class="det-table">
+                    <thead><tr>
+                        <th>الفئة</th><th>العدد المستهدف</th><th>الفئة العمرية</th>
+                        <th>ملاحظات النوع</th><th>معايير الاختيار</th><th>وصف الاستفادة</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var g in Model.TargetGroups)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@g.CategoryName</td>
+                            <td class="text-center">@g.TargetCount</td>
+                            <td>@g.AgeRange</td>
+                            <td>@g.GenderNotes</td>
+                            <td>@g.SelectionCriteria</td>
+                            <td>@g.BenefitDescription</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-2 text-muted small">
+                إجمالي المستهدفين: <strong>@Model.TargetGroups.Where(x => x.TargetCount.HasValue).Sum(x => x.TargetCount)</strong>
+            </div>
+        </div>
+    }
+
+    @** ════ 5. الأهداف ════  *@
+    @if (Model.Objectives.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-target-lock"></i> الأهداف الفرعية والنتائج</div>
+            <div class="table-responsive">
+                <table class="det-table">
+                    <thead><tr><th style="width:100px">النوع</th><th>العنوان</th><th>الوصف / المؤشر</th></tr></thead>
+                    <tbody>
+                    @foreach (var o in Model.Objectives)
+                    {
+                        <tr>
+                            <td>
+                                @switch (o.ObjectiveType)
+                                {
+                                    case "General":  <span class="badge bg-primary" style="font-size:.7rem">هدف عام</span> break;
+                                    case "Specific": <span class="badge bg-info text-dark" style="font-size:.7rem">هدف فرعي</span> break;
+                                    case "Result":   <span class="badge bg-success" style="font-size:.7rem">نتيجة</span> break;
+                                    default:         <span class="badge bg-secondary" style="font-size:.7rem">@o.ObjectiveType</span> break;
+                                }
+                            </td>
+                            <td class="fw-semibold">@o.Title</td>
+                            <td class="text-muted">@o.Description</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @** ════ 6. الأنشطة ════  *@
+    @if (Model.Activities.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-list-check"></i> الأنشطة</div>
+            <div class="table-responsive">
+                <table class="det-table">
+                    <thead><tr>
+                        <th>#</th>
+                        <th>عنوان النشاط</th>
+                        <th>الفئة المستهدفة</th>
+                        <th>الكمية</th>
+                        <th>الوحدة</th>
+                        <th>عدد الأنشطة</th>
+                        <th>المدة (أيام)</th>
+                        <th>ساعات/يوم</th>
+                        <th>مؤشر الأداء</th>
+                        <th>وسائل التحقق</th>
+                        <th>المسؤول</th>
+                        <th>الأولوية</th>
+                    </tr></thead>
+                    <tbody>
+                    @{ int actN = 1; }
+                    @foreach (var a in Model.Activities.OrderBy(x => x.SortOrder))
+                    {
+                        <tr>
+                            <td class="text-center text-muted fw-bold">@(actN++)</td>
+                            <td class="fw-semibold">@a.Title</td>
+                            <td>@a.TargetGroup</td>
+                            <td class="text-center">@a.PlannedCount</td>
+                            <td>@a.QuantityUnit</td>
+                            <td class="text-center">@a.ActivityCount</td>
+                            <td class="text-center">@a.PlannedDurationDays</td>
+                            <td class="text-center">@a.PlannedHoursPerDay</td>
+                            <td class="text-muted">@a.Description</td>
+                            <td class="text-muted">@a.NeededResources</td>
+                            <td>@(a.Responsible ?? a.ResponsibleRole)</td>
+                            <td>
+                                @{
+                                    var (pClass, pLabel) = a.Priority switch
+                                    {
+                                        "Low"      => ("bg-success",           "منخفض"),
+                                        "High"     => ("bg-warning text-dark", "عالي"),
+                                        "Critical" => ("bg-danger",            "حرج"),
+                                        _          => ("bg-secondary",         "متوسط")
+                                    };
+                                }
+                                <span class="badge @pClass" style="font-size:.7rem">@pLabel</span>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @** ════ 7. خطة العمل الإرشادية ════  *@
+    @if (Model.WorkPlanItems.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-calendar-check"></i> خطة العمل الإرشادية</div>
+            <div class="table-responsive">
+                <table class="det-table">
+                    <thead><tr>
+                        <th>الهدف الفرعي</th><th>النشاط</th><th>المسؤول</th><th>الموارد</th>
+                        <th style="min-width:280px">الأشهر (@Model.DurationMonths شهر)</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var w in Model.WorkPlanItems)
+                    {
+                        <tr>
+                            <td>@w.GoalTitle</td>
+                            <td class="fw-semibold">@w.ActivityTitle</td>
+                            <td>@w.Responsible</td>
+                            <td>@w.Resources</td>
+                            <td>
+                                <div style="display:flex;flex-wrap:wrap;gap:2px">
+                                @for (int m = 1; m <= Model.DurationMonths; m++)
+                                {
+                                    bool on = w.StartMonth.HasValue && w.EndMonth.HasValue && m >= w.StartMonth && m <= w.EndMonth;
+                                    <span class="month-chip @(on ? "active" : "inactive")">@m</span>
+                                }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @** ════ 8. مراحل المشروع وتسكين الأنشطة ════  *@
+    @if (Model.Phases.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-git-branch"></i> مراحل المشروع وتسكين الأنشطة</div>
+            @foreach (var ph in Model.Phases.OrderBy(p => p.SortOrder))
+            {
+                <div class="phase-block">
+                    <div class="phase-header">
+                        <span class="fw-bold" style="color:#0f6e56;font-size:.9rem">@ph.Name</span>
+                        <span class="text-muted small"><i class="bx bx-calendar me-1"></i>الشهر @ph.StartMonth ← @ph.EndMonth</span>
+                        @if (!string.IsNullOrWhiteSpace(ph.Description))
+                        {
+                            <span class="text-muted small ms-auto">@ph.Description</span>
+                        }
+                    </div>
+                    @if (ph.Activities.Any())
+                    {
+                        <div style="padding:.75rem 1rem">
+                            <table class="det-table">
+                                <thead><tr>
+                                    <th>النشاط</th>
+                                    <th style="width:140px">نسبة المساهمة</th>
+                                    <th style="width:90px">الكمية</th>
+                                    <th style="width:100px">المدة (أيام)</th>
+                                </tr></thead>
+                                <tbody>
+                                @foreach (var pa in ph.Activities.OrderBy(a => a.SortOrder))
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@pa.ActivityTitle</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress flex-grow-1" style="height:6px;border-radius:3px">
+                                                    <div class="progress-bar bg-success" style="width:@(pa.ContributionPercent)%"></div>
+                                                </div>
+                                                <span class="small fw-bold" style="color:#0f6e56;min-width:32px">@pa.ContributionPercent%</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">@pa.PlannedQuantity</td>
+                                        <td class="text-center">@pa.DurationDays</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="px-3 py-2 text-muted small">لا توجد أنشطة مسكّنة في هذه المرحلة</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @** ════ 9. خطة الرصد والتقييم ════  *@
+    @if (Model.MonitoringIndicators.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-bar-chart"></i> خطة الرصد والتقييم</div>
+            <div class="table-responsive">
+                <table class="det-table">
+                    <thead><tr>
+                        <th>النشاط</th><th>المؤشر</th><th>القيمة المستهدفة</th>
+                        <th>وسائل التحقق</th><th>دورية التقرير</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var mi in Model.MonitoringIndicators)
+                    {
+                        <tr>
+                            <td>@mi.ActivityTitle</td>
+                            <td class="fw-semibold">@mi.Indicator</td>
+                            <td class="text-center">@mi.TargetValue</td>
+                            <td class="text-muted">@mi.VerificationMethod</td>
+                            <td>@mi.ReportingFrequency</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @** ════ 10. الخبرات في مشاريع مماثلة ════  *@
+    @if (Model.PastExperiences.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-award"></i> الخبرات في مشاريع مماثلة</div>
+            <div class="table-responsive">
+                <table class="det-table">
+                    <thead><tr>
+                        <th>اسم المشروع</th><th>الجهة المانحة</th><th>الموقع</th>
+                        <th>فترة التنفيذ</th><th>الميزانية</th><th>الفئة المستهدفة</th><th>النتائج المحققة</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var pe in Model.PastExperiences)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@pe.ProjectName</td>
+                            <td>@pe.Donor</td>
+                            <td>@pe.Location</td>
+                            <td>@pe.DurationText</td>
+                            <td>@(pe.Budget.HasValue ? pe.Budget.Value.ToString("N2") : "—")</td>
+                            <td>@pe.TargetGroup</td>
+                            <td class="text-muted">@pe.ResultAchieved</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @** ════ 11. فريق التنفيذ ════  *@
+    @if (Model.TeamMembers.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-user-check"></i> فريق التنفيذ</div>
+            <div class="table-responsive">
+                <table class="det-table">
+                    <thead><tr><th>الدور / المنصب</th><th>المسؤولية</th><th>النوع</th></tr></thead>
+                    <tbody>
+                    @foreach (var tm in Model.TeamMembers)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@tm.RoleName</td>
+                            <td class="text-muted">@tm.Responsibility</td>
+                            <td>
+                                <span class="badge @(tm.IsInternal ? "bg-primary" : "bg-secondary")" style="font-size:.7rem">
+                                    @(tm.IsInternal ? "داخلي" : "خارجي")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @** ════ 12. معلومات إضافية ════  *@
+    @if (!string.IsNullOrWhiteSpace(Model.ExpectedResults) || !string.IsNullOrWhiteSpace(Model.PreparatoryRequirements) ||
+         !string.IsNullOrWhiteSpace(Model.ImplementationTeamSummary) || !string.IsNullOrWhiteSpace(Model.SustainabilityPlan) ||
+         !string.IsNullOrWhiteSpace(Model.RisksAndExternalFactors) || !string.IsNullOrWhiteSpace(Model.Notes))
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-note"></i> معلومات إضافية</div>
+            <div class="row g-3">
+                @if (!string.IsNullOrWhiteSpace(Model.ExpectedResults))
+                {
+                    <div class="col-md-6"><div class="det-label">النتائج المتوقعة</div><div class="info-box">@Model.ExpectedResults</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.PreparatoryRequirements))
+                {
+                    <div class="col-md-6"><div class="det-label">المتطلبات التمهيدية</div><div class="info-box">@Model.PreparatoryRequirements</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ImplementationTeamSummary))
+                {
+                    <div class="col-md-6"><div class="det-label">ملخص فريق التنفيذ</div><div class="info-box">@Model.ImplementationTeamSummary</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.SustainabilityPlan))
+                {
+                    <div class="col-md-6"><div class="det-label">خطة الاستدامة</div><div class="info-box">@Model.SustainabilityPlan</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.RisksAndExternalFactors))
+                {
+                    <div class="col-12"><div class="det-label">المخاطر والعوامل الخارجية</div><div class="info-box">@Model.RisksAndExternalFactors</div></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                {
+                    <div class="col-12"><div class="det-label">ملاحظات</div><div class="info-box">@Model.Notes</div></div>
+                }
+            </div>
+        </div>
+    }
+
+    @** ════ 13. المرفقات ════  *@
+    @if (Model.Attachments.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-paperclip"></i> المرفقات (@Model.Attachments.Count)</div>
+            <div class="row g-2">
+            @foreach (var att in Model.Attachments)
+            {
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2 border rounded p-2" style="font-size:.82rem">
+                        <i class="bx bx-file text-primary fs-5"></i>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="fw-semibold text-truncate">@att.OriginalFileName</div>
+                            <div class="text-muted" style="font-size:.72rem">@((att.FileSizeBytes/1024.0).ToString("F1")) KB</div>
+                        </div>
+                        <a asp-action="DownloadAttachment" asp-route-id="@Model.Id" asp-route-attachmentId="@att.Id"
+                           class="btn btn-sm btn-light" title="تحميل">
+                            <i class="bx bx-download"></i>
+                        </a>
+                    </div>
+                </div>
+            }
+            </div>
+        </div>
+    }
+
+
+    @** مسار الموافقة  *@
+    @{
+        var wfSteps   = ViewBag.WorkflowSteps   as List<InfrastrfuctureManagmentCore.Domains.Charity.Workflow.WorkflowStep>;
+        var wfCurrent = ViewBag.WorkflowCurrent as InfrastrfuctureManagmentCore.Domains.Charity.Workflow.WorkflowStep;
+    }
+    @if (wfSteps != null && wfSteps.Any())
+    {
+        <div class="det-section">
+            <div class="sec-title"><i class="bx bx-git-merge"></i> مسار الموافقة</div>
+            <div class="d-flex align-items-start gap-0 flex-wrap">
+            @foreach (var step in wfSteps.OrderBy(x => x.StepOrder))
+            {
+                var (bg, icon, txtColor) = step.Status switch {
+                    "Approved"  => ("bg-success",   "bx-check-circle",  "text-white"),
+                    "Rejected"  => ("bg-danger",     "bx-x-circle",      "text-white"),
+                    "Returned"  => ("bg-warning",    "bx-revision",      "text-dark"),
+                    "Pending"   => ("bg-primary",    "bx-time-five",     "text-white"),
+                    "Skipped"   => ("bg-secondary",  "bx-skip-next",     "text-white"),
+                    _           => ("bg-light border","bx-circle",       "text-muted")
+                };
+                var statusAr = step.Status switch {
+                    "Approved" => "معتمد", "Rejected" => "مرفوض",
+                    "Returned" => "مُعاد", "Pending"  => "قيد المراجعة",
+                    "Skipped"  => "متخطى", "Waiting"  => "في الانتظار", _ => step.Status
+                };
+                <div class="text-center" style="min-width:130px;padding:0 8px">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center @bg @txtColor"
+                         style="width:44px;height:44px;font-size:1.2rem">
+                        <i class="bx @icon"></i>
+                    </div>
+                    @if (step.StepOrder < wfSteps.Count)
+                    {
+                        <hr style="border-top:2px dashed #ccc;margin:0;position:relative;top:-22px;z-index:-1" />
+                    }
+                    <div class="small fw-bold mt-1" style="font-size:.78rem">@step.StepName</div>
+                    <div class="small @(step.Status=="Pending"?"text-primary fw-bold":"text-muted")" style="font-size:.72rem">@statusAr</div>
+                    @if (step.ActionDate.HasValue)
+                    {
+                        <div class="text-muted" style="font-size:.68rem">@step.ActionDate.Value.ToLocalTime().ToString("MM/dd HH:mm")</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(step.ActionNote))
+                    {
+                        <div class="text-muted fst-italic" style="font-size:.68rem" title="@step.ActionNote">
+                            "@(step.ActionNote.Length > 30 ? step.ActionNote[..30] + "…" : step.ActionNote)"
+                        </div>
+                    }
+                </div>
+            }
+            </div>
+        </div>
+    }
+    else if (Model.Status is "Draft" or "Returned")
+    {
+        <div class="det-section" style="border:1.5px dashed #ffc107;background:#fffdf0">
+            <div class="d-flex align-items-center gap-2 text-warning">
+                <i class="bx bx-info-circle fs-5"></i>
+                <span class="small fw-semibold">المقترح في حالة <strong>مسودة</strong> — اضغط "إرسال للمراجعة" لبدء مسار الموافقة.</span>
+            </div>
+        </div>
+    }
+
+</div>

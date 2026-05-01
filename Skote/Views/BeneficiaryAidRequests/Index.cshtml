@@ -1,0 +1,514 @@
+@using InfrastructureManagmentServices.Charity.Funding
+@using InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.AidRequests
+@using InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.Shared
+@model List<BeneficiaryAidRequestListItemVm>
+@{
+    ViewData["Title"] = "طلبات المساعدة";
+    var filterTypeName        = ViewBag.FilterAidTypeName as string;
+    var filterTypeId          = ViewBag.AidTypeId as Guid?;
+    var hasBeneficiaryContext = (bool?)ViewBag.HasBeneficiaryContext ?? false;
+    var beneficiaryId         = ViewBag.BeneficiaryId as Guid?;
+
+    string StatusColor(string s) => s switch {
+        "Approved"  => "#34c38f", "Disbursed" => "#556ee6",
+        "Rejected"  => "#f46a6a", _           => "#f1b44c" };
+    string StatusAr(string s) => s switch {
+        "Approved"  => "معتمد",  "Disbursed" => "مصروف",
+        "Rejected"  => "مرفوض", "Pending"   => "قيد الانتظار",
+        _           => s };
+    string UrgencyColor(string? u) => u switch {
+        "عالي" or "High" or "Critical" => "#f46a6a",
+        "متوسط" or "Medium"            => "#f1b44c",
+        _                              => "#adb5bd" };
+}
+
+@* ── CSS libs ── *@
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"/>
+
+@* Beneficiary header *@
+@if (beneficiaryId.HasValue && beneficiaryId != Guid.Empty)
+{
+    var h = new BeneficiaryHeaderVm {
+        Id            = beneficiaryId.Value,
+        Code          = ViewBag.BeneficiaryCode        as string ?? "",
+        FullName      = ViewBag.BeneficiaryName        as string ?? "",
+        NationalId    = ViewBag.BeneficiaryNationalId  as string ?? "",
+        PhoneNumber   = ViewBag.BeneficiaryPhoneNumber as string ?? "",
+        StatusName    = ViewBag.BeneficiaryStatusName  as string ?? ""
+    };
+    <partial name="~/Views/Shared/Beneficiaries/_BeneficiaryHeader.cshtml" model="h"/>
+}
+
+<style>
+/* ── reset / base ── */
+*,*::before,*::after{box-sizing:border-box}
+
+/* ── hero ── */
+.req-hero{background:linear-gradient(135deg,#0a4a3a,#0e6f73);border-radius:16px;padding:14px 20px;color:#fff;margin-bottom:16px}
+.req-stat{background:rgba(255,255,255,.12);border-radius:10px;padding:8px 12px;text-align:center;flex:1;min-width:60px}
+.req-stat .n{font-size:1.1rem;font-weight:800;line-height:1}
+.req-stat .l{font-size:.63rem;opacity:.8;margin-top:1px}
+
+/* ── card wrapper ── */
+.table-card{background:#fff;border-radius:14px;border:.5px solid rgba(10,74,58,.1);box-shadow:0 2px 8px rgba(10,74,58,.05);overflow:hidden}
+
+/* ── toolbar ── */
+.dt-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 16px;border-bottom:.5px solid rgba(10,74,58,.07)}
+.search-wrap{position:relative;flex:1;min-width:220px}
+.search-wrap .bx-search{position:absolute;top:50%;right:11px;transform:translateY(-50%);color:#0e6f73;font-size:1rem;pointer-events:none}
+.search-wrap input{width:100%;padding:7px 34px 7px 12px;border-radius:10px;border:1.5px solid rgba(10,74,58,.18);font-size:.83rem;outline:none;transition:border .2s;direction:rtl}
+.search-wrap input:focus{border-color:#0e6f73;box-shadow:0 0 0 3px rgba(14,111,115,.1)}
+
+/* autocomplete dropdown */
+.ac-dropdown{position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border-radius:10px;border:1px solid rgba(10,74,58,.15);box-shadow:0 6px 24px rgba(10,74,58,.12);z-index:1050;max-height:220px;overflow-y:auto;display:none}
+.ac-dropdown.open{display:block}
+.ac-item{padding:8px 14px;cursor:pointer;font-size:.82rem;direction:rtl;transition:background .15s}
+.ac-item:hover,.ac-item.active{background:rgba(14,111,115,.08);color:#0a5f63}
+.ac-item .ac-sub{font-size:.7rem;color:#adb5bd}
+.ac-empty{padding:10px 14px;font-size:.8rem;color:#adb5bd;text-align:center}
+
+/* filter row */
+.filter-row input,.filter-row select{width:100%;padding:4px 8px;border-radius:7px;border:1px solid rgba(10,74,58,.15);font-size:.75rem;direction:rtl;outline:none;transition:border .2s}
+.filter-row input:focus,.filter-row select:focus{border-color:#0e6f73}
+.filter-row th{padding:5px 8px;background:#f4fbf9}
+
+/* ── table ── */
+.req-table{width:100%!important;border-collapse:collapse}
+.req-table thead th{padding:9px 12px;background:#f8fdfb;font-size:.76rem;font-weight:700;color:#6b7d80;border-bottom:.5px solid rgba(10,74,58,.1);white-space:nowrap;cursor:pointer;user-select:none}
+.req-table thead th.sorting::after{content:"⇅";margin-right:4px;opacity:.4;font-size:.65rem}
+.req-table thead th.sorting_asc::after{content:"↑";margin-right:4px;opacity:.9;color:#0e6f73;font-size:.75rem}
+.req-table thead th.sorting_desc::after{content:"↓";margin-right:4px;opacity:.9;color:#0e6f73;font-size:.75rem}
+.req-table td{padding:9px 12px;border-bottom:.5px solid rgba(10,74,58,.05);font-size:.83rem;vertical-align:middle}
+.req-table tr:hover td{background:rgba(10,74,58,.02)}
+.req-table tr:last-child td{border-bottom:none}
+
+/* pills & badges */
+.status-pill{padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.aid-badge{padding:2px 8px;border-radius:5px;font-size:.75rem;font-weight:600;background:rgba(14,111,115,.08);color:#0a5f63}
+.fin-mini{font-size:.72rem;color:#6b7d80;line-height:1.6}
+.fin-mini span{font-weight:600;color:#1e3a5f}
+.act-btn{padding:2px 9px;border-radius:7px;font-size:.74rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;white-space:nowrap}
+.urgency-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:4px}
+
+/* ── pagination ── */
+.dataTables_wrapper .dataTables_paginate .paginate_button{border-radius:8px!important;font-size:.78rem!important;margin:1px 2px!important}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current{background:#0e6f73!important;border-color:#0e6f73!important;color:#fff!important}
+.dataTables_wrapper .dataTables_info{font-size:.78rem;color:#6b7d80;direction:rtl}
+.dataTables_wrapper .dataTables_length select{border-radius:8px;border:1px solid rgba(10,74,58,.18);padding:3px 8px;font-size:.8rem;direction:rtl}
+.dataTables_wrapper .dataTables_length label,.dataTables_wrapper .dataTables_info{font-size:.8rem}
+.dt-bottom{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:10px 16px;gap:8px;border-top:.5px solid rgba(10,74,58,.07)}
+
+/* export btns */
+.dt-button{font-size:.75rem!important;border-radius:8px!important;padding:4px 12px!important;background:rgba(10,74,58,.07)!important;color:#0a4a3a!important;border:none!important;font-weight:600!important}
+.dt-button:hover{background:rgba(10,74,58,.15)!important}
+
+/* empty state */
+.empty-state{text-align:center;padding:40px;color:#adb5bd}
+.empty-state i{font-size:2.5rem;display:block;margin-bottom:10px}
+
+/* date range */
+.date-range-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.date-range-wrap input[type=date]{padding:6px 10px;border-radius:9px;border:1.5px solid rgba(10,74,58,.18);font-size:.8rem;outline:none;direction:ltr}
+.date-range-wrap input[type=date]:focus{border-color:#0e6f73}
+.date-range-wrap label{font-size:.78rem;color:#6b7d80;white-space:nowrap}
+</style>
+
+@* ── Filter banner ── *@
+@if (!string.IsNullOrWhiteSpace(filterTypeName))
+{
+  <div class="d-flex align-items-center gap-2 mb-3 px-1"
+       style="background:rgba(14,111,115,.07);border-radius:12px;padding:10px 14px;border:.5px solid rgba(14,111,115,.2)">
+    <i class="bx bx-filter-alt" style="color:#0e6f73"></i>
+    <span style="font-size:.84rem;color:#0a5f63"><strong>نوع المساعدة:</strong> @filterTypeName</span>
+    <a asp-action="Index" class="btn btn-sm ms-auto fw-bold"
+       style="border-radius:8px;background:rgba(14,111,115,.15);color:#0a5f63;border:none">
+      <i class="bx bx-x me-1"></i>مسح
+    </a>
+  </div>
+}
+
+@* ── Hero stats ── *@
+<div class="req-hero">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <h5 class="fw-bold mb-0 text-white"><i class="bx bx-list-check me-2"></i>طلبات المساعدة</h5>
+    @if (hasBeneficiaryContext)
+    { <a asp-action="Create" asp-route-beneficiaryId="@beneficiaryId" class="btn btn-warning btn-sm fw-bold" style="border-radius:10px">+ طلب جديد</a> }
+    else
+    { <a asp-action="Create" class="btn btn-warning btn-sm fw-bold" style="border-radius:10px">+ طلب جديد</a> }
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <div class="req-stat"><div class="n" id="stat-total">@Model.Count</div><div class="l">إجمالي</div></div>
+    <div class="req-stat" style="background:rgba(241,180,76,.2)">
+      <div class="n" id="stat-pending">@Model.Count(x=>x.Status=="Pending")</div><div class="l">قيد الانتظار</div>
+    </div>
+    <div class="req-stat" style="background:rgba(52,195,143,.2)">
+      <div class="n" id="stat-approved" style="color:#a7f3d0">@Model.Count(x=>x.Status=="Approved"||x.Status=="Disbursed")</div><div class="l">معتمدة</div>
+    </div>
+    <div class="req-stat" style="background:rgba(244,106,106,.2)">
+      <div class="n" id="stat-rejected" style="color:#fca5a5">@Model.Count(x=>x.Status=="Rejected")</div><div class="l">مرفوضة</div>
+    </div>
+    <div class="req-stat" style="background:rgba(85,110,230,.2)">
+      <div class="n" style="color:#c7d2fe">@Model.Sum(x=>x.RequestedAmount??0).ToString("N0")</div><div class="l">إجمالي المطلوب</div>
+    </div>
+    <div class="req-stat" style="background:rgba(52,195,143,.15)">
+      <div class="n" style="color:#a7f3d0">@Model.Sum(x=>x.DisbursedAmount).ToString("N0")</div><div class="l">إجمالي المصروف</div>
+    </div>
+  </div>
+</div>
+
+@* ── Main card ── *@
+<div class="table-card">
+
+  @* ── Toolbar ── *@
+  <div class="dt-toolbar">
+
+    @* Autocomplete search *@
+    <div class="search-wrap" id="acWrap">
+      <i class="bx bx-search"></i>
+      <input type="text" id="acInput" placeholder="ابحث باسم المستفيد أو نوع المساعدة..." autocomplete="off"/>
+      <div class="ac-dropdown" id="acDropdown"></div>
+    </div>
+
+    @* Date range *@
+    <div class="date-range-wrap">
+      <label>من</label>
+      <input type="date" id="dateFrom" title="من تاريخ"/>
+      <label>إلى</label>
+      <input type="date" id="dateTo" title="إلى تاريخ"/>
+    </div>
+
+    @* Status quick-filter *@
+    <select id="statusFilter" style="padding:7px 12px;border-radius:10px;border:1.5px solid rgba(10,74,58,.18);font-size:.83rem;direction:rtl;outline:none">
+      <option value="">كل الحالات</option>
+      <option value="قيد الانتظار">قيد الانتظار</option>
+      <option value="معتمد">معتمد</option>
+      <option value="مصروف">مصروف</option>
+      <option value="مرفوض">مرفوض</option>
+    </select>
+
+    @* Urgency quick-filter *@
+    <select id="urgencyFilter" style="padding:7px 12px;border-radius:10px;border:1.5px solid rgba(10,74,58,.18);font-size:.83rem;direction:rtl;outline:none">
+      <option value="">كل درجات الاستعجال</option>
+      <option value="عالي">عالي</option>
+      <option value="High">High</option>
+      <option value="Critical">Critical</option>
+      <option value="متوسط">متوسط</option>
+      <option value="Medium">Medium</option>
+      <option value="منخفض">منخفض</option>
+    </select>
+
+    @* Clear all *@
+    <button id="clearFilters" class="act-btn" style="background:rgba(244,106,106,.1);color:#c0392b;padding:7px 14px">
+      <i class="bx bx-x me-1"></i>مسح الفلاتر
+    </button>
+  </div>
+
+  @* ── Table ── *@
+  <div style="overflow-x:auto">
+    <table class="req-table" id="aidTable" style="width:100%">
+      <thead>
+        <tr>
+          @if (!hasBeneficiaryContext) { <th>المستفيد</th> }
+          <th>التاريخ</th>
+          <th>نوع المساعدة</th>
+          <th>المنشئ</th>
+          <th style="text-align:center">المطلوب</th>
+          <th>الموقف المالي</th>
+          <th style="text-align:center">الاستعجال</th>
+          <th style="text-align:center">حالة الطلب</th>
+          <th style="text-align:center">التمويل</th>
+          <th style="text-align:center">الصرف</th>
+          <th style="text-align:center">إجراءات</th>
+        </tr>
+        @* Per-column filter row *@
+        <tr class="filter-row" id="filterRow">
+          @if (!hasBeneficiaryContext)
+          { <th><input type="text" placeholder="المستفيد..."/></th> }
+          <th><input type="text" placeholder="التاريخ..."/></th>
+          <th><input type="text" placeholder="نوع المساعدة..."/></th>
+          <th><input type="text" placeholder="المنشئ..."/></th>
+          <th><input type="text" placeholder="المبلغ..."/></th>
+          <th><input type="text" placeholder="الموقف المالي..."/></th>
+          <th>
+            <select>
+              <option value="">الكل</option>
+              <option>عالي</option><option>High</option><option>Critical</option>
+              <option>متوسط</option><option>Medium</option><option>منخفض</option>
+            </select>
+          </th>
+          <th>
+            <select>
+              <option value="">الكل</option>
+              <option>قيد الانتظار</option><option>معتمد</option>
+              <option>مصروف</option><option>مرفوض</option>
+            </select>
+          </th>
+          <th><input type="text" placeholder="التمويل..."/></th>
+          <th><input type="text" placeholder="الصرف..."/></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (!Model.Any())
+        {
+          <tr>
+            <td colspan="11">
+              <div class="empty-state">
+                <i class="bx bx-list-check"></i>
+                لا توجد طلبات مساعدة
+              </div>
+            </td>
+          </tr>
+        }
+        @foreach (var item in Model)
+        {
+          <tr>
+            @if (!hasBeneficiaryContext)
+            {
+              <td data-sort="@(item.BeneficiaryName)">
+                <div class="fw-semibold" style="color:#1e3a5f;font-size:.84rem">@(item.BeneficiaryName ?? "—")</div>
+                <div style="font-size:.7rem;color:#adb5bd">@item.BeneficiaryCode</div>
+              </td>
+            }
+            <td data-sort="@item.RequestDate.ToString("yyyy-MM-dd")" style="white-space:nowrap;color:#6b7d80">
+              @item.RequestDate.ToString("d/M/yyyy")
+            </td>
+            <td><span class="aid-badge">@(item.AidType ?? "—")</span></td>
+            <td style="font-size:.78rem;color:#6b7d80;white-space:nowrap">
+              <i class="bx bx-user me-1" style="opacity:.5"></i>@(item.BeneficiaryName ?? "—")
+            </td>
+            <td style="text-align:center;font-weight:700;color:#1e3a5f" data-sort="@(item.RequestedAmount ?? 0)">
+              @(item.RequestedAmount?.ToString("N0") ?? "—")
+            </td>
+            <td>
+              <div class="fin-mini">
+                <div>ممول: <span>@item.FundedAmount.ToString("N0")</span></div>
+                <div>مصروف: <span>@item.DisbursedAmount.ToString("N0")</span></div>
+                @if (item.RemainingToDisburseAmount > 0)
+                {<div style="color:#f1b44c">متاح: <span>@item.RemainingToDisburseAmount.ToString("N0")</span></div>}
+              </div>
+            </td>
+            <td style="text-align:center">
+              <div class="urgency-dot" style="background:@UrgencyColor(item.UrgencyLevel)"></div>
+              <span style="font-size:.75rem">@(item.UrgencyLevel ?? "—")</span>
+            </td>
+            <td style="text-align:center">
+              <span class="status-pill"
+                    style="background:@(StatusColor(item.Status))18;color:@StatusColor(item.Status)">
+                @StatusAr(item.Status)
+              </span>
+            </td>
+            <td style="text-align:center">
+              <span class="status-pill" style="font-size:.68rem;background:rgba(14,111,115,.08);color:#0a5f63">
+                @(item.FundingStatusName ?? "—")
+              </span>
+            </td>
+            <td style="text-align:center">
+              <span class="status-pill" style="font-size:.68rem;background:rgba(85,110,230,.08);color:#3145a3">
+                @(item.DisbursementStatusName ?? "—")
+              </span>
+            </td>
+            <td style="text-align:center">
+              <div class="d-flex gap-1 justify-content-center flex-wrap">
+                <a asp-action="Edit" asp-route-id="@item.Id"
+                   class="act-btn" style="background:rgba(241,180,76,.12);color:#92400e"
+                   title="تعديل">
+                  <i class="bx bx-edit"></i>
+                </a>
+                @if (!hasBeneficiaryContext)
+                {
+                  <a asp-action="Index" asp-route-beneficiaryId="@item.BeneficiaryId"
+                     class="act-btn" style="background:rgba(30,58,95,.08);color:#1e3a5f"
+                     title="ملف المستفيد">
+                    <i class="bx bx-user"></i>
+                  </a>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+@section Scripts {
+@* ── JS libs ── *@
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+<script>
+$(function () {
+  var hasBeneficiaryCtx = @hasBeneficiaryContext.ToString().ToLower();
+
+  /* ── 1. Init DataTable ── */
+  var table = $('#aidTable').DataTable({
+    dom: '<"dt-bottom"lip>t<"dt-bottom"ip>B',
+    language: {
+      url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/ar.json'
+    },
+    buttons: [
+      { extend: 'excelHtml5', text: '<i class="bx bx-spreadsheet me-1"></i>Excel', className: 'dt-button' },
+      { extend: 'print',      text: '<i class="bx bx-printer me-1"></i>طباعة',      className: 'dt-button' }
+    ],
+    pageLength: 25,
+    lengthMenu: [[10,25,50,100,-1],[10,25,50,100,'الكل']],
+    order: [[hasBeneficiaryCtx ? 0 : 1, 'desc']],   // sort by date desc by default
+    columnDefs: [
+      { orderable: false, targets: -1 },  // actions col not sortable
+      { type: 'num',  targets: hasBeneficiaryCtx ? 3 : 4 },  // amount col
+      { type: 'date', targets: hasBeneficiaryCtx ? 0 : 1 }   // date col
+    ],
+    initComplete: function () {
+      /* ── Per-column filter inputs ── */
+      var api = this.api();
+      $('#filterRow th').each(function (i) {
+        var ctrl = $(this).find('input, select');
+        if (!ctrl.length) return;
+        ctrl.on('input change keyup', function () {
+          if (api.column(i).search() !== this.value) {
+            api.column(i).search(this.value).draw();
+          }
+        });
+      });
+    }
+  });
+
+  // Move buttons into toolbar area
+  table.buttons().container().appendTo('#aidTable_wrapper .dt-bottom:first');
+
+  /* ── 2. Global search from our custom input (feeds DataTable) ── */
+  $('#acInput').on('keyup', function () {
+    table.search(this.value).draw();
+  });
+
+  /* ── 3. Status quick-filter ── */
+  var statusCol = hasBeneficiaryCtx ? 6 : 7;
+  $('#statusFilter').on('change', function () {
+    table.column(statusCol).search(this.value).draw();
+  });
+
+  /* ── 4. Urgency quick-filter ── */
+  var urgencyCol = hasBeneficiaryCtx ? 5 : 6;
+  $('#urgencyFilter').on('change', function () {
+    table.column(urgencyCol).search(this.value).draw();
+  });
+
+  /* ── 5. Date range filter ── */
+  $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    if (settings.nTable.id !== 'aidTable') return true;
+    var from = $('#dateFrom').val();
+    var to   = $('#dateTo').val();
+    if (!from && !to) return true;
+    var dateCol = hasBeneficiaryCtx ? 0 : 1;
+    // data-sort attribute contains ISO date (yyyy-MM-dd)
+    var rowDateStr = $(table.row(dataIndex).node()).find('td').eq(dateCol).data('sort') || data[dateCol];
+    var rowDate = new Date(rowDateStr);
+    if (isNaN(rowDate)) return true;
+    if (from && rowDate < new Date(from)) return false;
+    if (to   && rowDate > new Date(to))   return false;
+    return true;
+  });
+  $('#dateFrom, #dateTo').on('change', function () { table.draw(); });
+
+  /* ── 6. Clear all filters ── */
+  $('#clearFilters').on('click', function () {
+    $('#acInput').val('');
+    $('#statusFilter').val('');
+    $('#urgencyFilter').val('');
+    $('#dateFrom').val('');
+    $('#dateTo').val('');
+    $('#filterRow input').val('');
+    $('#filterRow select').val('');
+    table.search('').columns().search('').draw();
+  });
+
+  /* ── 7. Autocomplete dropdown ── */
+  var suggestions = [];
+  // Build suggestion list from table data
+  $('#aidTable tbody tr').each(function () {
+    var cells = $(this).find('td');
+    var offset = hasBeneficiaryCtx ? 0 : 1;
+    var name    = hasBeneficiaryCtx ? '' : $(cells[0]).text().trim();
+    var aidType = $(cells[offset + 1]).text().trim();
+    if (name    && !suggestions.find(s => s.label === name))
+      suggestions.push({ label: name,    sub: 'مستفيد' });
+    if (aidType && !suggestions.find(s => s.label === aidType))
+      suggestions.push({ label: aidType, sub: 'نوع المساعدة' });
+  });
+
+  var $inp = $('#acInput');
+  var $dd  = $('#acDropdown');
+  var activeIdx = -1;
+
+  $inp.on('input', function () {
+    var q = this.value.trim();
+    $dd.empty();
+    if (!q) { $dd.removeClass('open'); return; }
+
+    var matches = suggestions.filter(function (s) {
+      return s.label.includes(q);
+    }).slice(0, 8);
+
+    if (!matches.length) {
+      $dd.html('<div class="ac-empty">لا توجد نتائج</div>').addClass('open');
+      return;
+    }
+    matches.forEach(function (s, i) {
+      $dd.append(
+        $('<div class="ac-item"></div>')
+          .attr('data-idx', i)
+          .html(highlight(s.label, q) + '<div class="ac-sub">' + s.sub + '</div>')
+          .on('mousedown', function (e) {
+            e.preventDefault();
+            $inp.val(s.label);
+            table.search(s.label).draw();
+            $dd.removeClass('open');
+          })
+      );
+    });
+    activeIdx = -1;
+    $dd.addClass('open');
+  });
+
+  $inp.on('keydown', function (e) {
+    var items = $dd.find('.ac-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') {
+      activeIdx = Math.min(activeIdx + 1, items.length - 1);
+      items.removeClass('active').eq(activeIdx).addClass('active');
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      activeIdx = Math.max(activeIdx - 1, 0);
+      items.removeClass('active').eq(activeIdx).addClass('active');
+      e.preventDefault();
+    } else if (e.key === 'Enter' && activeIdx >= 0) {
+      var chosen = suggestions[activeIdx];
+      if (chosen) { $inp.val(chosen.label); table.search(chosen.label).draw(); }
+      $dd.removeClass('open');
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      $dd.removeClass('open');
+    }
+  });
+
+  $(document).on('click', function (e) {
+    if (!$(e.target).closest('#acWrap').length) $dd.removeClass('open');
+  });
+
+  function highlight(text, q) {
+    var idx = text.indexOf(q);
+    if (idx < 0) return text;
+    return text.slice(0, idx) +
+           '<strong style="color:#0e6f73">' + text.slice(idx, idx + q.length) + '</strong>' +
+           text.slice(idx + q.length);
+  }
+});
+</script>
+    }

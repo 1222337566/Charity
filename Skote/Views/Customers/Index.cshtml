@@ -1,0 +1,125 @@
+﻿
+
+@model CustomerListPageVm
+@using InfrastructureManagmentWebFramework.Models.Optics.Customers
+
+@{
+    ViewData["Title"] = "Customer List";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-xl-4 col-md-6">
+            <div class="border rounded p-3 bg-light">
+                <div class="text-muted">إجمالي العملاء</div>
+                <div class="fs-4 fw-bold">@Model.TotalCount</div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="border rounded p-3 bg-light">
+                <div class="text-muted">العملاء النشطون</div>
+                <div class="fs-4 fw-bold">@Model.ActiveCount</div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="border rounded p-3 bg-light">
+                <div class="text-muted">عملاء لهم رصيد</div>
+                <div class="fs-4 fw-bold">@Model.HasBalanceCount</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Customer List</h4>
+            <a asp-action="Create" class="btn btn-primary btn-sm">إضافة عميل</a>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+
+            <form method="get" class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label class="form-label">بحث</label>
+                    <input name="q" value="@Model.Filter.Q" class="form-control"
+                           placeholder="رقم العميل / الاسم / الموبايل" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">الحالة</label>
+                    <select name="isActive" class="form-select">
+                        <option value="">الكل</option>
+                        <option value="true" selected="@(Model.Filter.IsActive == true ? "selected" : null)">نشط</option>
+                        <option value="false" selected="@(Model.Filter.IsActive == false ? "selected" : null)">غير نشط</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">بحث</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم العميل</th>
+                            <th>الاسم</th>
+                            <th>الموبايل</th>
+                            
+                           
+                            <th>الرصيد</th>
+                           
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Rows.Any())
+                        {
+                            foreach (var item in Model.Rows)
+                            {
+                                <tr>
+                                    <td>@item.CustomerNumber</td>
+                                    <td>@item.NameAr</td>
+                                    <td>@(item.MobileNo ?? item.Tel ?? "-")</td>
+                                   
+                                   
+                                    <td class="fw-bold">@item.AccountBalance</td>
+                                   
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">نشط</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">غير نشط</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">الملف</a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">تعديل</a>
+                                            <a asp-controller="CustomerReceipts" asp-action="Create" asp-route-customerId="@item.Id" class="btn btn-sm btn-success">سند قبض</a>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">لا توجد بيانات</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

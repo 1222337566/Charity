@@ -1,0 +1,123 @@
+@model IEnumerable<InfrastrfuctureManagmentCore.Domains.Charity.StockAdvanced.StockNeedRequest>
+@{
+    ViewData["Title"] = "طلبات الاحتياج";
+    string StatusBg(string s) => s switch {
+        "Draft"    => "#f1f5f9", "Approved" => "#d1fae5",
+        "Ordered"  => "#fef3c7", "Fulfilled" => "#d1fae5",
+        "Rejected" => "#fee2e2", _ => "#f1f5f9"
+    };
+    string StatusFg(string s) => s switch {
+        "Approved" => "#065f46", "Fulfilled" => "#065f46",
+        "Ordered"  => "#92400e", "Rejected"  => "#991b1b", _ => "#374151"
+    };
+    string StatusAr(string s) => s switch {
+        "Draft" => "مسودة", "Submitted" => "مُقدَّم",
+        "Approved" => "مُعتمَد", "Ordered" => "تم الطلب",
+        "PartiallyFulfilled" => "جزئي", "Fulfilled" => "مُنجَز",
+        "Rejected" => "مرفوض", "Cancelled" => "ملغى", _ => s
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="fw-bold mb-0" style="color:#0a5f63">
+    <i class="bx bx-package me-2"></i>طلبات الاحتياج
+  </h4>
+  <a asp-action="Create" class="btn btn-primary fw-bold" style="border-radius:12px">
+    <i class="bx bx-plus me-1"></i>طلب جديد
+  </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+  <div class="alert alert-success alert-dismissible fade show" style="border-radius:12px">
+    <i class="bx bx-check-circle me-2"></i>@TempData["Success"]
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+}
+
+<div style="background:#fff;border-radius:16px;border:.5px solid rgba(14,111,115,.12);overflow:hidden;box-shadow:0 2px 10px rgba(14,111,115,.05)">
+  <table class="table table-hover mb-0" style="font-size:.88rem">
+    <thead style="background:#f8fbfb">
+      <tr>
+        <th style="padding:12px 16px;font-size:.78rem;font-weight:700;color:#6b7d80">رقم الطلب</th>
+        <th style="padding:12px 16px;font-size:.78rem;font-weight:700;color:#6b7d80">التاريخ</th>
+        <th style="padding:12px 16px;font-size:.78rem;font-weight:700;color:#6b7d80">النوع</th>
+        <th style="padding:12px 16px;font-size:.78rem;font-weight:700;color:#6b7d80">عدد الأصناف</th>
+        <th style="padding:12px 16px;font-size:.78rem;font-weight:700;color:#6b7d80">الحالة</th>
+        <th style="padding:12px 16px;font-size:.78rem;font-weight:700;color:#6b7d80">إجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var x in Model)
+      {
+        <tr>
+          <td style="padding:11px 16px;font-weight:600">@x.RequestNumber</td>
+          <td style="padding:11px 16px;color:#6b7d80">@x.RequestDate.ToString("d/M/yyyy")</td>
+          <td style="padding:11px 16px">@x.RequestType</td>
+          <td style="padding:11px 16px;text-align:center">@x.Lines.Count</td>
+          <td style="padding:11px 16px">
+            <span style="padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;background:@StatusBg(x.Status);color:@StatusFg(x.Status)">
+              @StatusAr(x.Status)
+            </span>
+          </td>
+          <td style="padding:8px 16px">
+            <div class="d-flex gap-2 align-items-center">
+
+              @* عرض التفاصيل *@
+              <a asp-action="Details" asp-route-id="@x.Id"
+                 class="btn btn-sm fw-semibold"
+                 style="border-radius:8px;background:rgba(14,111,115,.08);color:#0e6f73;border:none;font-size:.76rem">
+                <i class="bx bx-show me-1"></i>تفاصيل
+              </a>
+
+              @* زر الاعتماد — فقط لو Draft أو Submitted *@
+              @if (x.Status == "Draft" || x.Status == "Submitted")
+              {
+                <form asp-action="Approve" asp-route-id="@x.Id"
+                      method="post" class="d-inline"
+                      onsubmit="return confirm('اعتماد طلب @x.RequestNumber؟')">
+                  @Html.AntiForgeryToken()
+                  <button type="submit" class="btn btn-sm fw-semibold"
+                          style="border-radius:8px;background:rgba(52,195,143,.15);color:#0d7a5a;border:none;font-size:.76rem">
+                    <i class="bx bx-check-shield me-1"></i>اعتماد
+                  </button>
+                </form>
+              }
+
+              @* زر إنشاء فاتورة — فقط لو Approved *@
+              @if (x.Status == "Approved")
+              {
+                <a asp-action="CreatePurchaseInvoice" asp-route-id="@x.Id"
+                   class="btn btn-sm fw-semibold"
+                   style="border-radius:8px;background:rgba(241,180,76,.15);color:#8a5f00;border:none;font-size:.76rem">
+                  <i class="bx bx-receipt me-1"></i>فاتورة شراء
+                </a>
+              }
+
+              @* رابط الفاتورة — لو تم الطلب *@
+              @if (x.Status == "Ordered" && x.LinkedPurchaseInvoiceId.HasValue)
+              {
+                <a asp-controller="PurchaseInvoices" asp-action="Details"
+                   asp-route-id="@x.LinkedPurchaseInvoiceId"
+                   class="btn btn-sm fw-semibold"
+                   style="border-radius:8px;background:rgba(85,110,230,.12);color:#3145a3;border:none;font-size:.76rem">
+                  <i class="bx bx-link-external me-1"></i>الفاتورة
+                </a>
+              }
+
+            </div>
+          </td>
+        </tr>
+      }
+      @if (!Model.Any())
+      {
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4" style="font-size:.85rem">
+            <i class="bx bx-inbox" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+            لا توجد طلبات احتياج
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

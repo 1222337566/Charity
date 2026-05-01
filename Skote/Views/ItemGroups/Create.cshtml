@@ -1,0 +1,54 @@
+﻿@model CreateItemGroupVm
+@using InfrastructureManagmentWebFramework.Models.FinancialAccounting;
+
+@{
+    ViewData["Title"] = "إضافة مجموعة صنف";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">إضافة مجموعة صنف</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="GroupCode" class="form-label"></label>
+                        <input asp-for="GroupCode" class="form-control" />
+                        <span asp-validation-for="GroupCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-8 mb-3">
+                        <label asp-for="GroupNameAr" class="form-label"></label>
+                        <input asp-for="GroupNameAr" class="form-control" />
+                        <span asp-validation-for="GroupNameAr" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="GroupNameEn" class="form-label"></label>
+                        <input asp-for="GroupNameEn" class="form-control" />
+                        <span asp-validation-for="GroupNameEn" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ParentGroupId" class="form-label"></label>
+                        <select asp-for="ParentGroupId" asp-items="Model.ParentGroups" class="form-select">
+                            <option value="">-- بدون أب --</option>
+                        </select>
+                        <span asp-validation-for="ParentGroupId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,12 @@
+@{ ViewData["Title"] = "تقارير محاسبة المشروعات"; }
+<div class="row g-3">
+    <div class="col-md-6"><a asp-action="ProjectCostSummary" class="btn btn-outline-primary w-100 p-4">ملخص تكلفة المشروعات</a></div>
+    <div class="col-md-6"><a asp-action="ProjectLedger" class="btn btn-outline-primary w-100 p-4">دفتر أستاذ المشروع</a></div>
+    <div class="col-md-6">
+        <a asp-controller="ProjectFinancialControlReports"
+           asp-action="Index"
+           class="btn btn-outline-success w-100 p-4">
+            الرقابة المالية للمشروعات
+        </a>
+    </div>
+</div>

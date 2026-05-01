@@ -1,0 +1,145 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.DonorProfile
+@model InfrastructureManagmentWebFramework.Models.Charity.DonorProfile.Donations.DonationInKindTrackingVm
+@{
+    ViewData["Title"] = "التتبع المستندي للتبرع العيني";
+    var donorHeader = ViewBag.DonorHeader as DonorHeaderVm;
+    string StatusClass(string? code) => code switch
+    {
+        "FullyIssued" => "bg-success",
+        "PartiallyIssued" => "bg-warning text-dark",
+        "ReceivedToStore" => "bg-info text-dark",
+        _ => "bg-secondary"
+    };
+}
+<div class="page-content">
+    <div class="container-fluid">
+        @if (donorHeader != null)
+        {
+            @await Html.PartialAsync("~/Views/Shared/Donors/_DonorHeader.cshtml", donorHeader)
+        }
+
+        <div class="card mb-3">
+            <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <div class="fw-semibold">رقم التبرع: @Model.DonationNumber</div>
+                    <div class="text-muted">التاريخ: @Model.DonationDate.ToString("yyyy-MM-dd") | المتبرع: @(Model.DonorName ?? "-") | نوع المساعدة: @(Model.AidTypeName ?? "-")</div>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge @StatusClass(Model.TrackingStatusCode)">@Model.TrackingStatusName</span>
+                    <a asp-action="Edit" asp-route-id="@Model.DonationId" class="btn btn-light">رجوع للتبرع</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2 col-6"><div class="card"><div class="card-body"><div class="text-muted">عدد الأصناف</div><div class="fs-5 fw-semibold">@Model.ItemsCount</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card"><div class="card-body"><div class="text-muted">إذن إضافة</div><div class="fs-5 fw-semibold">@Model.StoreReceiptCount</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card"><div class="card-body"><div class="text-muted">إذن صرف</div><div class="fs-5 fw-semibold">@Model.StoreIssueCount</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card"><div class="card-body"><div class="text-muted">الوارد للمخزن</div><div class="fs-5 fw-semibold">@Model.ReceivedToStoreQuantity.ToString("N2")</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card"><div class="card-body"><div class="text-muted">المصروف</div><div class="fs-5 fw-semibold">@Model.IssuedQuantity.ToString("N2")</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card"><div class="card-body"><div class="text-muted">المتبقي للصرف</div><div class="fs-5 fw-semibold">@Model.RemainingToIssueQuantity.ToString("N2")</div></div></div></div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header"><h4 class="card-title mb-0">تفصيل الأصناف</h4></div>
+            <div class="card-body table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>الصنف</th>
+                            <th>الكمية</th>
+                            <th>المخصص</th>
+                            <th>الوارد</th>
+                            <th>المصروف</th>
+                            <th>المتبقي</th>
+                            <th>أذون الإضافة</th>
+                            <th>أذون الصرف</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div>@item.ItemName</div>
+                                <small class="text-muted">@(item.WarehouseName ?? "-") @(!string.IsNullOrWhiteSpace(item.BatchNo) ? $"| تشغيلة: {item.BatchNo}" : "")</small>
+                            </td>
+                            <td>@item.Quantity.ToString("N2")</td>
+                            <td>@item.AllocatedQuantity.ToString("N2")</td>
+                            <td>@item.ReceivedToStoreQuantity.ToString("N2")</td>
+                            <td>@item.IssuedQuantity.ToString("N2")</td>
+                            <td>@item.RemainingToIssueQuantity.ToString("N2")</td>
+                            <td>@item.StoreReceiptCount</td>
+                            <td>@item.StoreIssueCount</td>
+                            <td><span class="badge @StatusClass(item.TrackingStatusCode)">@item.TrackingStatusName</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header"><h4 class="card-title mb-0">أذون الإضافة المرتبطة</h4></div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-sm table-striped align-middle">
+                            <thead><tr><th>رقم الإذن</th><th>التاريخ</th><th>المخزن</th><th>الكمية</th><th></th></tr></thead>
+                            <tbody>
+                            @if (Model.StoreReceipts.Count == 0)
+                            {
+                                <tr><td colspan="5" class="text-center text-muted">لا توجد أذون إضافة مرتبطة بعد.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var doc in Model.StoreReceipts)
+                                {
+                                    <tr>
+                                        <td>@doc.Number</td>
+                                        <td>@doc.DocumentDate.ToString("yyyy-MM-dd")</td>
+                                        <td>@doc.WarehouseName</td>
+                                        <td>@doc.TotalQuantity.ToString("N2")</td>
+                                        <td><a asp-controller="CharityStoreReceipts" asp-action="Details" asp-route-id="@doc.Id" class="btn btn-sm btn-outline-primary">عرض</a></td>
+                                    </tr>
+                                }
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header"><h4 class="card-title mb-0">أذون الصرف المرتبطة</h4></div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-sm table-striped align-middle">
+                            <thead><tr><th>رقم الإذن</th><th>التاريخ</th><th>المخزن</th><th>المستفيد</th><th>الكمية</th><th></th></tr></thead>
+                            <tbody>
+                            @if (Model.StoreIssues.Count == 0)
+                            {
+                                <tr><td colspan="6" class="text-center text-muted">لا توجد أذون صرف مرتبطة بعد.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var doc in Model.StoreIssues)
+                                {
+                                    <tr>
+                                        <td>@doc.Number</td>
+                                        <td>@doc.DocumentDate.ToString("yyyy-MM-dd")</td>
+                                        <td>@doc.WarehouseName</td>
+                                        <td>@(doc.BeneficiaryName ?? "-")</td>
+                                        <td>@doc.TotalQuantity.ToString("N2")</td>
+                                        <td><a asp-controller="CharityStoreIssues" asp-action="Details" asp-route-id="@doc.Id" class="btn btn-sm btn-outline-primary">عرض</a></td>
+                                    </tr>
+                                }
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

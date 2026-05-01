@@ -1,0 +1,118 @@
+@using InfrastrfuctureManagmentCore.Domains.Purchase
+@model List<PurchaseInvoice>
+@{ ViewData["Title"] = "المشتريات والتوريدات"; }
+
+<style>
+.pi-hero{background:linear-gradient(135deg,#1e3a5f,#2d5282);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.pi-stat{background:rgba(255,255,255,.12);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:70px}
+.pi-stat .n{font-size:1.3rem;font-weight:800;line-height:1}
+.pi-stat .l{font-size:.67rem;opacity:.8;margin-top:2px}
+.inv-card{background:#fff;border-radius:14px;border:.5px solid rgba(30,58,95,.1);box-shadow:0 2px 8px rgba(30,58,95,.05);margin-bottom:10px;padding:13px 16px;display:flex;align-items:center;gap:12px}
+.inv-num{font-size:.8rem;font-weight:700;color:#1e3a5f;background:rgba(30,58,95,.08);padding:2px 8px;border-radius:5px}
+.status-chip{padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.empty-state{text-align:center;padding:52px;background:#fff;border-radius:16px;color:#adb5bd}
+</style>
+
+@{
+    string StatusAr(PurchaseInvoiceStatus s) => s switch {
+        PurchaseInvoiceStatus.Draft    => "مسودة",
+        PurchaseInvoiceStatus.Approved => "معتمدة",
+        PurchaseInvoiceStatus.Posted   => "مرحّلة",
+        PurchaseInvoiceStatus.Cancelled=> "ملغاة",
+        _ => s.ToString()
+    };
+    string StatusColor(PurchaseInvoiceStatus s) => s switch {
+        PurchaseInvoiceStatus.Draft     => "#adb5bd",
+        PurchaseInvoiceStatus.Approved  => "#34c38f",
+        PurchaseInvoiceStatus.Posted    => "#556ee6",
+        PurchaseInvoiceStatus.Cancelled => "#f46a6a",
+        _ => "#adb5bd"
+    };
+}
+
+@* Hero *@
+<div class="pi-hero">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1 text-white"><i class="bx bx-cart-alt me-2"></i>المشتريات والتوريدات</h4>
+      <div style="opacity:.72;font-size:.8rem">فواتير الشراء والتوريد مرتبطة بالموردين والمشروعات</div>
+    </div>
+    <a asp-action="Create" class="btn btn-warning fw-bold" style="border-radius:12px">
+      <i class="bx bx-plus me-1"></i>إضافة فاتورة شراء / توريد
+    </a>
+  </div>
+  <div class="d-flex gap-3 flex-wrap">
+    <div class="pi-stat"><div class="n">@Model.Count</div><div class="l">إجمالي الفواتير</div></div>
+    <div class="pi-stat" style="background:rgba(244,106,106,.2)">
+      <div class="n" style="color:#fca5a5">@Model.Count(x => x.Status == PurchaseInvoiceStatus.Draft)</div>
+      <div class="l">مسودة</div>
+    </div>
+    <div class="pi-stat" style="background:rgba(52,195,143,.2)">
+      <div class="n" style="color:#a7f3d0">@Model.Count(x => x.Status == PurchaseInvoiceStatus.Approved)</div>
+      <div class="l">معتمدة</div>
+    </div>
+    <div class="pi-stat" style="background:rgba(85,110,230,.2)">
+      <div class="n" style="color:#c7d2fe">@Model.Sum(x => x.NetAmount).ToString("N0")</div>
+      <div class="l">إجمالي القيمة</div>
+    </div>
+  </div>
+</div>
+
+@if (TempData["Success"] != null)
+{ <div class="alert alert-success alert-dismissible fade show" style="border-radius:12px">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div> }
+
+@if (!Model.Any())
+{
+  <div class="empty-state">
+    <i class="bx bx-cart-alt" style="font-size:3rem;display:block;margin-bottom:12px"></i>
+    <p>لا توجد فواتير شراء بعد</p>
+    <a asp-action="Create" class="btn btn-primary fw-bold" style="border-radius:12px">إضافة أول فاتورة</a>
+  </div>
+}
+else
+{
+  @* رأس الجدول *@
+  <div style="background:#fff;border-radius:14px;border:.5px solid rgba(30,58,95,.1);overflow:hidden">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr 80px;padding:9px 16px;background:#f8fbfb;border-bottom:.5px solid rgba(30,58,95,.08);font-size:.76rem;font-weight:700;color:#6b7d80">
+      <div>رقم الفاتورة</div>
+      <div>التاريخ</div>
+      <div>المورد</div>
+      <div>المخزن</div>
+      <div>المشروع</div>
+      <div>التصنيف</div>
+      <div style="text-align:center">الإجمالي</div>
+      <div style="text-align:center">الحالة</div>
+    </div>
+
+    @foreach (var inv in Model.OrderByDescending(x => x.InvoiceDateUtc))
+    {
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr 80px;padding:10px 16px;border-bottom:.5px solid rgba(30,58,95,.04);font-size:.83rem;align-items:center"
+           class="inv-row">
+        <div>
+          <span class="inv-num">@inv.InvoiceNumber</span>
+          @if (!string.IsNullOrWhiteSpace(inv.SupplierInvoiceNumber))
+          { <div style="font-size:.7rem;color:#adb5bd">رقم المورد: @inv.SupplierInvoiceNumber</div> }
+        </div>
+        <div style="color:#6b7d80">@inv.InvoiceDateUtc.ToString("d/M/yyyy")</div>
+        <div class="fw-semibold">@(inv.Supplier?.NameAr ?? inv.SupplierName)</div>
+        <div style="color:#6b7d80">@(inv.Warehouse?.WarehouseNameAr ?? "—")</div>
+        <div style="color:#6b7d80;font-size:.78rem">—</div>
+        <div>
+          @if (!string.IsNullOrWhiteSpace(inv.Notes))
+          { <span style="font-size:.72rem;color:#6b7d80">@inv.Notes[..Math.Min(inv.Notes.Length,20)]</span> }
+        </div>
+        <div style="text-align:center;font-weight:700;color:#1e3a5f">@inv.NetAmount.ToString("N2")</div>
+        <div style="text-align:center">
+          <span class="status-chip" style="background:@(StatusColor(inv.Status))22;color:@StatusColor(inv.Status)">
+            @StatusAr(inv.Status)
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<style>
+.inv-row:hover{background:rgba(30,58,95,.02)}
+.inv-row:last-child{border-bottom:none!important}
+</style>

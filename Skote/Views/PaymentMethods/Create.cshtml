@@ -1,0 +1,53 @@
+﻿@model CreatePaymentMethodVm
+@using InfrastructureManagmentWebFramework.Models.PaymentMethods
+
+@{
+    ViewData["Title"] = "إضافة طريقة دفع";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header"><h4 class="mb-0">إضافة طريقة دفع</h4></div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="MethodCode" class="form-label"></label>
+                        <input asp-for="MethodCode" class="form-control" />
+                        <span asp-validation-for="MethodCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-8 mb-3">
+                        <label asp-for="MethodNameAr" class="form-label"></label>
+                        <input asp-for="MethodNameAr" class="form-control" />
+                        <span asp-validation-for="MethodNameAr" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="MethodNameEn" class="form-label"></label>
+                        <input asp-for="MethodNameEn" class="form-control" />
+                    </div>
+
+                    <div class="col-md-3 mb-3 form-check">
+                        <input asp-for="IsCash" class="form-check-input" />
+                        <label asp-for="IsCash" class="form-check-label"></label>
+                    </div>
+
+                    <div class="col-md-3 mb-3 form-check">
+                        <input asp-for="IsDefault" class="form-check-input" />
+                        <label asp-for="IsDefault" class="form-check-label"></label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

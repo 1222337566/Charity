@@ -1,0 +1,321 @@
+@using InfrastrfuctureManagmentCore.Domains.Charity.Projects
+@model List<ProjectPhaseTask>
+@{
+    ViewData["Title"] = "مهام النشاط";
+    var pa      = ViewBag.Assignment as ActivityPhaseAssignment;
+    var project = ViewBag.Project as CharityProject;
+    var kanban  = ViewBag.Kanban as dynamic;
+
+    string PriorityAr(string p) => p switch {
+        "Critical"=>"🔴 حرج","High"=>"🟠 عالي","Medium"=>"🟡 متوسط","Low"=>"🟢 منخفض",_=>p};
+    string PriorityBg(string p) => p switch {
+        "Critical"=>"rgba(244,106,106,.1)","High"=>"rgba(241,180,76,.12)",
+        "Medium"=>"rgba(85,110,230,.1)","Low"=>"rgba(52,195,143,.1)",_=>"rgba(173,181,189,.1)"};
+    string PriorityFg(string p) => p switch {
+        "Critical"=>"#991b1b","High"=>"#92400e","Medium"=>"#3145a3","Low"=>"#065f46",_=>"#6b7d80"};
+    var doneCount    = Model.Count(t => t.Status == "Done");
+    var totalCount   = Model.Count;
+    var overallPct   = totalCount > 0 ? (decimal)doneCount / totalCount * 100 : 0;
+}
+
+<style>
+/* ── Hero ── */
+.kb-hero{background:linear-gradient(135deg,#1a2f5e,#2d4a8a);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.kb-stat{background:rgba(255,255,255,.12);border-radius:12px;padding:8px 14px;text-align:center;flex:1;min-width:60px}
+.kb-stat .n{font-size:1.1rem;font-weight:800;line-height:1}
+.kb-stat .l{font-size:.65rem;opacity:.8;margin-top:2px}
+
+/* ── Kanban ── */
+.kb-board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+media(max-width:900px){.kb-board{grid-template-columns:repeat(2,1fr)}}
+media(max-width:576px){.kb-board{grid-template-columns:1fr}}
+
+.kb-col{border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.kb-col-head{padding:11px 14px;font-size:.85rem;font-weight:800;display:flex;align-items:center;justify-content:space-between}
+.kb-col-body{min-height:280px;padding:10px;background:#f8fbfb;border-radius:0 0 14px 14px;transition:.15s}
+.kb-col-body.drag-over{background:rgba(85,110,230,.08);outline:2px dashed rgba(85,110,230,.3);outline-offset:-4px}
+
+/* ── Cards ── */
+.kb-card{background:#fff;border-radius:12px;border:.5px solid rgba(30,58,95,.1);box-shadow:0 1px 6px rgba(30,58,95,.06);margin-bottom:8px;padding:10px 13px;cursor:grab;transition:box-shadow .15s;user-select:none}
+.kb-card:active{cursor:grabbing;box-shadow:0 4px 16px rgba(30,58,95,.18)}
+.kb-card.dragging{opacity:.5;box-shadow:0 8px 24px rgba(30,58,95,.25)}
+.kb-card:hover{box-shadow:0 3px 12px rgba(30,58,95,.12)}
+.kb-card .title{font-size:.84rem;font-weight:600;color:#1e3a5f;line-height:1.3;margin-bottom:6px}
+.kb-card .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.7rem}
+.kb-card .assignee{font-size:.7rem;color:#6b7d80}
+.kb-card .due{font-size:.68rem;color:#adb5bd}
+.kb-card .due.overdue{color:#f46a6a;font-weight:600}
+
+/* ── Quick Add Form ── */
+.quick-add{background:rgba(85,110,230,.04);border-radius:10px;border:.5px dashed rgba(85,110,230,.2);padding:10px 12px;margin-top:8px;display:none}
+.quick-add.show{display:block}
+.quick-add input,.quick-add select{border-radius:8px;border:.5px solid rgba(30,58,95,.2);padding:5px 9px;font-size:.8rem;width:100%;background:#fff;margin-bottom:6px}
+.quick-add input:focus,.quick-add select:focus{outline:none;border-color:#556ee6}
+
+.add-btn{background:none;border:none;color:rgba(255,255,255,.7);font-size:.75rem;cursor:pointer;display:flex;align-items:center;gap:4px}
+.add-btn:hover{color:#fff}
+
+/* ── Prog bar ── */
+.prog-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.2);overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:999px;background:#34c38f;transition:width .3s}
+</style>
+
+@* Hero *@
+<div class="kb-hero">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <div>
+      <h5 class="fw-bold mb-1 text-white">
+        <i class="bx bx-task me-2"></i>مهام النشاط — @(pa?.Phase?.Name ?? "المرحلة")
+      </h5>
+      <div style="opacity:.72;font-size:.79rem">
+        @project?.Name · @(pa?.Activity?.SubGoal?.Goal?.Title ?? "") · @(pa?.Activity?.Title ?? "")
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a asp-controller="ActivityPhaseTracking" asp-action="Index"
+         asp-route-activityId="@pa?.ActivityId"
+         class="btn btn-light btn-sm fw-bold" style="border-radius:10px">
+        ← تتبع النشاط
+      </a>
+      <a asp-controller="ActivityPhaseTracking" asp-action="PhaseOverview"
+         asp-route-projectId="@project?.Id"
+         class="btn btn-light btn-sm fw-bold" style="border-radius:10px">
+        📊 المراحل
+      </a>
+    </div>
+  </div>
+  <div class="d-flex gap-3 flex-wrap mb-2">
+    <div class="kb-stat"><div class="n">@totalCount</div><div class="l">إجمالي</div></div>
+    <div class="kb-stat"><div class="n">@Model.Count(t=>t.Status=="Todo")</div><div class="l">انتظار</div></div>
+    <div class="kb-stat" style="background:rgba(85,110,230,.2)"><div class="n">@Model.Count(t=>t.Status=="InProgress")</div><div class="l">جارٍ</div></div>
+    <div class="kb-stat" style="background:rgba(244,106,106,.2)"><div class="n">@Model.Count(t=>t.Status=="Blocked")</div><div class="l">موقوف</div></div>
+    <div class="kb-stat" style="background:rgba(52,195,143,.2)"><div class="n" style="color:#a7f3d0">@doneCount</div><div class="l">مكتمل</div></div>
+  </div>
+  @* شريط تقدم *@
+  <div class="d-flex align-items-center gap-2">
+    <div class="prog-bar flex-grow-1">
+      <div class="prog-fill" style="width:@overallPct.ToString("F1",System.Globalization.CultureInfo.InvariantCulture)%"></div>
+    </div>
+    <span style="font-size:.82rem;font-weight:700;color:#a7f3d0;white-space:nowrap">@overallPct.ToString("N0")% مكتمل</span>
+  </div>
+</div>
+
+@if (TempData["Error"] != null)
+{<div class="alert alert-danger" style="border-radius:12px">@TempData["Error"]</div>}
+
+@* Kanban Board *@
+<div class="kb-board" id="kanban-board">
+  @{
+    var cols = new[] {
+        ("Todo",      "قائمة الانتظار", "#adb5bd"),
+        ("InProgress","جارٍ التنفيذ",   "#556ee6"),
+        ("Blocked",   "موقوف",           "#f46a6a"),
+        ("Done",      "مكتمل",           "#34c38f"),
+    };
+}
+  @foreach (var col in cols)
+  {
+    var colTasks = Model.Where(t => t.Status == col.Item1).ToList();
+    <div class="kb-col">
+        <div class="kb-col-head" style="background:@col.Item3">
+          <div class="d-flex align-items-center gap-2">
+            <span style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:.8"></span>
+            <span class="text-white">@col.Item2</span>
+            <span style="background:rgba(255,255,255,.25);color:#fff;padding:1px 8px;border-radius:10px;font-size:.7rem;font-weight:700">
+              @colTasks.Count
+            </span>
+          </div>
+          <button type="button" class="add-btn" onclick="toggleAdd('@col.Item1')">
+            <i class="bx bx-plus"></i> إضافة
+          </button>
+        </div>
+
+        @* Drop Zone *@
+        <div class="kb-col-body" id="col-@col.Item1"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="dropTask(event,'@col.Item1')">
+
+          @* Task Cards *@
+          @if (colTasks.Count == 0)
+          {
+            <div style="text-align:center;padding:20px 10px;color:#d1d5db;font-size:.8rem">
+              <i class="bx bx-list-check" style="font-size:1.5rem;display:block;margin-bottom:4px"></i>
+              لا توجد مهام
+            </div>
+          }
+          @foreach (var task in colTasks)
+          {
+            var isOverdue = task.DueDate.HasValue && task.DueDate.Value < DateTime.Today && task.Status != "Done";
+            <div class="kb-card" id="task-@task.Id"
+                 draggable="true"
+                 ondragstart="dragStart(event,'@task.Id')"
+                 ondragend="dragEnd(event)">
+              <div class="title">@task.Title</div>
+              <div class="meta">
+                @if (!string.IsNullOrWhiteSpace(task.Code))
+                { <span style="font-size:.65rem;color:#adb5bd;background:#f1f5f9;padding:1px 5px;border-radius:4px">@task.Code</span> }
+                <span style="padding:1px 7px;border-radius:4px;background:@PriorityBg(task.Priority);color:@PriorityFg(task.Priority);font-weight:600">
+                  @PriorityAr(task.Priority)
+                </span>
+                @if (task.PercentComplete > 0)
+                {
+                  <span style="color:#556ee6;font-weight:600">@task.PercentComplete%</span>
+                }
+              </div>
+              @if (!string.IsNullOrWhiteSpace(task.AssignedToName))
+              { <div class="assignee mt-1"><i class="bx bx-user me-1"></i>@task.AssignedToName</div> }
+              @if (task.DueDate.HasValue)
+              {
+                <div class="due @(isOverdue?"overdue":"") mt-1">
+                  <i class="bx bx-calendar me-1"></i>@task.DueDate.Value.ToString("d/M/yyyy")
+                  @if (isOverdue) { <span>⚠ متأخرة</span> }
+                </div>
+              }
+              @if (task.EstimatedHours > 0)
+              {
+                <div style="font-size:.68rem;color:#adb5bd;margin-top:2px">
+                  <i class="bx bx-time me-1"></i>@task.EstimatedHours ساعة مقدرة
+                </div>
+              }
+              @* Quick actions *@
+              <div class="d-flex gap-1 mt-2 justify-content-end">
+                <a asp-controller="ProjectPhaseTasks" asp-action="Edit"
+                   asp-route-id="@task.Id"
+                   class="btn btn-sm" style="border-radius:6px;background:rgba(85,110,230,.1);color:#3145a3;border:none;font-size:.68rem;padding:2px 7px">
+                  <i class="bx bx-edit"></i>
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+
+        @* Quick Add Form ── *@
+        <div class="quick-add" id="add-@col.Item1">
+          <form asp-action="QuickCreateTask" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="assignmentId" value="@pa?.Id"/>
+            <input type="hidden" name="Status" value="@col.Item1"/>
+            <input name="title" placeholder="عنوان المهمة..." required style="font-weight:600"/>
+            <div class="d-flex gap-2">
+              <select name="priority" style="flex:1">
+                <option value="Medium">🟡 متوسط</option>
+                <option value="High">🟠 عالي</option>
+                <option value="Critical">🔴 حرج</option>
+                <option value="Low">🟢 منخفض</option>
+              </select>
+              <input name="dueDate" type="date" style="flex:1"/>
+            </div>
+            <input name="assignedToName" placeholder="المسؤول (اختياري)"/>
+            <div class="d-flex gap-2 mt-1">
+              <button type="submit" class="btn btn-primary btn-sm fw-bold w-100" style="border-radius:8px;font-size:.8rem">
+                <i class="bx bx-plus me-1"></i>إضافة
+              </button>
+              <button type="button" class="btn btn-light btn-sm w-100" style="border-radius:8px;font-size:.8rem"
+                      onclick="toggleAdd('@col.Item1')">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+  }
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+var draggedId = null;
+
+function dragStart(e, taskId) {
+    draggedId = taskId;
+    document.getElementById('task-' + taskId)?.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function dragEnd(e) {
+    document.querySelectorAll('.kb-card').forEach(c => c.classList.remove('dragging'));
+    document.querySelectorAll('.kb-col-body').forEach(c => c.classList.remove('drag-over'));
+}
+
+function dropTask(e, newStatus) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if (!draggedId) return;
+
+    // Optimistic UI — move card
+    var card = document.getElementById('task-' + draggedId);
+    var col  = document.getElementById('col-' + newStatus);
+    if (card && col) {
+        // Remove empty placeholder if present
+        col.querySelectorAll('[style*="text-align:center"]').forEach(el => el.remove());
+        col.appendChild(card);
+        // Update count badges
+        updateCounts();
+    }
+
+    // POST to MoveTask
+    var fd = new FormData();
+    fd.append('taskId',    draggedId);
+    fd.append('newStatus', newStatus);
+    var tok = document.querySelector('[name="__RequestVerificationToken"]')?.value || '';
+    fd.append('__RequestVerificationToken', tok);
+    fetch('@Url.Action("MoveTask","ProjectPhaseTasks")', { method:'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) location.reload();
+            // broadcast via SignalR if connected
+            if (window._phaseConn && window._phaseConn.state === 'Connected') {
+                window._phaseConn.invoke('BroadcastTaskMove', {
+                    assignmentId : '@pa?.Id',
+                    taskId       : draggedId,
+                    newStatus    : newStatus
+                }).catch(e => console.warn(e));
+            }
+        })
+        .catch(() => location.reload());
+
+    draggedId = null;
+}
+
+function updateCounts() {
+    ['Todo','InProgress','Blocked','Done'].forEach(status => {
+        var count = document.getElementById('col-' + status)?.querySelectorAll('.kb-card').length ?? 0;
+        // Update badge in header — simplified
+    });
+}
+
+function toggleAdd(status) {
+    var el = document.getElementById('add-' + status);
+    if (el) el.classList.toggle('show');
+    if (el?.classList.contains('show'))
+        el.querySelector('[name="title"]')?.focus();
+}
+
+// ── SignalR realtime sync ──
+(function() {
+    var realtimeBase = '@(ViewBag.RealtimeBase ?? "")';
+    if (!realtimeBase) return;
+    var conn = new signalR.HubConnectionBuilder()
+        .withUrl(realtimeBase + '/hubs/kanban', {
+            accessTokenFactory: () => document.cookie
+                .split('; ').find(r => r.startsWith('access_token='))?.split('=')[1] || ''
+        })
+        .withAutomaticReconnect().build();
+
+    conn.on('TaskMoved', function(data) {
+        if (!data) return;
+        var card = document.getElementById('task-' + data.taskId);
+        var col  = document.getElementById('col-' + data.newStatus);
+        if (card && col && !col.contains(card)) {
+            col.appendChild(card);
+            card.style.transition = 'border-color .4s';
+            card.style.borderColor = '#556ee6';
+            setTimeout(() => { card.style.borderColor = ''; }, 600);
+        }
+    });
+
+    conn.start().catch(e => console.warn('[SignalR] Phase Kanban:', e));
+    window._phaseConn = conn;
+})();
+</script>
+}

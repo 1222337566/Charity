@@ -1,0 +1,12 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Volunteers.CreateVolunteerAvailabilitySlotVm
+<div class="row">
+    <div class="col-md-4 mb-3"><label asp-for="DayOfWeekName" class="form-label">اليوم</label><select asp-for="DayOfWeekName" asp-items="Model.Days" class="form-select"></select></div>
+    <div class="col-md-4 mb-3"><label asp-for="FromTime" class="form-label">من</label><input asp-for="FromTime" class="form-control" type="time" /></div>
+    <div class="col-md-4 mb-3"><label asp-for="ToTime" class="form-label">إلى</label><input asp-for="ToTime" class="form-control" type="time" /></div>
+</div>
+<div class="row">
+    <div class="col-md-6 mb-3"><label asp-for="AvailabilityType" class="form-label">نوع التوفر</label><select asp-for="AvailabilityType" asp-items="Model.Types" class="form-select"></select></div>
+    <div class="col-md-6 mb-3"><label asp-for="Area" class="form-label">المنطقة</label><input asp-for="Area" class="form-control" /></div>
+</div>
+<div class="form-check mb-3"><input asp-for="IsRemoteAllowed" class="form-check-input" /><label asp-for="IsRemoteAllowed" class="form-check-label">يسمح بالعمل عن بعد</label></div>
+<div class="mb-3"><label asp-for="Notes" class="form-label">ملاحظات</label><textarea asp-for="Notes" class="form-control" rows="3"></textarea></div>

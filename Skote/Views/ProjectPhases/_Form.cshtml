@@ -1,0 +1,19 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Phases.CreateProjectPhaseVm
+<input type="hidden" asp-for="ProjectId" />
+<div class="row g-3">
+    <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+    <div class="col-md-3"><label asp-for="SortOrder" class="form-label"></label><input asp-for="SortOrder" class="form-control" /></div>
+    <div class="col-12"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="3"></textarea></div>
+    <div class="col-md-3"><label asp-for="PlannedStartDate" class="form-label"></label><input asp-for="PlannedStartDate" type="date" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="PlannedEndDate" class="form-label"></label><input asp-for="PlannedEndDate" type="date" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="ActualStartDate" class="form-label"></label><input asp-for="ActualStartDate" type="date" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="ActualEndDate" class="form-label"></label><input asp-for="ActualEndDate" type="date" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="Status" class="form-label"></label><select asp-for="Status" class="form-select"><option>Planned</option><option>InProgress</option><option>Completed</option><option>Delayed</option><option>OnHold</option></select></div>
+    <div class="col-md-3"><label asp-for="ProgressPercent" class="form-label"></label><input asp-for="ProgressPercent" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="PlannedCost" class="form-label"></label><input asp-for="PlannedCost" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="ActualCost" class="form-label"></label><input asp-for="ActualCost" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="ResponsiblePersonName" class="form-label"></label><input asp-for="ResponsiblePersonName" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="2"></textarea></div>
+    <div class="col-12 form-check ms-2"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
+</div>

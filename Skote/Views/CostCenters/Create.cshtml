@@ -1,0 +1,50 @@
+@model InfrastructureManagmentWebFramework.Models.Accounting.CreateCostCenterVm
+@{
+    ViewData["Title"] = "إضافة مركز تكلفة";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header"><h4 class="mb-0">إضافة مركز تكلفة</h4></div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="CostCenterCode" class="form-label"></label>
+                        <input asp-for="CostCenterCode" class="form-control" />
+                        <span asp-validation-for="CostCenterCode" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label asp-for="CostCenterNameAr" class="form-label"></label>
+                        <input asp-for="CostCenterNameAr" class="form-control" />
+                        <span asp-validation-for="CostCenterNameAr" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CostCenterNameEn" class="form-label"></label>
+                        <input asp-for="CostCenterNameEn" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ParentCostCenterId" class="form-label"></label>
+                        <select asp-for="ParentCostCenterId" asp-items="Model.ParentCostCenters" class="form-select">
+                            <option value="">-- بدون أب (مستوى أول) --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 form-check mt-3 ms-2">
+                        <input asp-for="IsProjectRelated" class="form-check-input" />
+                        <label asp-for="IsProjectRelated" class="form-check-label"></label>
+                    </div>
+                    <div class="col-md-12">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                    <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

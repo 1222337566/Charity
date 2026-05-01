@@ -1,0 +1,89 @@
+@model Skote.ViewModels.QaAudit.QaAuditIndexVm
+@{
+    ViewData["Title"] = "Sprint 41 - Smoke Test";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h4 class="mb-1">Sprint 41 - Buttons Audit &amp; Smoke Test</h4>
+                            <div class="text-muted">تقرير أولي لاختبار الروابط والأزرار والـ workflow على النسخة الحالية.</div>
+                        </div>
+                        <div class="text-muted">آخر توليد: @Model.GeneratedAtUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm tt")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2 col-sm-6"><div class="card"><div class="card-body"><div class="text-muted">Controllers</div><h3>@Model.ControllersCount</h3></div></div></div>
+        <div class="col-md-2 col-sm-6"><div class="card"><div class="card-body"><div class="text-muted">Actions</div><h3>@Model.ActionsCount</h3></div></div></div>
+        <div class="col-md-2 col-sm-6"><div class="card"><div class="card-body"><div class="text-muted">Smoke Targets</div><h3>@Model.SmokeTargetsCount</h3></div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="card"><div class="card-body"><div class="text-muted">Needs Parameters</div><h3>@Model.RequiresParametersCount</h3></div></div></div>
+        <div class="col-md-3 col-sm-12"><div class="card border-warning"><div class="card-body"><div class="text-muted">Missing Views</div><h3 class="text-warning">@Model.MissingViewsCount</h3></div></div></div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Controllers Summary</h5>
+                    <a class="btn btn-sm btn-primary" asp-controller="QaAudit" asp-action="Routes">تفاصيل الروابط</a>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>Controller</th>
+                                <th>Actions</th>
+                                <th>Smoke</th>
+                                <th>Missing Views</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model.Controllers)
+                        {
+                            <tr>
+                                <td>@item.ControllerName</td>
+                                <td>@item.ActionsCount</td>
+                                <td>@item.SmokeTargetsCount</td>
+                                <td>
+                                    @if (item.MissingViewsCount > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark">@item.MissingViewsCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">0</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Quick Notes</h5>
+                    <a class="btn btn-sm btn-outline-primary" asp-controller="QaAudit" asp-action="Workflows">Workflow UAT</a>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        @foreach (var note in Model.QuickNotes)
+                        {
+                            <li class="mb-2">@note</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

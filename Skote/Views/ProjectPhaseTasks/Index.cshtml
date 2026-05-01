@@ -1,0 +1,37 @@
+@model List<InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Tasks.ProjectPhaseTaskListItemVm>
+@await Html.PartialAsync("~/Views/Shared/Projects/_ProjectHeader.cshtml")
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">مهام النشاط / المرحلة</h4>
+            @if (ViewBag.ProjectId != null && ViewBag.PhaseId != null && ViewBag.ActivityId != null)
+            {
+                <a class="btn btn-primary" asp-action="Create" asp-route-projectId="@ViewBag.ProjectId" asp-route-phaseId="@ViewBag.PhaseId" asp-route-activityId="@ViewBag.ActivityId">إضافة مهمة</a>
+            }
+            else
+            {
+                <a class="btn btn-outline-secondary" asp-controller="ProjectPhaseActivities" asp-action="Index">اختيار نشاط أولاً</a>
+            }
+        </div>
+        <table class="table table-striped table-bordered align-middle">
+            <thead><tr><th>المهمة</th><th>الحالة</th><th>المسؤول</th><th>الإنجاز</th><th>الاستحقاق</th><th>آخر متابعة</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><strong>@item.Title</strong><br /><small class="text-muted">@item.Code</small></td>
+                    <td>@item.Status</td>
+                    <td>@item.AssignedToName</td>
+                    <td>@item.PercentComplete %</td>
+                    <td>@(item.DueDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>@(item.LastDailyUpdateAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td class="text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" asp-controller="ProjectTaskDailyUpdates" asp-action="Index" asp-route-taskId="@item.Id">المتابعة اليومية</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@item.Id">تعديل</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,47 @@
+@model InfrastructureManagmentWebFramework.Models.HR.Employees.EmployeeListPageVm
+@using Skote.Helpers
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="mb-1">الموظفون</h4>
+                <p class="text-muted mb-0">إدارة الموظفين وربطهم بالحضور والانصراف</p>
+            </div>
+            <authz policy="HrManage">
+                <a asp-action="Create" class="btn btn-primary">إضافة موظف</a>
+            </authz>
+        </div>
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-md-4"><input asp-for="Filter.Q" class="form-control" placeholder="بحث بالاسم أو الكود أو الرقم القومي" /></div>
+            <div class="col-md-3"><select asp-for="Filter.Status" asp-items="Model.Filter.Statuses" class="form-select"></select></div>
+            <div class="col-md-3"><select asp-for="Filter.IsActive" class="form-select"><option value="">الكل</option><option value="true">النشطون</option><option value="false">غير النشطين</option></select></div>
+            <div class="col-md-2"><button class="btn btn-secondary w-100">بحث</button></div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead><tr><th>الكود</th><th>الاسم</th><th>القسم</th><th>الوظيفة</th><th>التعيين</th><th>الأساسي</th><th>الحالة</th><th>نشط</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+                        <td>@item.FullName</td>
+                        <td>@(item.DepartmentName ?? "-")</td>
+                        <td>@(item.JobTitleName ?? "-")</td>
+                        <td>@item.HireDate.ToString("yyyy-MM-dd")</td>
+                        <td>@item.BasicSalary.ToString("N2")</td>
+                        <td>@item.Status</td>
+                        <td>@(item.IsActive ? "نعم" : "لا")</td>
+                        <td class="text-nowrap">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">عرض</a>
+                            <authz policy="HrManage">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">تعديل</a>
+                            </authz>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

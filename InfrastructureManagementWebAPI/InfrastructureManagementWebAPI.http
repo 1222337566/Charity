@@ -1,6 +1,0 @@
-@InfrastructureManagementWebAPI_HostAddress = http://localhost:5184
-
-GET {{InfrastructureManagementWebAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

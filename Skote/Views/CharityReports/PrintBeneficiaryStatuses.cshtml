@@ -1,4 +1,0 @@
-@model InfrastructureManagmentWebFramework.Models.Reports.BeneficiaryStatusReportVm
-@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة تقرير حالات المستفيدين"; }
-<h3>تقرير حالات المستفيدين</h3><div class="meta">تاريخ الطباعة: @DateTime.Now.ToString("yyyy-MM-dd HH:mm")</div>
-<table class="table"><thead><tr><th>الحالة</th><th>عدد المستفيدين</th><th>طلبات المساعدة</th><th>مرات الصرف</th><th>إجمالي الصرف</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@row.StatusName</td><td>@row.BeneficiariesCount</td><td>@row.AidRequestsCount</td><td>@row.DisbursementsCount</td><td>@row.TotalDisbursedAmount.ToString("N2")</td></tr>}</tbody></table>

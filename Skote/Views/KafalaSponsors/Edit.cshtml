@@ -1,7 +1,0 @@
-@model InfrastructureManagmentWebFramework.Models.Charity.Kafala.EditKafalaSponsorVm
-@{ ViewData["Title"] = "تعديل كفيل"; }
-<h4 class="mb-3">تعديل كفيل</h4>
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="Id" />
-    @Html.Partial("_Form", Model)
-</form>

@@ -1,4 +1,0 @@
-@model InfrastructureManagmentWebFramework.Models.Reports.BeneficiaryAidDetailReportVm
-@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة التقرير التفصيلي للمستفيدين"; }
-<h3>التقرير التفصيلي للمستفيدين</h3><div class="meta">الفترة: @(Model.FromDate?.ToString("yyyy-MM-dd") ?? "الكل") - @(Model.ToDate?.ToString("yyyy-MM-dd") ?? "الكل")</div>
-<table class="table"><thead><tr><th>الكود</th><th>المستفيد</th><th>الحالة</th><th>نوع المساعدة</th><th>الطلب</th><th>المنصرف</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@row.BeneficiaryCode</td><td>@row.BeneficiaryName</td><td>@row.BeneficiaryStatus</td><td>@row.AidTypeName</td><td>@row.RequestedAmount.ToString("N2")</td><td>@row.DisbursedAmount.ToString("N2")</td></tr>}</tbody></table>

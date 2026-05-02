@@ -1,0 +1,4 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.DonationReportVm
+@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة تقرير التبرعات"; }
+<h3>تقرير التبرعات</h3><div class="meta">الفترة: @(Model.FromDate?.ToString("yyyy-MM-dd") ?? "الكل") - @(Model.ToDate?.ToString("yyyy-MM-dd") ?? "الكل")</div>
+<table class="table"><thead><tr><th>التاريخ</th><th>رقم التبرع</th><th>المتبرع</th><th>النوع</th><th>القيمة</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@row.DonationDate.ToString("yyyy-MM-dd")</td><td>@row.DonationNumber</td><td>@row.DonorName</td><td>@row.DonationType</td><td>@row.Amount.ToString("N2")</td></tr>}</tbody></table>

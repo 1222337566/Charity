@@ -1,0 +1,5 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Volunteers.CreateVolunteerSkillDefinitionVm
+<div class="mb-3"><label asp-for="Name" class="form-label">اسم المهارة</label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+<div class="mb-3"><label asp-for="Category" class="form-label">الفئة</label><input asp-for="Category" class="form-control" /></div>
+<div class="mb-3"><label asp-for="SortOrder" class="form-label">الترتيب</label><input asp-for="SortOrder" class="form-control" type="number" /></div>
+<div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label">نشط</label></div>

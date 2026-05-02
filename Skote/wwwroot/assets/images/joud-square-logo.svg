@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <rect width="256" height="256" rx="56" fill="#F8FBFA"/>
+  <path d="M64 176C76 160 82 146 84 126" stroke="#D9A44A" stroke-width="12" stroke-linecap="round"/>
+  <path d="M192 176C180 160 174 146 172 126" stroke="#D9A44A" stroke-width="12" stroke-linecap="round"/>
+  <path d="M88 184C100 150 110 121 128 88C146 121 156 150 168 184" stroke="#0E6F73" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 68C140 53 160 46 176 54C170 72 158 84 138 88" stroke="#D9A44A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 68C116 53 96 46 80 54C86 72 98 84 118 88" stroke="#0E6F73" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 132C140 112 160 104 180 110C171 134 155 146 128 148" stroke="#0E6F73" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 132C116 112 96 104 76 110C85 134 101 146 128 148" stroke="#0E6F73" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="128" y="221" text-anchor="middle" fill="#0E6F73" font-size="30" font-family="Segoe UI, Arial" font-weight="700">Joud Charity</text>
+</svg>

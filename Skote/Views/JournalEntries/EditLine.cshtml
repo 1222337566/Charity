@@ -1,0 +1,65 @@
+@model InfrastructureManagmentWebFramework.Models.Accounting.EditJournalEntryLineVm
+@{
+    ViewData["Title"] = "تعديل سطر القيد";
+}
+
+<div class="page-content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">تعديل سطر القيد</h4>
+                <form asp-action="EditLine" method="post">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="Id" type="hidden" />
+                    <input asp-for="JournalEntryId" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="FinancialAccountId" class="form-label"></label>
+                            <select asp-for="FinancialAccountId" asp-items="Model.Accounts" class="form-select">
+                                <option value="">-- اختر الحساب --</option>
+                            </select>
+                            <span asp-validation-for="FinancialAccountId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CostCenterId" class="form-label"></label>
+                            <select asp-for="CostCenterId" asp-items="Model.CostCenters" class="form-select">
+                                <option value="">-- بدون --</option>
+                            </select>
+                            <span asp-validation-for="CostCenterId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ProjectId" class="form-label"></label>
+                            <input asp-for="ProjectId" class="form-control" />
+                            <span asp-validation-for="ProjectId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Description" class="form-label"></label>
+                            <input asp-for="Description" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="DebitAmount" class="form-label"></label>
+                            <input asp-for="DebitAmount" class="form-control" />
+                            <span asp-validation-for="DebitAmount" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CreditAmount" class="form-label"></label>
+                            <input asp-for="CreditAmount" class="form-control" />
+                            <span asp-validation-for="CreditAmount" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">حفظ</button>
+                        <a asp-action="Details" asp-route-id="@Model.JournalEntryId" class="btn btn-light">رجوع</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

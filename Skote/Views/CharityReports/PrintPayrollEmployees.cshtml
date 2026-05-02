@@ -1,0 +1,3 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.PayrollEmployeeDetailReportVm
+@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة تفاصيل مرتبات الموظفين"; }
+<h3>تفاصيل مرتبات الموظفين</h3><table class="table"><thead><tr><th>الكود</th><th>الاسم</th><th>القسم</th><th>الأساسي</th><th>الإضافات</th><th>الخصومات</th><th>الصافي</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@row.EmployeeCode</td><td>@row.EmployeeName</td><td>@(row.DepartmentName ?? "-")</td><td>@row.BasicSalary.ToString("N2")</td><td>@row.Additions.ToString("N2")</td><td>@row.TotalDeductions.ToString("N2")</td><td>@row.NetAmount.ToString("N2")</td></tr>}</tbody></table>

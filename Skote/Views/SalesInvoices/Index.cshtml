@@ -1,0 +1,965 @@
+@using InfrastrfuctureManagmentCore.Domains.Sale
+@using InfrastructureManagmentWebFramework.Helpers
+@model List<SalesInvoice>
+@{
+    ViewData["Title"] = "فواتير الإيرادات الذاتية / البيع";
+
+    var totalCount = Model.Count;
+    var postedCount = Model.Count(x => x.Status == SalesInvoiceStatus.Posted);
+    var draftCount = Model.Count(x => x.Status == SalesInvoiceStatus.Draft);
+    var cancelledCount = Model.Count(x => x.Status == SalesInvoiceStatus.Cancelled);
+    var totalNet = Model.Sum(x => x.NetAmount);
+    var totalDiscount = Model.Sum(x => x.DiscountAmount);
+    var totalTax = Model.Sum(x => x.TaxAmount);
+    var postedNet = Model.Where(x => x.Status == SalesInvoiceStatus.Posted).Sum(x => x.NetAmount);
+
+    string StatusColor(SalesInvoiceStatus s) => s switch
+    {
+        SalesInvoiceStatus.Posted => "#10b981",
+        SalesInvoiceStatus.Cancelled => "#ef4444",
+        _ => "#f59e0b"
+    };
+    string StatusBg(SalesInvoiceStatus s) => s switch
+    {
+        SalesInvoiceStatus.Posted => "#d1fae5",
+        SalesInvoiceStatus.Cancelled => "#fee2e2",
+        _ => "#fef3c7"
+    };
+    string StatusAr(SalesInvoiceStatus s) => s switch
+    {
+        SalesInvoiceStatus.Posted => "مرحّلة",
+        SalesInvoiceStatus.Cancelled => "ملغية",
+        _ => "مسودة"
+    };
+    string StatusIcon(SalesInvoiceStatus s) => s switch
+    {
+        SalesInvoiceStatus.Posted => "bx-check-circle",
+        SalesInvoiceStatus.Cancelled => "bx-x-circle",
+        _ => "bx-edit"
+    };
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --brand: #0e4f38;
+        --brand-mid: #16a34a;
+        --brand-light: #dcfce7;
+        --amber: #f59e0b;
+        --amber-light: #fef3c7;
+        --blue: #3b82f6;
+        --blue-light: #dbeafe;
+        --red: #ef4444;
+        --red-light: #fee2e2;
+        --surface: #ffffff;
+        --bg: #f8fafc;
+        --border: #e2e8f0;
+        --text: #1e293b;
+        --muted: #94a3b8;
+        --radius: 14px;
+        --radius-sm: 8px;
+        --shadow: 0 4px 20px rgba(14,79,56,.09);
+        --shadow-sm: 0 1px 4px rgba(14,79,56,.06);
+        font-family: 'IBM Plex Sans Arabic',sans-serif
+    }
+
+    /* ── Hero ── */
+    .sales-hero {
+        background: linear-gradient(135deg,#052e16 0%,#0e4f38 45%,#15803d 100%);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        color: #fff;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden
+    }
+
+        .sales-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 90% at 85% -10%,rgba(134,239,172,.14),transparent),radial-gradient(ellipse 40% 60% at 5% 110%,rgba(255,255,255,.04),transparent);
+            pointer-events: none
+        }
+
+    .hero-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px
+    }
+
+    .hero-title {
+        display: flex;
+        align-items: center;
+        gap: 10px
+    }
+
+    .hero-title-icon {
+        width: 38px;
+        height: 38px;
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem
+    }
+
+    .hero-title h5 {
+        margin: 0;
+        font-size: .98rem;
+        font-weight: 800;
+        letter-spacing: -.01em
+    }
+
+    .hero-title small {
+        display: block;
+        font-size: .68rem;
+        opacity: .65;
+        margin-top: 1px
+    }
+
+    .btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fbbf24;
+        color: #1c1917;
+        font-weight: 800;
+        font-size: .82rem;
+        padding: 8px 16px;
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        transition: all .18s;
+        border: none;
+        white-space: nowrap
+    }
+
+        .btn-add:hover {
+            background: #f59e0b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(251,191,36,.4);
+            color: #1c1917
+        }
+
+    /* ── Stat grid ── */
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit,minmax(110px,1fr));
+        gap: 8px
+    }
+
+    .sc {
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 10px;
+        padding: 10px 14px;
+        backdrop-filter: blur(4px);
+        transition: background .15s;
+        cursor: default
+    }
+
+        .sc:hover {
+            background: rgba(255,255,255,.14)
+        }
+
+        .sc .l {
+            font-size: .61rem;
+            opacity: .65;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+            margin-bottom: 4px
+        }
+
+        .sc .n {
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1
+        }
+
+        .sc .s {
+            font-size: .63rem;
+            opacity: .5;
+            margin-top: 3px
+        }
+
+        .sc.posted .n {
+            color: #86efac
+        }
+
+        .sc.draft .n {
+            color: #fde68a
+        }
+
+        .sc.cancelled .n {
+            color: #fca5a5
+        }
+
+        .sc.total-amt .n {
+            color: #c7d2fe
+        }
+
+        .sc.posted-amt .n {
+            color: #86efac
+        }
+
+        .sc.discount .n {
+            color: #fca5a5
+        }
+
+        .sc.tax .n {
+            color: #fdba74
+        }
+
+    /* ── Info bar ── */
+    .info-bar {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        background: var(--blue-light);
+        border: 1px solid #93c5fd;
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-size: .82rem;
+        color: #1e3a8a;
+        margin-bottom: 16px;
+        line-height: 1.5
+    }
+
+        .info-bar i {
+            font-size: 1.05rem;
+            color: var(--blue);
+            margin-top: 1px;
+            flex-shrink: 0
+        }
+
+    /* ── Table card ── */
+    .table-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden
+    }
+
+    /* ── Toolbar ── */
+    .toolbar-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 14px 16px 0
+    }
+
+    .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+        max-width: 340px
+    }
+
+        .search-wrap .si {
+            position: absolute;
+            right: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 1rem;
+            pointer-events: none
+        }
+
+    #globalSearch {
+        width: 100%;
+        padding: 8px 34px 8px 12px;
+        font-size: .84rem;
+        font-family: inherit;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        outline: none;
+        color: var(--text);
+        background: #f8fafc;
+        direction: rtl;
+        transition: border-color .15s,box-shadow .15s
+    }
+
+        #globalSearch:focus {
+            border-color: var(--brand-mid);
+            box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+            background: #fff
+        }
+
+    /* ── Autocomplete ── */
+    .ac-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        left: 0;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow);
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 9999;
+        display: none
+    }
+
+        .ac-list.show {
+            display: block
+        }
+
+    .ac-item {
+        padding: 8px 14px;
+        font-size: .82rem;
+        color: var(--text);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background .1s;
+        direction: rtl
+    }
+
+        .ac-item:last-child {
+            border-bottom: none
+        }
+
+        .ac-item:hover, .ac-item.active {
+            background: #f0fdf4
+        }
+
+        .ac-item mark {
+            background: #bbf7d0;
+            color: #14532d;
+            border-radius: 2px;
+            padding: 0 2px;
+            font-weight: 700
+        }
+
+    .ac-icon {
+        color: var(--brand-mid);
+        font-size: .85rem
+    }
+
+    .length-sel {
+        padding: 7px 10px;
+        font-size: .82rem;
+        font-family: inherit;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: #f8fafc;
+        color: var(--text);
+        outline: none;
+        cursor: pointer
+    }
+
+    .tb-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: .79rem;
+        font-weight: 600;
+        padding: 7px 12px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: #f8fafc;
+        color: #475569;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all .15s;
+        white-space: nowrap
+    }
+
+        .tb-btn:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #1e293b
+        }
+
+    /* ── Column filter row ── */
+    .col-filter-row th {
+        padding: 5px 6px !important;
+        background: #f8fafc !important;
+        border-bottom: 1.5px solid var(--border) !important
+    }
+
+    .col-filter-row input, .col-filter-row select {
+        width: 100%;
+        padding: 4px 7px;
+        font-size: .74rem;
+        font-family: inherit;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        background: #fff;
+        color: var(--text);
+        outline: none;
+        direction: rtl;
+        transition: border-color .15s
+    }
+
+        .col-filter-row input:focus, .col-filter-row select:focus {
+            border-color: var(--brand-mid)
+        }
+
+    /* ── Table ── */
+    table.si-table {
+        width: 100% !important;
+        border-collapse: collapse
+    }
+
+        table.si-table thead tr:first-child th {
+            padding: 11px 12px;
+            background: #f0fdf4;
+            font-size: .74rem;
+            font-weight: 700;
+            color: #374151;
+            border-bottom: 2px solid rgba(14,79,56,.12);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            position: relative
+        }
+
+            table.si-table thead tr:first-child th.sorting::after,
+            table.si-table thead tr:first-child th.sorting_asc::after,
+            table.si-table thead tr:first-child th.sorting_desc::after {
+                font-family: 'boxicons' !important;
+                font-size: .74rem;
+                position: absolute;
+                left: 7px;
+                top: 50%;
+                transform: translateY(-50%);
+                opacity: .4
+            }
+
+            table.si-table thead tr:first-child th.sorting::after {
+                content: '\ea41'
+            }
+
+            table.si-table thead tr:first-child th.sorting_asc::after {
+                content: '\ea19';
+                opacity: .9;
+                color: var(--brand-mid)
+            }
+
+            table.si-table thead tr:first-child th.sorting_desc::after {
+                content: '\ea17';
+                opacity: .9;
+                color: var(--brand-mid)
+            }
+
+        table.si-table tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: .83rem;
+            vertical-align: middle;
+            color: var(--text)
+        }
+
+        table.si-table tbody tr:last-child td {
+            border-bottom: none
+        }
+
+        table.si-table tbody tr:hover td {
+            background: #f0fdf4
+        }
+
+        table.si-table tbody tr.odd td {
+            background: #fafffe
+        }
+
+        table.si-table tbody tr.even td {
+            background: #fff
+        }
+
+        table.si-table tbody tr.odd:hover td,
+        table.si-table tbody tr.even:hover td {
+            background: #f0fdf4
+        }
+
+    /* ── Pagination ── */
+    .dataTables_wrapper .dataTables_paginate {
+        padding: 10px 16px;
+        direction: rtl
+    }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            font-size: .8rem !important;
+            border-radius: 7px !important;
+            padding: 4px 10px !important;
+            margin: 0 2px !important;
+            border: 1px solid transparent !important;
+            background: transparent !important;
+            color: #475569 !important;
+            transition: all .15s !important
+        }
+
+            .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+                background: #f0fdf4 !important;
+                border-color: var(--brand-mid) !important;
+                color: var(--brand) !important
+            }
+
+            .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+                background: var(--brand) !important;
+                border-color: var(--brand) !important;
+                color: #fff !important;
+                font-weight: 700 !important
+            }
+
+            .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+                opacity: .35 !important
+            }
+
+    .dataTables_wrapper .dataTables_info {
+        font-size: .78rem;
+        color: var(--muted);
+        padding: 10px 16px;
+        direction: rtl
+    }
+
+    /* ── Misc ── */
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 9px;
+        border-radius: 20px;
+        font-size: .7rem;
+        font-weight: 700;
+        white-space: nowrap;
+        line-height: 1.6
+    }
+
+    .inv-num {
+        font-family: 'Courier New',monospace;
+        font-size: .78rem;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #334155;
+        border-radius: 5px;
+        padding: 2px 8px;
+        letter-spacing: .03em
+    }
+
+    .amount-cell {
+        font-weight: 700;
+        color: #065f46;
+        font-size: .88rem
+    }
+
+    .muted-cell {
+        font-size: .78rem;
+        color: #94a3b8
+    }
+
+    .tag-cat {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 5px;
+        font-size: .73rem;
+        font-weight: 600;
+        background: #f0fdf4;
+        color: #14532d;
+        border: 1px solid #86efac
+    }
+
+    .row-num {
+        font-size: .72rem;
+        color: var(--muted);
+        font-weight: 700
+    }
+
+    .act-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 7px;
+        font-size: .74rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all .15s;
+        line-height: 1
+    }
+
+        .act-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,.1)
+        }
+
+    .act-btn-print {
+        background: #f0fdf4;
+        color: #065f46
+    }
+
+        .act-btn-print:hover {
+            background: #dcfce7
+        }
+
+    .act-btn-return {
+        background: #fef3c7;
+        color: #92400e
+    }
+
+        .act-btn-return:hover {
+            background: #fde68a
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 52px 20px;
+        color: var(--muted)
+    }
+
+        .empty-state i {
+            font-size: 2.4rem;
+            display: block;
+            margin-bottom: 10px;
+            color: #cbd5e1
+        }
+
+        .empty-state p {
+            font-size: .85rem
+        }
+</style>
+
+<%-- ── Hero Banner ── --%>
+<div class="sales-hero">
+    <div class="hero-top">
+        <div class="hero-title">
+            <div class="hero-title-icon"><i class="bx bx-receipt"></i></div>
+            <div>
+                <h5>فواتير الإيرادات الذاتية / البيع</h5>
+                <small>إدارة فواتير المبيعات والإيرادات الذاتية</small>
+            </div>
+        </div>
+        <a asp-action="Create" class="btn-add">
+            <i class="bx bx-plus"></i> إضافة فاتورة إيراد
+        </a>
+    </div>
+
+    <div class="hero-stats">
+        <div class="sc">
+            <div class="l">إجمالي الفواتير</div>
+            <div class="n">@totalCount</div>
+            <div class="s">جميع الحالات</div>
+        </div>
+        <div class="sc posted">
+            <div class="l">مرحّلة</div>
+            <div class="n">@postedCount</div>
+            <div class="s">فواتير نشطة</div>
+        </div>
+        <div class="sc draft">
+            <div class="l">مسودة</div>
+            <div class="n">@draftCount</div>
+            <div class="s">قيد الإعداد</div>
+        </div>
+        <div class="sc cancelled">
+            <div class="l">ملغية</div>
+            <div class="n">@cancelledCount</div>
+            <div class="s">تم الإلغاء</div>
+        </div>
+        <div class="sc total-amt">
+            <div class="l">إجمالي الإيرادات</div>
+            <div class="n">@totalNet.ToString("N0")</div>
+            <div class="s">صافي الكل</div>
+        </div>
+        <div class="sc posted-amt">
+            <div class="l">إيرادات مرحّلة</div>
+            <div class="n">@postedNet.ToString("N0")</div>
+            <div class="s">من المرحّلة فقط</div>
+        </div>
+        <div class="sc discount">
+            <div class="l">إجمالي الخصم</div>
+            <div class="n">@totalDiscount.ToString("N0")</div>
+            <div class="s">مجموع الخصومات</div>
+        </div>
+        <div class="sc tax">
+            <div class="l">إجمالي الضريبة</div>
+            <div class="n">@totalTax.ToString("N0")</div>
+            <div class="s">مجموع الضرائب</div>
+        </div>
+    </div>
+</div>
+
+<%-- ── Success alert ── --%>
+        @if (TempData["Success"] != null)
+        {
+    <div style="display:flex;align-items:center;gap:8px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.85rem;color:#065f46">
+        <i class="bx bx-check-circle" style="font-size:1.1rem"></i> @TempData["Success"]
+    </div>
+        }
+
+<%-- ── Info bar ── --%>
+<div class="info-bar">
+    <i class="bx bx-info-circle"></i>
+    <span>هذه الشاشة تخدم الإيرادات الذاتية وبيع المنتجات ورسوم الخدمات والفعاليات، مع إظهار المشروع أو اتفاقية التمويل داخل السجل نفسه.</span>
+</div>
+
+<%-- ── Table card ── --%>
+<div class="table-card">
+    <div class="toolbar-row">
+        <div class="search-wrap">
+            <i class="bx bx-search si"></i>
+            <input type="text" id="globalSearch" placeholder="بحث في جميع الأعمدة..." autocomplete="off" />
+            <div class="ac-list" id="acList"></div>
+        </div>
+        <select class="length-sel" id="dtLen">
+            <option value="10">10 صفوف</option>
+            <option value="25">25 صفوف</option>
+            <option value="50">50 صفوف</option>
+            <option value="100">100 صفوف</option>
+            <option value="-1">الكل</option>
+        </select>
+        <button class="tb-btn" id="btnCsv"><i class="bx bx-download"></i> CSV</button>
+        <button class="tb-btn" id="btnPrint"><i class="bx bx-printer"></i> طباعة</button>
+        <button class="tb-btn" id="btnReset"><i class="bx bx-reset"></i> إعادة ضبط</button>
+    </div>
+
+    <div style="overflow-x:auto;padding:0 0 4px">
+        <table class="si-table" id="siTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>رقم الفاتورة</th>
+                    <th>التاريخ</th>
+                    <th>العميل</th>
+                    <th>المخزن</th>
+                    <th>التصنيف</th>
+                    <th>المشروع</th>
+                    <th>التمويل</th>
+                    <th>الإجمالي</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                                @{
+                                    int ri = 0;
+                                }
+                                @foreach (var item in Model)
+                                {
+                                    ri++;
+                                    var tags = CharityOperationNoteTags.Parse(item.Notes);
+                    <tr>
+                        <td class="row-num">@ri</td>
+                        <td><span class="inv-num">@item.InvoiceNumber</span></td>
+                        <td data-order="@item.InvoiceDateUtc.ToString("yyyyMMdd")"
+                            style="white-space:nowrap;color:#64748b">
+                                            @item.InvoiceDateUtc.ToLocalTime().ToString("yyyy-MM-dd")
+                        </td>
+                        <td>
+                            <div style="font-weight:600;font-size:.84rem;color:#1e3a5f">
+                                                @(string.IsNullOrWhiteSpace(item.CustomerName) ? "—" : item.CustomerName)
+                            </div>
+                        </td>
+                        <td style="font-size:.8rem;color:#64748b">
+                                            @(item.Warehouse?.WarehouseNameAr ?? "—")
+                        </td>
+                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(tags.CategoryText))
+                                            {
+                                                <span class="tag-cat">@tags.CategoryText</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="muted-cell">—</span>
+                                            }
+                        </td>
+                        <td style="font-size:.8rem;color:#475569">
+                                            @if (!string.IsNullOrWhiteSpace(tags.ProjectName))
+                                            {
+                                <span style="display:inline-flex;align-items:center;gap:4px">
+                                    <i class="bx bx-briefcase" style="color:#94a3b8;font-size:.85rem"></i>@tags.ProjectName
+                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="muted-cell">—</span>
+                                            }
+                        </td>
+                        <td style="font-size:.8rem;color:#475569">
+                                            @if (!string.IsNullOrWhiteSpace(tags.GrantAgreementNumber))
+                                            {
+                                <span style="display:inline-flex;align-items:center;gap:4px">
+                                    <i class="bx bx-file" style="color:#94a3b8;font-size:.85rem"></i>@tags.GrantAgreementNumber
+                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="muted-cell">—</span>
+                                            }
+                        </td>
+                        <td data-order="@item.NetAmount" class="amount-cell">
+                                            @item.NetAmount.ToString("N2")
+                                            @if (item.DiscountAmount > 0)
+                                            {
+                                <div style="font-size:.68rem;color:#94a3b8;font-weight:400;margin-top:1px">خصم: @item.DiscountAmount.ToString("N2")</div>
+                                            }
+                        </td>
+                        <td style="text-align:center">
+                            <span class="pill" style="background:@StatusBg(item.Status);color:@StatusColor(item.Status)">
+                                <i class="bx @StatusIcon(item.Status)" style="font-size:.72rem"></i>
+                                                @StatusAr(item.Status)
+                            </span>
+                        </td>
+                        <td style="text-align:center">
+                            <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                <a asp-action="PrintReceipt" asp-route-id="@item.Id"
+                                   class="act-btn act-btn-print" title="طباعة الإيصال">
+                                    <i class="bx bx-printer"></i> طباعة
+                                </a>
+                                                @if (item.Status != SalesInvoiceStatus.Cancelled)
+                                                {
+                                    <a asp-controller="SalesReturns" asp-action="Create"
+                                       asp-route-salesInvoiceId="@item.Id"
+                                       class="act-btn act-btn-return" title="إنشاء مرتجع">
+                                        <i class="bx bx-undo"></i> مرتجع
+                                    </a>
+                                                }
+                            </div>
+                        </td>
+                    </tr>
+                                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+                @section Scripts {
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+    $(function(){
+        /* ── Autocomplete pool ── */
+        const pool=new Set();
+        $('#siTable tbody tr').each(function(){
+            $(this).find('td').each(function(){
+                const t=$(this).text().trim();
+                if(t&&t!=='—'&&t.length>1&&t.length<60)
+                    t.split(/[\s،,\n]+/).forEach(w=>{if(w.length>1)pool.add(w);});
+            });
+        });
+        const poolArr=[...pool];
+
+        /* ── DataTable ── */
+        const emptyHtml='<div style="text-align:center;padding:40px 20px"><i class="bx bx-receipt" style="font-size:2.2rem;color:#cbd5e1;display:block;margin-bottom:8px"></i><p style="color:#94a3b8;font-size:.85rem;margin:0">لا توجد فواتير مبيعات حتى الآن</p></div>';
+        const noResultsHtml='<div style="text-align:center;padding:40px 20px"><i class="bx bx-search-alt" style="font-size:2rem;color:#cbd5e1;display:block;margin-bottom:8px"></i><p style="color:#94a3b8;font-size:.85rem;margin:0">لا توجد نتائج مطابقة للبحث</p></div>';
+        const dt=$('#siTable').DataTable({
+            language:{url:'https://cdn.datatables.net/plug-ins/1.13.8/i18n/ar.json',emptyTable:emptyHtml,zeroRecords:noResultsHtml},
+            dom:'tip', pageLength:10, lengthChange:false, responsive:true,
+            orderCellsTop:true,
+            order:[[2,'desc']],
+            columnDefs:[
+                {orderable:false, targets:[0,4,5,6,7,10]},
+                {searchable:false, targets:[0,10]}
+            ],
+            buttons:[
+                {extend:'csvHtml5',  charset:'UTF-8',bom:true},
+                {extend:'print'}
+            ],
+            initComplete:function(){buildFilters(this.api());},
+            drawCallback: function(){updateNums(this.api());}
+        });
+
+        function updateNums(api){
+            api.column(0,{search:'applied',order:'applied'})
+               .nodes().each(function(cell,i){$(cell).text(api.page.info().start+i+1);});
+        }
+
+        /* ── Global search ── */
+        let tmr;
+        $('#globalSearch').on('input',function(){
+            const q=$(this).val().trim();
+            clearTimeout(tmr);
+            tmr=setTimeout(()=>{dt.search(q).draw();renderAC(q);},200);
+        }).on('focus',function(){renderAC($(this).val().trim());});
+
+        /* ── Autocomplete ── */
+        function renderAC(q){
+            const list=$('#acList').empty().removeClass('show');
+            if(!q||q.length<2)return;
+            const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+            const hits=poolArr.filter(s=>s.match(re)).slice(0,9);
+            if(!hits.length)return;
+            hits.forEach(m=>{
+                const hl=m.replace(re,x=>`<mark>${x}</mark>`);
+                $(`<div class="ac-item"><i class="bx bx-search ac-icon"></i><span>${hl}</span></div>`)
+                    .on('mousedown',e=>{e.preventDefault();$('#globalSearch').val(m);dt.search(m).draw();list.removeClass('show');})
+                    .appendTo(list);
+            });
+            list.addClass('show');
+        }
+        $(document).on('click',e=>{if(!$(e.target).closest('.search-wrap').length)$('#acList').removeClass('show');});
+        $('#globalSearch').on('keydown',function(e){
+            const items=$('.ac-item'),active=items.filter('.active');
+            if(e.key==='ArrowDown'){e.preventDefault();(active.length?active.removeClass('active').next():items.first()).addClass('active').each((_,el)=>{$(this).val($(el).text().trim());});}
+            else if(e.key==='ArrowUp'){e.preventDefault();(active.length?active.removeClass('active').prev():items.last()).addClass('active').each((_,el)=>{$(this).val($(el).text().trim());});}
+            else if(e.key==='Escape')$('#acList').removeClass('show');
+        });
+
+        /* ── Controls ── */
+        $('#dtLen').on('change',function(){dt.page.len(+$(this).val()).draw();});
+        $('#btnCsv').on('click',()=>dt.button(0).trigger());
+        $('#btnPrint').on('click',()=>dt.button(1).trigger());
+        $('#btnReset').on('click',()=>{
+            dt.search('').columns().search('').draw();
+            $('#globalSearch').val('');
+            $('#siTable thead .col-filter-row input,#siTable thead .col-filter-row select').val('');
+            $('#dtLen').val('10');dt.page.len(10).draw();
+        });
+
+        /* ── Column filters ── */
+        function buildFilters(api){
+            const row=$('<tr class="col-filter-row"></tr>');
+            api.columns().every(function(){
+                const col=this, title=$(col.header()).text().trim();
+                let el;
+                const txt=ph=>{const i=$(`<input type="text" placeholder="${ph}"/>`);i.on('keyup',()=>col.search(i.val()).draw());return i;};
+                const sel=opts=>{const s=$('<select><option value="">الكل</option></select>');opts.forEach(o=>s.append(`<option value="${o}">${o}</option>`));s.on('change',()=>col.search(s.val()).draw());return s;};
+                const uniq=()=>{const s=new Set();col.data().each(v=>{const t=$('<div>').html(v).text().trim().split('\n')[0].trim();if(t&&t!=='—')s.add(t);});return[...s].sort();};
+
+                if(title==='#'||title==='الإجراءات') el=$('<span></span>');
+                else if(title==='التاريخ'){
+                    const i=$('<input type="date"/>');
+                    i.on('change',function(){
+                        if(!this.value){col.search('').draw();return;}
+                        const d=new Date(this.value);
+                        col.search(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`).draw();
+                    });
+                    el=i;
+                }
+                else if(title==='الحالة')         el=sel(['مرحّلة','مسودة','ملغية']);
+                else if(title==='التصنيف')         el=sel(uniq());
+                else if(title==='المخزن')          el=sel(uniq());
+                else if(title==='المشروع')         el=sel(uniq());
+                else if(title==='التمويل')         el=sel(uniq());
+                else if(title==='الإجمالي')        el=txt('ابحث بالمبلغ...');
+                else if(title==='العميل')          el=txt('ابحث بالعميل...');
+                else if(title==='رقم الفاتورة')    el=txt('ابحث برقم...');
+                else el=txt('ابحث...');
+
+                $('<th></th>').append(el).appendTo(row);
+            });
+            $('#siTable thead').append(row);
+        }
+    });
+</script>
+}

@@ -1,0 +1,81 @@
+﻿@using InfrastructureManagmentWebFramework.Models.Charity.FunderProfile
+@using InfrastructureManagmentWebFramework.Models.Charity.FunderProfile.GrantAgreements
+@model List<GrantAgreementListItemVm>
+@{
+    ViewData["Title"] = "اتفاقيات التمويل";
+    var funderHeader = ViewBag.FunderHeader as FunderHeaderVm;
+}
+<div class="page-content">
+<div class="container-fluid">
+    @if (funderHeader != null)
+    {
+        @await Html.PartialAsync("~/Views/Shared/Funders/_FunderHeader.cshtml", funderHeader)
+    }
+    <div class="card">
+        <div class="card-body table-responsive">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="card-title mb-0">اتفاقيات التمويل</h4>
+                    @if (funderHeader == null && ViewBag.PageSubtitle != null)
+                    {
+                        <small class="text-muted">@ViewBag.PageSubtitle</small>
+                    }
+                </div>
+                <a asp-action="Create" asp-route-funderId="@funderHeader?.Id" class="btn btn-success">إضافة اتفاقية</a>
+            </div>
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        @if (funderHeader == null)
+                        {
+                            <th>الممول</th>
+                        }
+                        <th>رقم الاتفاقية</th>
+                        <th>العنوان</th>
+                        <th>التاريخ</th>
+                        <th>الفترة</th>
+                        <th>التمويل</th>
+                        <th>الحالة</th>
+                        <th>دفعات</th>
+                        <th>شروط</th>
+                        <th>المستلم</th>
+                        <th style="width:220px">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            @if (funderHeader == null)
+                            {
+                                <td>@(item.FunderName ?? "-")</td>
+                            }
+                            <td>@item.AgreementNumber</td>
+                            <td>@item.Title</td>
+                            <td>@item.AgreementDate.ToString("yyyy-MM-dd")</td>
+                            <td>@item.StartDate?.ToString("yyyy-MM-dd") - @item.EndDate?.ToString("yyyy-MM-dd")</td>
+                            <td>@item.TotalAmount.ToString("N2") @item.Currency</td>
+                            <td>@item.Status</td>
+                            <td>@item.InstallmentsCount</td>
+                            <td>@item.ConditionsCount</td>
+                            <td>@item.ReceivedAmount.ToString("N2")</td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">تعديل</a>
+                                <a asp-controller="GrantInstallments" asp-action="Index" asp-route-grantAgreementId="@item.Id" class="btn btn-sm btn-outline-primary">الدفعات</a>
+                                <a asp-controller="GrantConditions" asp-action="Index" asp-route-grantAgreementId="@item.Id" class="btn btn-sm btn-outline-success">الشروط</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="11" class="text-center text-muted">لا توجد اتفاقيات</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>

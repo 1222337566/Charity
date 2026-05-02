@@ -1,0 +1,113 @@
+@model IEnumerable<InfrastructureManagmentWebFramework.Models.Charity.Kafala.KafalaCaseListItemVm>
+@using Skote.Helpers
+@{ ViewData["Title"] = "ملفات الكفالات"; }
+<style>
+:root{--teal:#0e6f73;--teal-l:#e1f5f5;--ink:#1e3a5f;--muted:#6b7d80}
+.kf-hero{background:linear-gradient(135deg,#4a1942,#c0392b);border-radius:20px;padding:20px 26px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden}
+.kf-hero::after{content:'';position:absolute;top:-50px;left:-50px;width:200px;height:200px;background:rgba(255,255,255,.04);border-radius:50%}
+.kf-stat{background:rgba(255,255,255,.13);border-radius:12px;padding:10px 16px;text-align:center;flex:1;min-width:80px}
+.kf-stat .n{font-size:1.3rem;font-weight:800;line-height:1}
+.kf-stat .l{font-size:.67rem;opacity:.8;margin-top:2px}
+.kf-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.kf-table th{padding:10px 14px;font-size:.72rem;font-weight:700;color:var(--muted);background:#f9f4f4;text-align:right;border-bottom:.5px solid rgba(192,57,43,.1);white-space:nowrap}
+.kf-table td{padding:11px 14px;border-bottom:.5px solid rgba(192,57,43,.05);vertical-align:middle}
+.kf-table tr:hover td{background:rgba(192,57,43,.02)}
+.kf-num{font-weight:700;color:#c0392b;font-size:.84rem}
+.type-chip{padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:700;color:#fff}
+.freq-chip{padding:2px 8px;border-radius:5px;font-size:.67rem;font-weight:700;background:rgba(14,111,115,.1);color:var(--teal)}
+.due-ok{background:rgba(52,195,143,.12);color:#1a7a55;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.due-late{background:rgba(244,106,106,.12);color:#d63301;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.status-active{background:rgba(52,195,143,.12);color:#1a7a55;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700}
+.status-other{background:#f0f4f8;color:#6b7d80;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700}
+.auto-on{background:rgba(52,195,143,.1);color:#1a7a55;padding:1px 7px;border-radius:4px;font-size:.67rem;font-weight:700}
+.auto-off{background:#f0f4f8;color:#adb5bd;padding:1px 7px;border-radius:4px;font-size:.67rem}
+.filter-strip{background:#fff;border-radius:12px;border:.5px solid rgba(192,57,43,.1);padding:12px 16px;margin-bottom:14px}
+</style>
+@{
+    var list=Model.ToList();
+    var activeCount=list.Count(x=>x.Status=="Active");
+    var overdueCount=list.Count(x=>x.NextDueDate.HasValue&&x.NextDueDate.Value<DateTime.Today);
+    var totalMonthly=list.Where(x=>x.Status=="Active").Sum(x=>x.MonthlyAmount);
+}
+<div class="kf-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <h4 class="mb-1 fw-bold"><i class="bx bx-heart me-2"></i>ملفات الكفالات</h4>
+            <p class="mb-0" style="opacity:.8;font-size:.87rem">إدارة ملفات الكفالة وتتبع الاستحقاقات والمدفوعات</p>
+        </div>
+        <a asp-action="Create" class="btn btn-light fw-semibold" style="border-radius:10px"><i class="bx bx-plus me-1"></i>ملف كفالة جديد</a>
+    </div>
+    <div class="d-flex flex-wrap gap-3 mt-3">
+        <div class="kf-stat"><div class="n">@list.Count</div><div class="l">إجمالي الملفات</div></div>
+        <div class="kf-stat"><div class="n">@activeCount</div><div class="l">نشطة</div></div>
+        <div class="kf-stat"><div class="n" style="color:@(overdueCount>0?"#ff6b6b":"inherit")">@overdueCount</div><div class="l">استحقاق متأخر</div></div>
+        <div class="kf-stat"><div class="n">@totalMonthly.ToString("N0")</div><div class="l">إجمالي شهري</div></div>
+    </div>
+</div>
+@if(overdueCount>0){
+    <div class="alert d-flex align-items-center gap-2 mb-3" style="background:rgba(244,106,106,.08);border:.5px solid rgba(244,106,106,.25);border-radius:12px">
+        <i class="bx bx-error-circle" style="color:#d63301;font-size:1.3rem;flex-shrink:0"></i>
+        <div style="font-size:.85rem;color:#7a1a01">يوجد <strong>@overdueCount ملف</strong> بها استحقاقات متأخرة تحتاج متابعة</div>
+    </div>
+}
+<div class="filter-strip d-flex flex-wrap gap-3 align-items-center justify-content-between">
+    <div class="d-flex gap-2 align-items-center">
+        <i class="bx bx-search text-muted"></i>
+        <input type="text" id="kfSearch" class="form-control form-control-sm border-0 shadow-none" placeholder="بحث بالرقم أو الكفيل أو المكفول..." style="width:260px;outline:none"/>
+    </div>
+    <form asp-action="GenerateCycle" method="post" class="d-flex gap-2 flex-wrap align-items-center">
+        <input type="date" name="plannedDate" class="form-control form-control-sm" style="border-color:rgba(192,57,43,.2)"/>
+        @if(ViewBag.SponsorId!=null){<input type="hidden" name="sponsorId" value="@ViewBag.SponsorId"/>}
+        <button type="submit" class="btn btn-sm fw-semibold" style="background:#c0392b;color:#fff;border-radius:8px"><i class="bx bx-refresh me-1"></i>توليد دورة كفالات</button>
+    </form>
+</div>
+@if(!list.Any()){
+    <div class="text-center py-5 text-muted"><i class="bx bx-heart-circle" style="font-size:3rem;opacity:.3;display:block;margin-bottom:10px"></i><p>لا توجد ملفات كفالة</p></div>
+}else{
+    <div class="card" style="border-radius:14px;border:.5px solid rgba(192,57,43,.1);overflow:hidden">
+        <div class="table-responsive">
+            <table class="kf-table" id="kfTable">
+                <thead>
+                    <tr><th>رقم الملف</th><th>الكفيل</th><th>المكفول</th><th>نوع الكفالة</th><th>الدورية</th><th>القيمة</th><th>الاستحقاق القادم</th><th>آخر تحصيل</th><th>الإدراج التلقائي</th><th>الحالة</th><th style="width:80px"></th></tr>
+                </thead>
+                <tbody>
+                @foreach(var item in list){
+                    var overdue=item.NextDueDate.HasValue&&item.NextDueDate.Value<DateTime.Today;
+                    <tr data-search="@item.CaseNumber.ToLower() @item.SponsorName.ToLower() @item.BeneficiaryName.ToLower()">
+                        <td><span class="kf-num">@item.CaseNumber</span></td>
+                        <td class="fw-semibold" style="color:var(--ink)">@item.SponsorName</td>
+                        <td class="fw-semibold" style="color:var(--ink)">@item.BeneficiaryName</td>
+                        <td><span class="type-chip" style="background:#c0392b">@KafalaArabic.SponsorshipType(item.SponsorshipType)</span></td>
+                        <td><span class="freq-chip">@KafalaArabic.Frequency(item.Frequency)</span></td>
+                        <td class="fw-semibold">@item.MonthlyAmount.ToString("N0")</td>
+                        <td>
+                            @if(item.NextDueDate.HasValue){
+                                <span class="@(overdue?"due-late":"due-ok")">
+                                    @item.NextDueDate.Value.ToString("yyyy/MM/dd")
+                                    @if(overdue){<span>⚠</span>}
+                                </span>
+                            }else{<span class="text-muted">—</span>}
+                        </td>
+                        <td class="text-muted" style="font-size:.78rem">@(item.LastCollectionDate?.ToString("yyyy/MM/dd")??"—")</td>
+                        <td><span class="@(item.AutoIncludeInAidCycles?"auto-on":"auto-off")">@(item.AutoIncludeInAidCycles?"مفعّل":"متوقف")</span></td>
+                        <td><span class="@(item.Status=="Active"?"status-active":"status-other")">@KafalaArabic.CaseStatus(item.Status)</span></td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light" style="border-radius:7px"><i class="bx bx-edit-alt"></i></a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+@section Scripts {
+<script>
+document.getElementById('kfSearch')?.addEventListener('input',function(){
+    const q=this.value.toLowerCase();
+    document.querySelectorAll('#kfTable tbody tr').forEach(r=>{
+        r.style.display=(r.dataset.search||'').includes(q)?'':'none';
+    });
+});
+</script>
+}

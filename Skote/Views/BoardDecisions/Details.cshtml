@@ -1,0 +1,138 @@
+@model InfrastrfuctureManagmentCore.Domains.Charity.MinutesAndDecisions.BoardDecision
+@{
+    ViewData["Title"] = "تفاصيل القرار";
+}
+<div class="container-fluid">
+    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+        <h4 class="mb-sm-0">تفاصيل القرار</h4>
+        <div class="page-title-right d-flex gap-2 flex-wrap">
+            <a asp-controller="BoardDecisions" asp-action="Index" asp-route-meetingId="@Model.BoardMeetingId" class="btn btn-light">رجوع</a>
+            <a asp-controller="BoardDecisionAttachments" asp-action="Index" asp-route-boardDecisionId="@Model.Id" class="btn btn-primary">ملفات القرار</a>
+            <a asp-controller="BoardDecisionFollowUps" asp-action="Create" asp-route-boardDecisionId="@Model.Id" class="btn btn-success">إضافة متابعة</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">عنوان القرار</dt>
+                <dd class="col-sm-9">@Model.Title</dd>
+
+                <dt class="col-sm-3">رقم القرار</dt>
+                <dd class="col-sm-9">@Model.DecisionNumber</dd>
+
+                <dt class="col-sm-3">نوع القرار</dt>
+                <dd class="col-sm-9">@Model.DecisionKind</dd>
+
+                <dt class="col-sm-3">الوصف</dt>
+                <dd class="col-sm-9">@Model.Description</dd>
+
+                <dt class="col-sm-3">المسؤول عن التنفيذ</dt>
+                <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.ResponsibleParty) ? "-" : Model.ResponsibleParty)</dd>
+
+                <dt class="col-sm-3">تاريخ الاستحقاق</dt>
+                <dd class="col-sm-9">@(Model.DueDate?.ToString("yyyy-MM-dd") ?? "-")</dd>
+
+                <dt class="col-sm-3">الحالة</dt>
+                <dd class="col-sm-9">@Model.Status</dd>
+
+                <dt class="col-sm-3">الأولوية</dt>
+                <dd class="col-sm-9">@Model.Priority</dd>
+
+                <dt class="col-sm-3">ملاحظات</dt>
+                <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="card-title mb-0">مرفقات القرار</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Attachments != null && Model.Attachments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead>
+                            <tr>
+                                <th>اسم الملف</th>
+                                <th>النوع</th>
+                                <th>الحجم</th>
+                                <th style="width:180px;">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model.Attachments.OrderByDescending(x => x.CreatedAtUtc))
+                        {
+                            <tr>
+                                <td>@item.OriginalFileName</td>
+                                <td>@item.ContentType</td>
+                                <td>@((item.FileSizeBytes / 1024.0).ToString("N0")) KB</td>
+                                <td>
+                                    <a asp-controller="BoardDecisionAttachments"
+                                       asp-action="Download"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-info">
+                                        تحميل
+                                    </a>
+                                    <a asp-controller="BoardDecisionAttachments"
+                                       asp-action="Delete"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-danger">
+                                        حذف
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light mb-0">لا توجد مرفقات لهذا القرار.</div>
+            }
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="card-title mb-0">متابعات القرار</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.FollowUps != null && Model.FollowUps.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الحالة</th>
+                                <th>نسبة الإنجاز</th>
+                                <th>التفاصيل</th>
+                                <th>الإجراء التالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model.FollowUps.OrderByDescending(x => x.FollowUpDate))
+                        {
+                            <tr>
+                                <td>@item.FollowUpDate.ToString("yyyy-MM-dd")</td>
+                                <td>@item.Status</td>
+                                <td>@(item.ProgressPercent ?? 0)%</td>
+                                <td>@item.Details</td>
+                                <td>@item.NextAction</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light mb-0">لا توجد متابعات لهذا القرار.</div>
+            }
+        </div>
+    </div>
+</div>

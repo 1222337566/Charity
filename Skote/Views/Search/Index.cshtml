@@ -1,0 +1,181 @@
+@{ ViewData["Title"] = "البحث الموحد"; }
+@{
+    var q = ViewBag.Query as string ?? "";
+}
+
+<style>
+.srch-hero{background:linear-gradient(135deg,#0a5659,#0e6f73);border-radius:18px;padding:28px 32px;color:#fff;margin-bottom:24px;text-align:center}
+.srch-box{position:relative;max-width:600px;margin:16px auto 0}
+.srch-input{width:100%;padding:14px 50px 14px 20px;border-radius:14px;border:none;font-size:1rem;outline:none;font-family:inherit;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.srch-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#0e6f73;font-size:20px;cursor:pointer}
+.srch-clear{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#adb5bd;font-size:16px;cursor:pointer;display:none}
+
+.filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:6px 16px;border-radius:10px;font-size:.82rem;font-weight:600;border:.5px solid rgba(14,111,115,.2);background:#fff;cursor:pointer;transition:.12s;color:#15363a}
+.filter-btn.active{background:#0e6f73;color:#fff;border-color:#0e6f73}
+.filter-btn:hover:not(.active){background:#f5faf9}
+
+.result-card{background:#fff;border-radius:14px;border:.5px solid rgba(14,111,115,.10);padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s;text-decoration:none;color:inherit}
+.result-card:hover{box-shadow:0 4px 16px rgba(14,111,115,.12);transform:translateY(-1px);border-color:rgba(14,111,115,.2)}
+.result-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.result-name{font-size:.92rem;font-weight:600;color:#15363a}
+.result-sub{font-size:.76rem;color:#6b7d80;margin-top:2px}
+.result-type{padding:2px 8px;border-radius:5px;font-size:.68rem;font-weight:700;margin-right:auto;flex-shrink:0}
+
+.section-title{font-size:.82rem;font-weight:700;color:#6b7d80;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.5px}
+.empty-state{text-align:center;padding:60px 24px;color:#adb5bd}
+.loading{text-align:center;padding:40px;color:#6b7d80}
+</style>
+
+<div class="srch-hero">
+  <h4 class="fw-bold mb-1">🔍 البحث الموحد</h4>
+  <p style="opacity:.8;font-size:.88rem">ابحث في كل موديولات النظام دفعة واحدة</p>
+  <div class="srch-box">
+    <input id="main-search" class="srch-input" type="text"
+           placeholder="اكتب اسم مستفيد، كفيل، مشروع، متبرع..."
+           value="@q" autocomplete="off"/>
+    <i class="bx bx-search srch-icon"></i>
+    <i class="bx bx-x srch-clear" id="clear-btn"></i>
+  </div>
+</div>
+
+<div class="filter-bar" id="filter-bar" style="display:none!important">
+  <span style="font-size:.82rem;color:#6b7d80;font-weight:600">فلتر:</span>
+  <button class="filter-btn active" data-type="all">الكل</button>
+  <button class="filter-btn" data-type="Beneficiary">👤 مستفيدون</button>
+  <button class="filter-btn" data-type="Donor">💰 متبرعون</button>
+  <button class="filter-btn" data-type="KafalaSponsor">🤝 كفلاء</button>
+  <button class="filter-btn" data-type="Project">🏗 مشروعات</button>
+  <button class="filter-btn" data-type="Funder">🏢 ممولون</button>
+  <button class="filter-btn" data-type="Volunteer">🙋 متطوعون</button>
+</div>
+
+<div id="results-wrap">
+  <div class="empty-state" id="empty-state">
+    <i class="bx bx-search" style="font-size:3rem;display:block;margin-bottom:12px"></i>
+    <p style="font-size:.9rem">اكتب للبحث في المستفيدين والكفلاء والمشروعات وأكثر</p>
+  </div>
+</div>
+
+@section scripts {
+<script>
+(function(){
+  var inp     = document.getElementById('main-search');
+  var wrap    = document.getElementById('results-wrap');
+  var filterBar = document.getElementById('filter-bar');
+  var clearBtn  = document.getElementById('clear-btn');
+  var timer, allResults = [], activeType = 'all';
+
+  var icons = {
+    Beneficiary:'👤', Donor:'💰', Funder:'🏢',
+    KafalaSponsor:'🤝', Project:'🏗', Volunteer:'🙋',
+    HumanitarianResearch:'📝', ProjectProposal:'📋'
+  };
+  var typeColors = {
+    Beneficiary:'rgba(244,106,106,.12)', Donor:'rgba(52,195,143,.12)',
+    Funder:'rgba(80,165,241,.12)', KafalaSponsor:'rgba(241,180,76,.12)',
+    Project:'rgba(219,164,74,.12)', Volunteer:'rgba(85,110,230,.12)',
+    HumanitarianResearch:'rgba(14,111,115,.10)', ProjectProposal:'rgba(14,111,115,.10)'
+  };
+  var typeColorText = {
+    Beneficiary:'#ab2b2b', Donor:'#0d7a5a', Funder:'#1a6faf',
+    KafalaSponsor:'#8a5f00', Project:'#8a5f00', Volunteer:'#3145a3',
+    HumanitarianResearch:'#0a5f63', ProjectProposal:'#0a5f63'
+  };
+  var typeAr = {
+    Beneficiary:'مستفيد', Donor:'متبرع', Funder:'ممول',
+    KafalaSponsor:'كفيل', Project:'مشروع', Volunteer:'متطوع',
+    HumanitarianResearch:'بحث اجتماعي', ProjectProposal:'مقترح'
+  };
+
+  function groupBy(arr, key) {
+    return arr.reduce(function(acc, x) {
+      (acc[x[key]] = acc[x[key]] || []).push(x); return acc;
+    }, {});
+  }
+
+  function render(results) {
+    if (!results || !results.length) {
+      wrap.innerHTML = '<div class="empty-state"><i class="bx bx-search-alt" style="font-size:3rem;display:block;margin-bottom:12px"></i><p>لا نتائج لـ «' + escHtml(inp.value) + '»</p></div>';
+      return;
+    }
+
+    var filtered = activeType === 'all' ? results : results.filter(r => r.type === activeType);
+    if (!filtered.length) {
+      wrap.innerHTML = '<div class="empty-state"><p>لا نتائج في هذا التصنيف</p></div>';
+      return;
+    }
+
+    var groups = groupBy(filtered, 'type');
+    var html = '';
+    Object.keys(groups).forEach(function(type) {
+      html += '<div class="section-title">' + (typeAr[type] || type) + ' (' + groups[type].length + ')</div>';
+      groups[type].forEach(function(r) {
+        var bg   = typeColors[r.type] || 'rgba(14,111,115,.08)';
+        var clr  = typeColorText[r.type] || '#0e6f73';
+        var icon = icons[r.type] || '📌';
+        html +=
+          '<a href="' + (r.url || '#') + '" class="result-card">' +
+          '<div class="result-icon" style="background:' + bg + '">' + icon + '</div>' +
+          '<div class="flex-grow-1 min-w-0">' +
+            '<div class="result-name">' + escHtml(r.name || '') + '</div>' +
+            '<div class="result-sub">' + escHtml(r.sub || '') + '</div>' +
+          '</div>' +
+          '<span class="result-type" style="background:' + bg + ';color:' + clr + '">' +
+            (typeAr[r.type] || r.type) +
+          '</span>' +
+          '</a>';
+      });
+    });
+    wrap.innerHTML = html;
+  }
+
+  function search(q) {
+    if (!q || q.length < 2) {
+      wrap.innerHTML = '<div class="empty-state" id="empty-state"><i class="bx bx-search" style="font-size:3rem;display:block;margin-bottom:12px"></i><p style="font-size:.9rem">اكتب للبحث في المستفيدين والكفلاء والمشروعات وأكثر</p></div>';
+      filterBar.style.cssText = 'display:none!important';
+      clearBtn.style.display = 'none';
+      return;
+    }
+    wrap.innerHTML = '<div class="loading"><div class="spinner-border spinner-border-sm text-primary me-2"></div>جاري البحث...</div>';
+    clearBtn.style.display = '';
+    fetch('/api/search?q=' + encodeURIComponent(q) + '&take=15')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        allResults = data.results || [];
+        filterBar.style.cssText = allResults.length ? '' : 'display:none!important';
+        render(allResults);
+      })
+      .catch(function() {
+        wrap.innerHTML = '<div class="empty-state"><i class="bx bx-error" style="font-size:2rem;color:#f46a6a;display:block;margin-bottom:8px"></i><p>تعذّر الاتصال</p></div>';
+      });
+  }
+
+  inp.addEventListener('input', function() {
+    clearTimeout(timer);
+    timer = setTimeout(function(){ search(inp.value.trim()); }, 300);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    inp.value = '';
+    search('');
+    inp.focus();
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeType = btn.dataset.type;
+      render(allResults);
+    });
+  });
+
+  function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // auto-search if q in URL
+  if (inp.value.trim().length >= 2) search(inp.value.trim());
+  inp.focus();
+})();
+</script>
+}

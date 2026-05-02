@@ -1,0 +1,40 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.Documents
+@model EditBeneficiaryDocumentVm
+@{ ViewData["Title"] = "تعديل مستند"; }
+@using InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.Shared
+@{
+    var beneficiaryId = ViewBag.BeneficiaryId as Guid?;
+    var beneficiaryName = ViewBag.BeneficiaryName as string;
+    var beneficiaryCode = ViewBag.BeneficiaryCode as string;
+    var beneficiaryNationalId = ViewBag.BeneficiaryNationalId as string;
+    var beneficiaryPhone = ViewBag.BeneficiaryPhoneNumber as string;
+    var beneficiaryStatus = ViewBag.BeneficiaryStatusName as string;
+}
+
+@if (beneficiaryId != Guid.Empty)
+{
+    var beneficiaryHeader = new BeneficiaryHeaderVm
+                {
+                    Id = beneficiaryId.Value,
+                    Code = beneficiaryCode ?? string.Empty,
+                    FullName = beneficiaryName ?? string.Empty,
+                    NationalId = beneficiaryNationalId ?? string.Empty,
+                    PhoneNumber = beneficiaryPhone ?? string.Empty,
+                    StatusName = beneficiaryStatus ?? string.Empty
+                };
+    <partial name="~/Views/Shared/Beneficiaries/_BeneficiaryHeader.cshtml" model="beneficiaryHeader" />
+}
+<div class="container-fluid">
+    
+    <div class="card"><div class="card-header"><h5 class="mb-0">تعديل مستند</h5></div><div class="card-body">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <partial name="_Form" model="Model" />
+            <div class="mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">حفظ التعديل</button>
+                <a asp-action="Index" asp-route-beneficiaryId="@Model.BeneficiaryId" class="btn btn-secondary">رجوع</a>
+            </div>
+        </form>
+    </div></div>
+</div>
+@section Scripts{<partial name="_ValidationScriptsPartial" />}

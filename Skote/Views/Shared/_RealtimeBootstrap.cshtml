@@ -1,0 +1,16 @@
+@using Microsoft.Extensions.Options
+@using System.Text.Json
+@using Skote.Helpers
+@inject IOptions<SignalRHubsOptions> SignalROptions
+@inject IConfiguration Configuration
+@{
+    var hubs = SignalROptions.Value.Hubs ?? new Dictionary<string, string>();
+    var realtimeBase = Configuration["Realtime:BaseUrl"] ?? string.Empty;
+    var tokenEndpoint = Url.Content("~/auth/realtime-token");
+}
+<script>
+    window.__SIGNALR_HUBS__ = @Html.Raw(JsonSerializer.Serialize(hubs));
+    window.__APP__ = window.__APP__ || {};
+    window.__APP__.realtimeBase = @Html.Raw(JsonSerializer.Serialize(realtimeBase));
+    window.__REALTIME_TOKEN_ENDPOINT = @Html.Raw(JsonSerializer.Serialize(tokenEndpoint));
+</script>

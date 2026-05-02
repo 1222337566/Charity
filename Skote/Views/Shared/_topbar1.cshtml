@@ -1,0 +1,75 @@
+<header id="page-topbar">
+    <div class="navbar-header">
+        <div class="d-flex">
+            <!-- LOGO -->
+            <div class="navbar-brand-box joud-brand-box">
+                <a href="@Url.Action("Index", "Dashboard")" class="joud-brand-link">
+                    <span class="joud-brand-mark">
+                        <img src="~/assets/images/joud/joud-mark.svg" alt="Joud Charity" />
+                    </span>
+                    <span class="joud-brand-copy">
+                        <span class="joud-brand-ar">جود</span>
+                        <span class="joud-brand-en">Joud Charity</span>
+                    </span>
+                </a>
+            </div>
+
+            <button type="button" class="btn btn-sm px-3 font-size-16 header-item waves-effect" id="vertical-menu-btn">
+                <i class="fa fa-fw fa-bars"></i>
+            </button>
+        </div>
+
+        <div class="d-flex">
+
+            <!-- Unified Search -->
+            <div class="d-none d-md-flex align-items-center me-2" style="position:relative">
+              <input id="topbar-search" type="text" placeholder="🔍 بحث موحد..."
+                     autocomplete="off"
+                     style="border-radius:12px;border:.5px solid rgba(14,111,115,.2);padding:6px 14px;font-size:.82rem;width:200px;outline:none;background:#f5faf9;transition:.2s"
+                     onfocus="this.style.width='260px'" onblur="this.style.width='200px'"/>
+              <div id="topbar-search-results"
+                   style="display:none;position:absolute;top:110%;right:0;width:320px;background:#fff;border-radius:14px;border:.5px solid rgba(14,111,115,.15);box-shadow:0 8px 24px rgba(14,111,115,.12);z-index:9999;max-height:360px;overflow-y:auto"></div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="dropdown d-inline-block">
+                <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle position-relative" href="#" id="page-header-notifications-dropdown"
+                   role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="bx bx-bell bx-tada"></i>
+                    <span id="notif-count" class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle">0</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0 shadow-lg"
+                     aria-labelledby="page-header-notifications-dropdown" style="width:340px;">
+
+                    <!-- Header -->
+                    <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-light">
+                        <span class="fw-semibold">الإشعارات</span>
+                        <button id="notif-markall" class="btn btn-sm btn-link p-0 text-primary">تعليم الكل كمقروء</button>
+                    </div>
+
+                    <!-- Scrollable list -->
+                    <div id="notif-list" data-simplebar
+                         style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+                        <!-- JS will inject notifications here -->
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="p-2 border-top text-center bg-light">
+                        <a id="notif-loadmore" href="#" class="small text-muted">تحميل المزيد</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            @await Component.InvokeAsync("UserBadge", new { mode = "flex" })
+
+            <div class="dropdown d-inline-block">
+                <button type="button" class="btn header-item noti-icon right-bar-toggle waves-effect">
+                    <i class="bx bx-cog bx-spin"></i>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</header>

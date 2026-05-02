@@ -1,0 +1,22 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.FunderProfile
+@using InfrastructureManagmentWebFramework.Models.Charity.FunderProfile.GrantInstallments
+@model EditGrantInstallmentVm
+@{
+    ViewData["Title"] = "تعديل دفعة";
+    var agreementHeader = ViewBag.GrantAgreementHeader as GrantAgreementHeaderVm;
+}
+<div class="page-content"><div class="container-fluid">
+@if (agreementHeader != null) { @await Html.PartialAsync("~/Views/Shared/Funders/_GrantAgreementHeader.cshtml", agreementHeader) }
+<div class="card"><div class="card-body">
+    <h4 class="card-title mb-4">تعديل دفعة التمويل</h4>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="GrantAgreementId" />
+        @await Html.PartialAsync("_Form", Model)
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+            <a asp-action="Index" asp-route-grantAgreementId="@Model.GrantAgreementId" class="btn btn-light">رجوع</a>
+        </div>
+    </form>
+</div></div>
+</div></div>

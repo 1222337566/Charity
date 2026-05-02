@@ -1,0 +1,20 @@
+@model InfrastructureManagmentWebFramework.Models.AccountingIntegration.CreateAccountingIntegrationProfileVm
+@{
+    ViewData["Title"] = "إضافة Profile ربط محاسبي";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="mb-3">إضافة Profile ربط محاسبي</h4>
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                @await Html.PartialAsync("_Form", Model)
+                <div class="mt-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                    <a asp-action="Index" class="btn btn-light">رجوع</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

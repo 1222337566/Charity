@@ -1,0 +1,52 @@
+﻿@model CreateUnitVm
+@using InfrastructureManagmentWebFramework.Models.FinancialAccounting;
+
+@{
+    ViewData["Title"] = "إضافة وحدة";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">إضافة وحدة</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="UnitCode" class="form-label"></label>
+                        <input asp-for="UnitCode" class="form-control" />
+                        <span asp-validation-for="UnitCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-8 mb-3">
+                        <label asp-for="UnitNameAr" class="form-label"></label>
+                        <input asp-for="UnitNameAr" class="form-control" />
+                        <span asp-validation-for="UnitNameAr" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="UnitNameEn" class="form-label"></label>
+                        <input asp-for="UnitNameEn" class="form-control" />
+                        <span asp-validation-for="UnitNameEn" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Symbol" class="form-label"></label>
+                        <input asp-for="Symbol" class="form-control" />
+                        <span asp-validation-for="Symbol" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

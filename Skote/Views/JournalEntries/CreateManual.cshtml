@@ -1,0 +1,266 @@
+@model InfrastructureManagmentWebFramework.Models.Accounting.CreateManualJournalEntryVm
+@{
+    ViewData["Title"] = "إضافة قيد يدوي";
+}
+
+<style>
+    .manual-header-card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+    .manual-badge { background: linear-gradient(135deg,#6f42c1,#495057); color:#fff; border-radius:20px; font-size:.75rem; padding:4px 12px; letter-spacing:.5px; }
+    .lines-card { border:none; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.07); overflow:hidden; }
+    .lines-card .card-header { background:#f8f9fa; border-bottom:1px solid #e9ecef; padding:14px 20px; }
+    #manualLinesTable thead th { background:#f1f3f5; font-size:.8rem; font-weight:600; color:#495057; padding:10px 8px; white-space:nowrap; border-color:#dee2e6; }
+    #manualLinesTable tbody td { padding:7px 6px; vertical-align:middle; }
+    #manualLinesTable .form-select, #manualLinesTable .form-control { font-size:.82rem; border-radius:8px; padding:5px 8px; height:36px; }
+    .balance-footer td { background:#f8f9fa; font-weight:600; }
+    .totals-box .val { font-size:1.15rem; font-weight:700; }
+    .remove-line-btn { border-radius:8px; padding:4px 10px; font-size:.78rem; }
+</style>
+
+<div class="page-content">
+  <div class="container-fluid" dir="rtl">
+    <form asp-action="CreateManual" method="post" id="manualJournalForm">
+      @Html.AntiForgeryToken()
+
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <h4 class="mb-1 d-flex align-items-center gap-2">
+            إضافة قيد يدوي
+            <span class="manual-badge">يدوي</span>
+          </h4>
+          <p class="text-muted mb-0 small">يُنشأ هذا القيد مباشرةً بدون مصدر تشغيلي ويُسجَّل كقيد يدوي.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-light btn-sm"><i class="bx bx-arrow-back me-1"></i> رجوع</a>
+      </div>
+
+      <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3" style="border-radius:12px"></div>
+
+      <div class="card manual-header-card mb-3">
+        <div class="card-body">
+          <h6 class="fw-semibold mb-3 text-muted small text-uppercase">بيانات القيد</h6>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label asp-for="EntryNumber" class="form-label fw-semibold small"></label>
+              <input asp-for="EntryNumber" class="form-control" readonly style="background:#f8f9fa;border-radius:10px" />
+            </div>
+            <div class="col-md-3">
+              <label asp-for="EntryDate" class="form-label fw-semibold small"></label>
+              <input asp-for="EntryDate" type="date" class="form-control" style="border-radius:10px" />
+              <span asp-validation-for="EntryDate" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+              <label asp-for="FiscalPeriodId" class="form-label fw-semibold small"></label>
+              <select asp-for="FiscalPeriodId" asp-items="Model.FiscalPeriods" class="form-select" style="border-radius:10px">
+                <option value="">-- اختر الفترة المالية --</option>
+              </select>
+              <span asp-validation-for="FiscalPeriodId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3 d-flex align-items-end pb-1">
+              <div class="form-check form-switch ms-2">
+                <input asp-for="PostImmediately" class="form-check-input" role="switch" />
+                <label asp-for="PostImmediately" class="form-check-label small fw-semibold"></label>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <label asp-for="Description" class="form-label fw-semibold small"></label>
+              <input asp-for="Description" class="form-control" style="border-radius:10px"
+                     placeholder="مثال: تسوية رصيد / قيد افتتاحي / تصحيح حساب" />
+              <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="Notes" class="form-label fw-semibold small"></label>
+              <input asp-for="Notes" class="form-control" style="border-radius:10px" placeholder="ملاحظات اختيارية" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-4">
+          <div class="card border-0" style="border-radius:12px;background:#e8f5e9">
+            <div class="card-body py-2 px-3 totals-box">
+              <div class="text-muted small">إجمالي المدين</div>
+              <div class="val text-success" id="totalDebitBig">0.00</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="card border-0" style="border-radius:12px;background:#fce4ec">
+            <div class="card-body py-2 px-3 totals-box">
+              <div class="text-muted small">إجمالي الدائن</div>
+              <div class="val text-danger" id="totalCreditBig">0.00</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="card border-0" style="border-radius:12px;background:#e3f2fd">
+            <div class="card-body py-2 px-3 totals-box">
+              <div class="text-muted small">حالة الاتزان</div>
+              <div class="val" id="balanceBig"><span class="text-warning">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card lines-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 fw-semibold">سطور القيد</h6>
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="addLine()" style="border-radius:10px">
+            <i class="bx bx-plus me-1"></i> إضافة سطر
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle mb-0" id="manualLinesTable">
+            <thead>
+              <tr>
+                <th style="min-width:260px">الحساب <span class="text-danger">*</span></th>
+                <th style="min-width:160px">مركز التكلفة</th>
+                <th style="min-width:170px">المشروع</th>
+                <th style="min-width:130px">مدين</th>
+                <th style="min-width:130px">دائن</th>
+                <th style="min-width:200px">البيان</th>
+                <th style="width:70px" class="text-center">حذف</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (var i = 0; i < Model.Lines.Count; i++)
+              {
+                <tr>
+                  <td>
+                    <select asp-for="Lines[i].FinancialAccountId" asp-items="Model.Accounts" class="form-select account-select">
+                      <option value="">-- اختر الحساب --</option>
+                    </select>
+                    <span asp-validation-for="Lines[i].FinancialAccountId" class="text-danger small"></span>
+                  </td>
+                  <td>
+                    <select asp-for="Lines[i].CostCenterId" asp-items="Model.CostCenters" class="form-select cost-center-select">
+                      <option value="">-- بدون --</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select asp-for="Lines[i].ProjectId" asp-items="Model.Projects" class="form-select project-select">
+                      <option value="">-- بدون --</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input asp-for="Lines[i].DebitAmount" class="form-control debit" type="number" step="0.01" min="0"
+                           oninput="lineAmountChanged(this);recalcTotals();" placeholder="0.00" />
+                  </td>
+                  <td>
+                    <input asp-for="Lines[i].CreditAmount" class="form-control credit" type="number" step="0.01" min="0"
+                           oninput="lineAmountChanged(this);recalcTotals();" placeholder="0.00" />
+                  </td>
+                  <td>
+                    <input asp-for="Lines[i].Description" class="form-control" placeholder="بيان السطر..." />
+                  </td>
+                  <td class="text-center">
+                    <button type="button" class="remove-line-btn btn btn-sm btn-outline-danger" onclick="removeLine(this)" title="حذف السطر">
+                      <i class="bx bx-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="balance-footer">
+                <td colspan="3" class="text-end pe-3">الإجمالي</td>
+                <td id="totalDebit" class="text-success fw-bold">0.00</td>
+                <td id="totalCredit" class="text-danger fw-bold">0.00</td>
+                <td colspan="2" id="balanceStatus"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#f8f9fa;border-top:1px solid #dee2e6;padding:14px 20px">
+          <div class="text-muted small">
+            <i class="bx bx-info-circle me-1"></i>
+            يجب أن يتساوى إجمالي المدين مع إجمالي الدائن قبل الحفظ
+          </div>
+          <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-light btn-sm" style="border-radius:10px">إلغاء</a>
+            <button type="submit" class="btn btn-primary btn-sm" id="saveBtn" style="border-radius:10px;min-width:120px">
+              <i class="bx bx-save me-1"></i> حفظ القيد
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function parseAmount(v) { const n = parseFloat(v || '0'); return isNaN(n) ? 0 : n; }
+        function fmt(n) { return n.toFixed(2); }
+
+        function recalcTotals() {
+            let d = 0, c = 0;
+            document.querySelectorAll('#manualLinesTable .debit').forEach(x => d += parseAmount(x.value));
+            document.querySelectorAll('#manualLinesTable .credit').forEach(x => c += parseAmount(x.value));
+            const ok = d > 0 && d === c;
+
+            document.getElementById('totalDebit').textContent  = fmt(d);
+            document.getElementById('totalCredit').textContent = fmt(c);
+            document.getElementById('balanceStatus').innerHTML = ok
+                ? '<span class="badge bg-success">متوازن ✓</span>'
+                : '<span class="badge bg-danger">غير متوازن</span>';
+
+            document.getElementById('totalDebitBig').textContent  = fmt(d);
+            document.getElementById('totalCreditBig').textContent = fmt(c);
+            document.getElementById('balanceBig').innerHTML = ok
+                ? '<span class="text-success fw-bold">متوازن ✓</span>'
+                : d === 0 ? '<span class="text-warning">—</span>'
+                : '<span class="text-danger">فرق ' + fmt(Math.abs(d - c)) + '</span>';
+
+            document.getElementById('saveBtn').disabled = !ok;
+        }
+
+        function lineAmountChanged(input) {
+            const row = input.closest('tr');
+            if (!row) return;
+            if (input.classList.contains('debit')  && parseAmount(input.value) > 0) row.querySelector('.credit').value = '';
+            if (input.classList.contains('credit') && parseAmount(input.value) > 0) row.querySelector('.debit').value  = '';
+        }
+
+        function removeLine(btn) {
+            if (document.querySelectorAll('#manualLinesTable tbody tr').length <= 2) {
+                alert('يجب أن يحتوي القيد على سطرين على الأقل.'); return;
+            }
+            btn.closest('tr').remove();
+            reindexLines(); recalcTotals();
+        }
+
+        function addLine() {
+            const tbody = document.querySelector('#manualLinesTable tbody');
+            const index = tbody.querySelectorAll('tr').length;
+            const ao = tbody.querySelector('.account-select')?.innerHTML    || '<option value="">-- اختر الحساب --</option>';
+            const co = tbody.querySelector('.cost-center-select')?.innerHTML || '<option value="">-- بدون --</option>';
+            const po = tbody.querySelector('.project-select')?.innerHTML     || '<option value="">-- بدون --</option>';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td><select name="Lines[${index}].FinancialAccountId" class="form-select account-select">${ao}</select></td>
+              <td><select name="Lines[${index}].CostCenterId"       class="form-select cost-center-select">${co}</select></td>
+              <td><select name="Lines[${index}].ProjectId"          class="form-select project-select">${po}</select></td>
+              <td><input name="Lines[${index}].DebitAmount"  class="form-control debit"  type="number" step="0.01" min="0" placeholder="0.00" oninput="lineAmountChanged(this);recalcTotals();" /></td>
+              <td><input name="Lines[${index}].CreditAmount" class="form-control credit" type="number" step="0.01" min="0" placeholder="0.00" oninput="lineAmountChanged(this);recalcTotals();" /></td>
+              <td><input name="Lines[${index}].Description"  class="form-control" placeholder="بيان السطر..." /></td>
+              <td class="text-center"><button type="button" class="remove-line-btn btn btn-sm btn-outline-danger" onclick="removeLine(this)" title="حذف"><i class="bx bx-trash"></i></button></td>`;
+            tbody.appendChild(row);
+            reindexLines(); recalcTotals();
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function reindexLines() {
+            document.querySelectorAll('#manualLinesTable tbody tr').forEach((row, i) => {
+                row.querySelectorAll('input, select').forEach(el => {
+                    if (el.name) el.name = el.name.replace(/Lines\[\d+\]/, `Lines[${i}]`);
+                    if (el.id)   el.id   = el.id.replace(/Lines_\d+__/,   `Lines_${i}__`);
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', recalcTotals);
+    </script>
+}

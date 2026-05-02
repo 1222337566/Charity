@@ -1,0 +1,84 @@
+﻿@model CreateOpticalWorkOrderVm
+@using InfrastructureManagmentWebFramework.Models.Optics.WorkOrders
+
+@{
+    ViewData["Title"] = "إنشاء أمر شغل";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">إنشاء أمر شغل</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <input asp-for="SalesInvoiceId" type="hidden" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">الفاتورة</label>
+                        <input class="form-control" value="@Model.InvoiceNumber" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">العميل</label>
+                        <input class="form-control" value="@Model.CustomerName" readonly />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Prescription</label>
+                        <input class="form-control" value="@Model.PrescriptionText" readonly />
+                    </div>
+                    <div class="col-md-2">
+                        <label asp-for="IsUrgent" class="form-label d-block">عاجل</label>
+                        <input asp-for="IsUrgent" class="form-check-input mt-2" />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="WorkOrderNumber" class="form-label"></label>
+                        <input asp-for="WorkOrderNumber" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="OrderDateUtc" class="form-label"></label>
+                        <input asp-for="OrderDateUtc" type="datetime-local" class="form-control"
+                               value="@(Model.OrderDateUtc.ToString("yyyy-MM-ddTHH:mm"))" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="ExpectedDeliveryDateUtc" class="form-label"></label>
+                        <input asp-for="ExpectedDeliveryDateUtc" type="datetime-local" class="form-control"
+                               value="@(Model.ExpectedDeliveryDateUtc?.ToString("yyyy-MM-ddTHH:mm"))" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="FrameNotes" class="form-label"></label>
+                    <textarea asp-for="FrameNotes" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="LensNotes" class="form-label"></label>
+                    <textarea asp-for="LensNotes" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="WorkshopNotes" class="form-label"></label>
+                    <textarea asp-for="WorkshopNotes" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DeliveryNotes" class="form-label"></label>
+                    <textarea asp-for="DeliveryNotes" class="form-control" rows="2"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a asp-controller="SalesInvoices" asp-action="Index" class="btn btn-secondary">رجوع</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

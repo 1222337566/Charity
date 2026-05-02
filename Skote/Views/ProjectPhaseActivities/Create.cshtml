@@ -1,0 +1,2 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Activities.CreateProjectPhaseActivityVm
+<div class="card"><div class="card-body"><h4 class="mb-3">إضافة نشاط</h4><form method="post">@Html.AntiForgeryToken()@await Html.PartialAsync("_Form", Model)<div class="mt-3"><button class="btn btn-primary">حفظ</button><a class="btn btn-light" asp-action="Index" asp-route-phaseId="@Model.PhaseId">رجوع</a></div></form></div></div>

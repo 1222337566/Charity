@@ -1,0 +1,1 @@
+namespace InfrastructureManagmentWebFramework.Models.HR.Advanced.EmployeeMovements { public class EditEmployeeMovementVm : CreateEmployeeMovementVm { } }

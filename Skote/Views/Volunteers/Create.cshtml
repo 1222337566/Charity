@@ -1,0 +1,14 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Volunteers.CreateVolunteerVm
+@{
+    ViewData["Title"] = "إضافة متطوع";
+}
+<div class="card">
+    <div class="card-header"><h4 class="mb-0">إضافة متطوع</h4></div>
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <partial name="_Form" model="Model" />
+            <button type="submit" class="btn btn-primary">حفظ</button>
+            <a asp-action="Index" class="btn btn-light">رجوع</a>
+        </form>
+    </div>
+</div>

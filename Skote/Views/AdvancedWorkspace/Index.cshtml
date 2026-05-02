@@ -1,0 +1,877 @@
+@using InfrastrfuctureManagmentCore.Domains.Charity.Workflow
+@{
+    ViewData["Title"] = "مساحة العمل المتقدمة";
+    var layoutJson    = ViewBag.LayoutJson as string ?? "[]";
+    var workflowDefs  = ViewBag.WorkflowDefs as List<DynamicWorkflowDefinition> ?? new();
+    var availRoles    = ViewBag.AvailableRoles as List<string> ?? new();
+    var entityTypes   = ViewBag.EntityTypes as List<(string Key, string Label)> ?? new();
+    var antiForgery   = Html.AntiForgeryToken();
+}
+
+<style>
+/* ── مساحة العمل العامة ── */
+.ws-tab-bar         { border-bottom: 2px solid #e9ecef; margin-bottom: 1.5rem; }
+.ws-tab-btn         { background: none; border: none; padding: .6rem 1.2rem; font-size: .95rem;
+                      color: #6c757d; cursor: pointer; border-bottom: 3px solid transparent;
+                      margin-bottom: -2px; transition: all .2s; }
+.ws-tab-btn.active  { color: #556ee6; border-bottom-color: #556ee6; font-weight: 600; }
+.ws-tab-pane        { display: none; }
+.ws-tab-pane.active { display: block; }
+
+/* ── Widget Grid ── */
+.widget-catalog      { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 1rem; }
+.widget-catalog-item { background:#fff; border:2px solid #e9ecef; border-radius:12px;
+                       padding:1rem 1.2rem; cursor:pointer; transition:all .2s; position:relative; }
+.widget-catalog-item:hover       { border-color:#556ee6; box-shadow:0 4px 16px rgba(85,110,230,.12); }
+.widget-catalog-item.selected    { border-color:#556ee6; background:#f0f3ff; }
+.widget-catalog-item .wi-icon    { font-size:1.8rem; margin-bottom:.5rem; }
+.widget-catalog-item .wi-label   { font-weight:600; font-size:.9rem; color:#343a40; }
+.widget-catalog-item .wi-check   { position:absolute; top:.6rem; left:.6rem; display:none; }
+.widget-catalog-item.selected .wi-check { display:block; }
+
+.widget-grid         { display:grid; grid-template-columns:repeat(12,1fr); gap:1rem; min-height:400px; }
+.widget-card         { background:#fff; border-radius:12px; border:1px solid #e9ecef;
+                       box-shadow:0 2px 8px rgba(0,0,0,.05); overflow:hidden;
+                       transition:box-shadow .2s; }
+.widget-card:hover   { box-shadow:0 4px 20px rgba(0,0,0,.1); }
+.widget-card.col-3   { grid-column:span 3; }
+.widget-card.col-4   { grid-column:span 4; }
+.widget-card.col-6   { grid-column:span 6; }
+.widget-card.col-12  { grid-column:span 12; }
+.widget-card-header  { padding:.75rem 1rem; background:#f8f9fa; border-bottom:1px solid #e9ecef;
+                       display:flex; align-items:center; justify-content:space-between; }
+.widget-card-header .wh-title { font-weight:600; font-size:.88rem; color:#343a40; }
+.widget-card-body    { padding:1rem; }
+.widget-drag-handle  { cursor:grab; color:#adb5bd; padding:0 .3rem; }
+.widget-drag-handle:active { cursor:grabbing; }
+.widget-count        { font-size:2.2rem; font-weight:700; color:#343a40; line-height:1; }
+.widget-subtitle     { font-size:.8rem; color:#6c757d; margin-top:.3rem; }
+
+.widget-card.dragging { opacity:.5; border:2px dashed #556ee6; }
+.widget-card.drag-over{ border:2px solid #556ee6; background:#f0f3ff; }
+
+/* ── Lookup Tab ── */
+.lookup-type-btn      { display:flex; align-items:center; gap:.5rem; padding:.6rem 1rem;
+                        border-radius:8px; cursor:pointer; border:1px solid #e9ecef;
+                        background:#fff; transition:all .15s; font-size:.88rem; }
+.lookup-type-btn:hover        { background:#f0f3ff; border-color:#556ee6; }
+.lookup-type-btn.active       { background:#556ee6; color:#fff; border-color:#556ee6; }
+.lookup-table-wrap    { background:#fff; border-radius:12px; border:1px solid #e9ecef; overflow:hidden; }
+
+/* ── Workflow Designer ── */
+.wf-def-card          { background:#fff; border:1px solid #e9ecef; border-radius:12px;
+                        margin-bottom:1rem; overflow:hidden; }
+.wf-def-header        { background:#f8f9fa; padding:.9rem 1.2rem;
+                        display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+.wf-def-title         { font-weight:700; font-size:.95rem; color:#343a40; }
+.wf-def-badge         { font-size:.75rem; }
+.wf-steps-list        { padding:1rem 1.2rem; }
+.wf-step-item         { display:flex; align-items:center; gap:.8rem; padding:.6rem;
+                        background:#f8f9fa; border-radius:8px; margin-bottom:.5rem;
+                        border:1px solid transparent; transition:all .15s; }
+.wf-step-item:hover   { border-color:#556ee6; background:#f0f3ff; }
+.wf-step-order        { width:28px; height:28px; background:#556ee6; color:#fff;
+                        border-radius:50%; display:flex; align-items:center; justify-content:center;
+                        font-size:.8rem; font-weight:700; flex-shrink:0; }
+.wf-step-name         { font-weight:600; font-size:.88rem; flex:1; }
+.wf-step-role         { font-size:.8rem; color:#6c757d; background:#e9ecef;
+                        padding:.15rem .5rem; border-radius:4px; }
+.wf-step-drag         { cursor:grab; color:#adb5bd; }
+.wf-step-drag:active  { cursor:grabbing; }
+
+/* ── Save Bar ── */
+.save-bar             { position:sticky; top:64px; z-index:100; background:#fff;
+                        border-bottom:1px solid #e9ecef; padding:.75rem 0; margin-bottom:1.5rem; }
+
+@@media(max-width:768px){
+    .widget-grid      { grid-template-columns:1fr; }
+    .widget-card.col-3,.widget-card.col-4,.widget-card.col-6,.widget-card.col-12{ grid-column:span 1; }
+}
+</style>
+
+<!-- ══════════════════════════════ PAGE HEADER ══════════════════════════════ -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="mb-1">مساحة العمل المتقدمة</h4>
+        <p class="text-muted mb-0">خصّص لوحة عملك، أدر البيانات المرجعية، وصمم مسارات الموافقة.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="CharityWorkspace" asp-action="Index" class="btn btn-light">مساحة العمل الأساسية</a>
+        <a asp-controller="WorkflowBoard"    asp-action="Index" class="btn btn-outline-primary">لوحة المهام</a>
+    </div>
+</div>
+
+<!-- ══════════════════════════════ TAB BAR ══════════════════════════════ -->
+<div class="ws-tab-bar d-flex gap-1">
+    <button class="ws-tab-btn active" data-tab="widgets">
+        <i class="mdi mdi-view-dashboard-outline me-1"></i> لوحة الـWidgets
+    </button>
+    <button class="ws-tab-btn" data-tab="lookups">
+        <i class="mdi mdi-database-edit-outline me-1"></i> البيانات المرجعية
+    </button>
+    <button class="ws-tab-btn" data-tab="workflow">
+        <i class="mdi mdi-state-machine me-1"></i> مسارات الموافقة
+    </button>
+</div>
+
+@Html.AntiForgeryToken()
+
+<!-- ══════════════════════════════ TAB 1: WIDGETS ══════════════════════════════ -->
+<div id="tab-widgets" class="ws-tab-pane active">
+
+    <div class="save-bar">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-sm btn-light" id="btnCustomize">
+                    <i class="mdi mdi-pencil-outline me-1"></i>تخصيص الـWidgets
+                </button>
+                <span class="text-muted small" id="saveStatus"></span>
+            </div>
+            <button class="btn btn-sm btn-primary" id="btnSaveLayout">
+                <i class="mdi mdi-content-save-outline me-1"></i>حفظ التخطيط
+            </button>
+        </div>
+    </div>
+
+    <!-- Catalog (hidden by default, shown when customizing) -->
+    <div id="widgetCatalog" class="card mb-3" style="display:none">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-semibold">اختر الـWidgets التي تريد عرضها</h6>
+                <button class="btn btn-sm btn-success" id="btnApplyCatalog">تطبيق الاختيارات</button>
+            </div>
+            <div class="widget-catalog" id="catalogGrid"></div>
+        </div>
+    </div>
+
+    <!-- Active Widget Grid -->
+    <div class="widget-grid" id="widgetGrid"></div>
+</div>
+
+<!-- ══════════════════════════════ TAB 2: LOOKUPS ══════════════════════════════ -->
+<div id="tab-lookups" class="ws-tab-pane">
+    <div class="row g-3">
+        <!-- Sidebar: lookup types -->
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-body p-2">
+                    <p class="text-muted small px-2 mb-2">اختر نوع القائمة</p>
+                    <div class="d-flex flex-column gap-1" id="lookupTypeList">
+                        @foreach(var lt in new[]{
+                            ("AidType","أنواع المساعدة","mdi-hand-heart-outline","#e74c3c"),
+                            ("BeneficiaryStatus","حالات المستفيد","mdi-account-check-outline","#27ae60"),
+                            ("Governorate","المحافظات","mdi-map-marker-outline","#2980b9"),
+                            ("City","المدن","mdi-city-variant-outline","#8e44ad"),
+                            ("Gender","الجنس","mdi-gender-male-female","#e67e22"),
+                            ("MaritalStatus","الحالة الاجتماعية","mdi-ring","#16a085")
+                        })
+                        {
+                            <button class="lookup-type-btn" data-ltype="@lt.Item1">
+                                <i class="mdi @lt.Item3" style="color:@lt.Item4;font-size:1.1rem"></i>
+                                @lt.Item2
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main: lookup table -->
+        <div class="col-lg-9">
+            <div id="lookupPanel" class="lookup-table-wrap">
+                <div class="p-4 text-center text-muted">
+                    <i class="mdi mdi-cursor-pointer" style="font-size:2rem"></i>
+                    <p class="mt-2">اختر نوعًا من القائمة على اليسار</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════ TAB 3: WORKFLOW ══════════════════════════════ -->
+<div id="tab-workflow" class="ws-tab-pane">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="text-muted mb-0 small">
+            المسارات المحفوظة هنا تتجاوز المسارات الثابتة في الكود عند تفعيلها.
+        </p>
+        <button class="btn btn-primary btn-sm" id="btnNewDef">
+            <i class="mdi mdi-plus me-1"></i>مسار جديد
+        </button>
+    </div>
+
+    <div id="wfDefsContainer">
+        @foreach (var def in workflowDefs)
+        {
+            <div class="wf-def-card" data-def-id="@def.Id">
+                <div class="wf-def-header" onclick="toggleDef(this)">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="wf-def-title">@def.DisplayName</span>
+                        <span class="badge bg-secondary wf-def-badge">@def.EntityType</span>
+                        @if (def.IsActive)
+                        { <span class="badge bg-success wf-def-badge">نشط</span> }
+                        else
+                        { <span class="badge bg-secondary wf-def-badge">غير نشط</span> }
+                    </div>
+                    <div class="d-flex gap-2" onclick="event.stopPropagation()">
+                        <button class="btn btn-sm btn-light btn-edit-def"
+                                data-def-id="@def.Id" data-entity="@def.EntityType"
+                                data-name="@def.DisplayName" data-notes="@def.Notes"
+                                data-active="@def.IsActive.ToString().ToLower()">
+                            <i class="mdi mdi-pencil-outline"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="showAddStep('@def.Id')">
+                            <i class="mdi mdi-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger btn-del-def" data-def-id="@def.Id">
+                            <i class="mdi mdi-delete-outline"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="wf-def-body" style="display:none">
+                    <div class="wf-steps-list" id="steps-@def.Id">
+                        @if (!def.Steps.Any())
+                        {
+                            <p class="text-muted text-center small py-2">لا توجد خطوات — أضف خطوة أولى</p>
+                        }
+                        @foreach (var step in def.Steps)
+                        {
+                            <div class="wf-step-item" data-step-id="@step.Id" data-def-id="@def.Id"
+                                 draggable="true">
+                                <span class="wf-step-drag"><i class="mdi mdi-drag"></i></span>
+                                <span class="wf-step-order">@step.StepOrder</span>
+                                <span class="wf-step-name">@step.StepName</span>
+                                <span class="wf-step-role">@step.AssignedRole</span>
+                                @if (!string.IsNullOrWhiteSpace(step.Description))
+                                {
+                                    <span class="text-muted small">@step.Description</span>
+                                }
+                                <div class="ms-auto d-flex gap-1">
+                                    <button class="btn btn-sm btn-light btn-edit-step"
+                                            data-step-id="@step.Id" data-def-id="@def.Id"
+                                            data-name="@step.StepName" data-role="@step.AssignedRole"
+                                            data-order="@step.StepOrder" data-desc="@step.Description">
+                                        <i class="mdi mdi-pencil-outline" style="font-size:.9rem"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger btn-del-step" data-step-id="@step.Id">
+                                        <i class="mdi mdi-delete-outline" style="font-size:.9rem"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ══════════════════════════════ MODALS ══════════════════════════════ -->
+
+<!-- Modal: Add/Edit Workflow Definition -->
+<div class="modal fade" id="modalWorkflowDef" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">مسار موافقة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="defId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">نوع الكيان <span class="text-danger">*</span></label>
+                    <select class="form-select" id="defEntityType">
+                        <option value="">— اختر —</option>
+                        @foreach (var et in entityTypes)
+                        {
+                            <option value="@et.Key">@et.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">الاسم <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="defDisplayName" placeholder="مثال: مسار مراجعة طلبات المساعدة">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">ملاحظات</label>
+                    <textarea class="form-control" id="defNotes" rows="2"></textarea>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="defIsActive" checked>
+                    <label class="form-check-label" for="defIsActive">مسار نشط</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="btnSaveDef">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add/Edit Workflow Step -->
+<div class="modal fade" id="modalWorkflowStep" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">خطوة في مسار الموافقة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="stepId">
+                <input type="hidden" id="stepDefId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">اسم الخطوة <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="stepName" placeholder="مثال: مراجعة أولية">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">الدور المسؤول <span class="text-danger">*</span></label>
+                    <select class="form-select" id="stepRole">
+                        <option value="">— اختر —</option>
+                        @foreach (var r in availRoles)
+                        { <option value="@r">@r</option> }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">رقم الترتيب</label>
+                    <input type="number" class="form-control" id="stepOrder" min="1" value="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">وصف الخطوة</label>
+                    <input type="text" class="form-control" id="stepDesc">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="btnSaveStep">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add/Edit Lookup Item -->
+<div class="modal fade" id="modalLookup" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lookupModalTitle">إضافة عنصر</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="lookupId">
+                <input type="hidden" id="lookupType">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">الاسم بالعربية <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="lookupNameAr">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">الاسم بالإنجليزية</label>
+                    <input type="text" class="form-control" id="lookupNameEn">
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="lookupIsActive" checked>
+                    <label class="form-check-label" for="lookupIsActive">نشط</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="btnSaveLookup">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// ANTIFORGERY TOKEN
+// ══════════════════════════════════════════════════════════════════════
+const TOKEN = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+async function postJson(url, data) {
+    const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': TOKEN },
+        body: JSON.stringify(data)
+    });
+    return r.json();
+}
+
+function toast(msg, ok = true) {
+    const el = document.createElement('div');
+    el.className = `alert alert-${ok ? 'success' : 'danger'} position-fixed`;
+    el.style.cssText = 'bottom:24px;right:24px;z-index:9999;min-width:280px;box-shadow:0 4px 16px rgba(0,0,0,.15)';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════════
+document.querySelectorAll('.ws-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.ws-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.ws-tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// WIDGETS CONFIGURATION
+// ══════════════════════════════════════════════════════════════════════
+const WIDGET_DEFS = [
+    { key:'PendingAidRequests',  label:'طلبات مساعدة معلقة', icon:'mdi-hand-heart', color:'warning',  col:3 },
+    { key:'NewBeneficiaries',    label:'حالات جديدة (7 أيام)',icon:'mdi-account-plus',color:'primary', col:3 },
+    { key:'WaitingListTotal',    label:'قوائم الانتظار',     icon:'mdi-clock-outline',color:'info',    col:3 },
+    { key:'PendingWorkflowSteps',label:'مهام موافقة معلقة',  icon:'mdi-state-machine',color:'secondary',col:3 },
+    { key:'DonationSummary',     label:'تبرعات هذا الأسبوع', icon:'mdi-gift-outline', color:'success', col:3 },
+    { key:'LowStock',            label:'أصناف تحت الحد الأدنى',icon:'mdi-package-variant-remove',color:'danger',col:3 },
+    { key:'GrantsDueSoon',       label:'دفعات تمويل قريبة',  icon:'mdi-cash-clock',  color:'danger',  col:3 },
+    { key:'ProjectsEndingSoon',  label:'مشروعات تنتهي قريبًا',icon:'mdi-flag-checkered',color:'warning',col:3 },
+    { key:'PendingStoreIssues',  label:'أذون صرف معلقة',     icon:'mdi-store-clock-outline',color:'info',col:3 },
+    { key:'HrAttendanceMissing', label:'حضور غير مكتمل اليوم',icon:'mdi-account-clock',color:'secondary',col:3 },
+];
+
+// Load saved layout
+let activeWidgets = [];
+try {
+    const saved = JSON.parse('@Html.Raw(layoutJson)');
+    if (Array.isArray(saved) && saved.length > 0) {
+        activeWidgets = saved;
+    } else {
+        // Default: first 8 widgets
+        activeWidgets = WIDGET_DEFS.slice(0, 8).map((w, i) =>
+            ({ key: w.key, order: i + 1, visible: true, col: w.col }));
+    }
+} catch { activeWidgets = []; }
+
+function renderCatalog() {
+    const grid = document.getElementById('catalogGrid');
+    grid.innerHTML = '';
+    const activeKeys = new Set(activeWidgets.filter(w => w.visible).map(w => w.key));
+    WIDGET_DEFS.forEach(def => {
+        const div = document.createElement('div');
+        div.className = 'widget-catalog-item' + (activeKeys.has(def.key) ? ' selected' : '');
+        div.dataset.key = def.key;
+        div.innerHTML = `
+            <div class="wi-check"><i class="mdi mdi-check-circle text-primary" style="font-size:1.2rem"></i></div>
+            <div class="wi-icon text-${def.color}"><i class="mdi ${def.icon}"></i></div>
+            <div class="wi-label">${def.label}</div>`;
+        div.addEventListener('click', () => {
+            div.classList.toggle('selected');
+        });
+        grid.appendChild(div);
+    });
+}
+
+function renderWidgetGrid() {
+    const grid = document.getElementById('widgetGrid');
+    grid.innerHTML = '';
+    const sorted = [...activeWidgets].filter(w => w.visible).sort((a, b) => a.order - b.order);
+    sorted.forEach(item => {
+        const def = WIDGET_DEFS.find(d => d.key === item.key);
+        if (!def) return;
+        const card = document.createElement('div');
+        card.className = `widget-card col-${item.col || def.col}`;
+        card.dataset.key = item.key;
+        card.draggable = true;
+        card.innerHTML = `
+            <div class="widget-card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="widget-drag-handle"><i class="mdi mdi-drag"></i></span>
+                    <span class="wh-title"><i class="mdi ${def.icon} text-${def.color} me-1"></i>${def.label}</span>
+                </div>
+                <div class="d-flex gap-1">
+                    <select class="form-select form-select-sm col-picker" style="width:70px" title="العرض">
+                        ${[3,4,6,12].map(c => `<option value="${c}" ${(item.col||def.col)==c?'selected':''}>${c}/12</option>`).join('')}
+                    </select>
+                    <button class="btn btn-sm text-danger btn-remove-widget" title="إزالة">
+                        <i class="mdi mdi-close"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="widget-card-body">
+                <div class="widget-count text-${def.color}" id="wdata-${item.key}">
+                    <div class="spinner-border spinner-border-sm text-muted" role="status"></div>
+                </div>
+                <div class="widget-subtitle">${def.label}</div>
+            </div>`;
+
+        // Col picker
+        card.querySelector('.col-picker').addEventListener('change', e => {
+            const idx = activeWidgets.findIndex(w => w.key === item.key);
+            if (idx >= 0) activeWidgets[idx].col = parseInt(e.target.value);
+            card.className = `widget-card col-${e.target.value}`;
+        });
+
+        // Remove button
+        card.querySelector('.btn-remove-widget').addEventListener('click', () => {
+            const idx = activeWidgets.findIndex(w => w.key === item.key);
+            if (idx >= 0) activeWidgets.splice(idx, 1);
+            renderWidgetGrid();
+        });
+
+        // Drag & drop
+        card.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', item.key);
+            card.classList.add('dragging');
+        });
+        card.addEventListener('dragend', () => card.classList.remove('dragging'));
+        card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+        card.addEventListener('drop', e => {
+            e.preventDefault();
+            card.classList.remove('drag-over');
+            const fromKey = e.dataTransfer.getData('text/plain');
+            const toKey   = item.key;
+            if (fromKey === toKey) return;
+            const fromIdx = activeWidgets.findIndex(w => w.key === fromKey);
+            const toIdx   = activeWidgets.findIndex(w => w.key === toKey);
+            if (fromIdx < 0 || toIdx < 0) return;
+            const fromOrder = activeWidgets[fromIdx].order;
+            activeWidgets[fromIdx].order = activeWidgets[toIdx].order;
+            activeWidgets[toIdx].order   = fromOrder;
+            renderWidgetGrid();
+        });
+
+        grid.appendChild(card);
+        // Load widget data
+        loadWidgetData(item.key);
+    });
+}
+
+async function loadWidgetData(key) {
+    try {
+        const r = await fetch(`/AdvancedWorkspace/GetWidgetData?key=${key}`);
+        const d = await r.json();
+        const el = document.getElementById('wdata-' + key);
+        if (el) el.innerHTML = d.count !== undefined ? d.count : '—';
+    } catch {
+        const el = document.getElementById('wdata-' + key);
+        if (el) el.innerHTML = '—';
+    }
+}
+
+// Customize button
+document.getElementById('btnCustomize').addEventListener('click', () => {
+    const catalog = document.getElementById('widgetCatalog');
+    const visible = catalog.style.display === 'none' || catalog.style.display === '';
+    catalog.style.display = visible ? 'block' : 'none';
+    if (visible) renderCatalog();
+});
+
+// Apply catalog selections
+document.getElementById('btnApplyCatalog').addEventListener('click', () => {
+    const selected = [...document.querySelectorAll('.widget-catalog-item.selected')]
+        .map(el => el.dataset.key);
+    const maxOrder = activeWidgets.length > 0
+        ? Math.max(...activeWidgets.map(w => w.order)) : 0;
+    let nextOrder = maxOrder + 1;
+
+    // Remove deselected
+    activeWidgets = activeWidgets.filter(w => selected.includes(w.key));
+
+    // Add newly selected
+    selected.forEach(key => {
+        if (!activeWidgets.find(w => w.key === key)) {
+            const def = WIDGET_DEFS.find(d => d.key === key);
+            activeWidgets.push({ key, order: nextOrder++, visible: true, col: def?.col || 3 });
+        }
+    });
+
+    activeWidgets.forEach(w => w.visible = selected.includes(w.key));
+    document.getElementById('widgetCatalog').style.display = 'none';
+    renderWidgetGrid();
+});
+
+// Save layout
+document.getElementById('btnSaveLayout').addEventListener('click', async () => {
+    const status = document.getElementById('saveStatus');
+    status.textContent = 'جاري الحفظ...';
+    try {
+        const res = await postJson('/AdvancedWorkspace/SaveLayout', {
+            layoutJson: JSON.stringify(activeWidgets)
+        });
+        status.textContent = res.success ? '✓ تم الحفظ' : '✗ حدث خطأ';
+        if (res.success) toast('تم حفظ تخطيط مساحة العمل بنجاح');
+        setTimeout(() => status.textContent = '', 3000);
+    } catch {
+        status.textContent = '✗ حدث خطأ';
+    }
+});
+
+// Init widgets
+renderWidgetGrid();
+
+// ══════════════════════════════════════════════════════════════════════
+// LOOKUPS
+// ══════════════════════════════════════════════════════════════════════
+let currentLookupType = null;
+
+const LOOKUP_LABELS = {
+    AidType: 'أنواع المساعدة', BeneficiaryStatus: 'حالات المستفيد',
+    Governorate: 'المحافظات',   City: 'المدن',
+    Gender: 'الجنس',            MaritalStatus: 'الحالة الاجتماعية'
+};
+
+document.querySelectorAll('.lookup-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.lookup-type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentLookupType = btn.dataset.ltype;
+        loadLookups(currentLookupType);
+    });
+});
+
+async function loadLookups(type) {
+    document.getElementById('lookupPanel').innerHTML =
+        '<div class="p-4 text-center"><div class="spinner-border text-primary"></div></div>';
+    const r = await fetch(`/AdvancedWorkspace/GetLookups?type=${type}`);
+    const items = await r.json();
+    renderLookupTable(type, items);
+}
+
+function renderLookupTable(type, items) {
+    const label = LOOKUP_LABELS[type] || type;
+    let rows = items.map(it => `
+        <tr>
+            <td class="fw-semibold">${it.nameAr || '—'}</td>
+            <td>${it.nameEn || '—'}</td>
+            <td>${it.isActive !== false
+                ? '<span class="badge bg-success">نشط</span>'
+                : '<span class="badge bg-secondary">غير نشط</span>'}</td>
+            <td>
+                <button class="btn btn-sm btn-light btn-edit-lookup"
+                    data-id="${it.id}" data-namear="${it.nameAr}" data-nameen="${it.nameEn||''}"
+                    data-active="${it.isActive!==false}">
+                    <i class="mdi mdi-pencil-outline"></i>
+                </button>
+                <button class="btn btn-sm btn-danger btn-del-lookup" data-id="${it.id}">
+                    <i class="mdi mdi-delete-outline"></i>
+                </button>
+            </td>
+        </tr>`).join('');
+
+    if (!rows) rows = '<tr><td colspan="4" class="text-center text-muted py-3">لا توجد بيانات</td></tr>';
+
+    document.getElementById('lookupPanel').innerHTML = `
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+            <h6 class="mb-0 fw-bold">${label}</h6>
+            <button class="btn btn-sm btn-primary btn-add-lookup">
+                <i class="mdi mdi-plus me-1"></i>إضافة
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>الاسم (عربي)</th><th>الاسم (إنجليزي)</th><th>الحالة</th><th style="width:90px">إجراءات</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+    // Add button
+    document.querySelector('.btn-add-lookup').addEventListener('click', () => {
+        document.getElementById('lookupId').value   = '';
+        document.getElementById('lookupType').value = type;
+        document.getElementById('lookupNameAr').value = '';
+        document.getElementById('lookupNameEn').value = '';
+        document.getElementById('lookupIsActive').checked = true;
+        document.getElementById('lookupModalTitle').textContent = `إضافة — ${label}`;
+        new bootstrap.Modal(document.getElementById('modalLookup')).show();
+    });
+
+    // Edit buttons
+    document.querySelectorAll('.btn-edit-lookup').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('lookupId').value    = btn.dataset.id;
+            document.getElementById('lookupType').value  = type;
+            document.getElementById('lookupNameAr').value = btn.dataset.namear;
+            document.getElementById('lookupNameEn').value = btn.dataset.nameen;
+            document.getElementById('lookupIsActive').checked = btn.dataset.active === 'true';
+            document.getElementById('lookupModalTitle').textContent = `تعديل — ${label}`;
+            new bootstrap.Modal(document.getElementById('modalLookup')).show();
+        });
+    });
+
+    // Delete buttons
+    document.querySelectorAll('.btn-del-lookup').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!confirm('هل تريد حذف هذا العنصر؟')) return;
+            const res = await postJson('/AdvancedWorkspace/DeleteLookup',
+                { id: btn.dataset.id, type });
+            if (res.success) { toast('تم الحذف'); loadLookups(type); }
+            else toast(res.message || 'حدث خطأ', false);
+        });
+    });
+}
+
+document.getElementById('btnSaveLookup').addEventListener('click', async () => {
+    const id    = document.getElementById('lookupId').value;
+    const type  = document.getElementById('lookupType').value;
+    const nameAr = document.getElementById('lookupNameAr').value.trim();
+    if (!nameAr) { alert('الاسم بالعربية مطلوب'); return; }
+
+    const res = await postJson('/AdvancedWorkspace/SaveLookup', {
+        id: id || null, type,
+        nameAr, nameEn: document.getElementById('lookupNameEn').value.trim(),
+        isActive: document.getElementById('lookupIsActive').checked
+    });
+    if (res.success) {
+        bootstrap.Modal.getInstance(document.getElementById('modalLookup'))?.hide();
+        toast('تم الحفظ بنجاح');
+        loadLookups(type);
+    } else toast(res.message || 'حدث خطأ', false);
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// WORKFLOW DESIGNER
+// ══════════════════════════════════════════════════════════════════════
+function toggleDef(header) {
+    const body = header.nextElementSibling;
+    body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+// New definition
+document.getElementById('btnNewDef').addEventListener('click', () => {
+    document.getElementById('defId').value = '';
+    document.getElementById('defEntityType').value = '';
+    document.getElementById('defDisplayName').value = '';
+    document.getElementById('defNotes').value = '';
+    document.getElementById('defIsActive').checked = true;
+    document.getElementById('defEntityType').disabled = false;
+    new bootstrap.Modal(document.getElementById('modalWorkflowDef')).show();
+});
+
+// Edit definition buttons
+document.querySelectorAll('.btn-edit-def').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('defId').value          = btn.dataset.defId;
+        document.getElementById('defEntityType').value  = btn.dataset.entity;
+        document.getElementById('defDisplayName').value = btn.dataset.name;
+        document.getElementById('defNotes').value        = btn.dataset.notes || '';
+        document.getElementById('defIsActive').checked  = btn.dataset.active === 'true';
+        document.getElementById('defEntityType').disabled = true; // can't change entity type after create
+        new bootstrap.Modal(document.getElementById('modalWorkflowDef')).show();
+    });
+});
+
+document.getElementById('btnSaveDef').addEventListener('click', async () => {
+    const id          = document.getElementById('defId').value;
+    const entityType  = document.getElementById('defEntityType').value;
+    const displayName = document.getElementById('defDisplayName').value.trim();
+    if (!displayName || !entityType) { alert('نوع الكيان والاسم مطلوبان'); return; }
+
+    const res = await postJson('/AdvancedWorkspace/SaveWorkflowDefinition', {
+        id: id || null, entityType, displayName,
+        notes: document.getElementById('defNotes').value,
+        isActive: document.getElementById('defIsActive').checked
+    });
+    if (res.success) {
+        bootstrap.Modal.getInstance(document.getElementById('modalWorkflowDef'))?.hide();
+        toast('تم الحفظ — سيتم تحديث الصفحة');
+        setTimeout(() => location.reload(), 800);
+    } else toast('حدث خطأ', false);
+});
+
+// Delete definition
+document.querySelectorAll('.btn-del-def').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        if (!confirm('هل تريد حذف هذا المسار وجميع خطواته؟')) return;
+        const res = await postJson('/AdvancedWorkspace/DeleteWorkflowDefinition',
+            { id: btn.dataset.defId });
+        if (res.success) { toast('تم الحذف'); btn.closest('.wf-def-card').remove(); }
+        else toast('حدث خطأ', false);
+    });
+});
+
+// Show add step modal
+function showAddStep(defId) {
+    document.getElementById('stepId').value  = '';
+    document.getElementById('stepDefId').value = defId;
+    document.getElementById('stepName').value  = '';
+    document.getElementById('stepRole').value  = '';
+    document.getElementById('stepOrder').value = 1;
+    document.getElementById('stepDesc').value  = '';
+    new bootstrap.Modal(document.getElementById('modalWorkflowStep')).show();
+}
+
+// Edit step
+document.querySelectorAll('.btn-edit-step').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('stepId').value    = btn.dataset.stepId;
+        document.getElementById('stepDefId').value = btn.dataset.defId;
+        document.getElementById('stepName').value  = btn.dataset.name;
+        document.getElementById('stepRole').value  = btn.dataset.role;
+        document.getElementById('stepOrder').value = btn.dataset.order;
+        document.getElementById('stepDesc').value  = btn.dataset.desc || '';
+        new bootstrap.Modal(document.getElementById('modalWorkflowStep')).show();
+    });
+});
+
+document.getElementById('btnSaveStep').addEventListener('click', async () => {
+    const stepName = document.getElementById('stepName').value.trim();
+    const stepRole = document.getElementById('stepRole').value;
+    const defId    = document.getElementById('stepDefId').value;
+    if (!stepName || !stepRole) { alert('اسم الخطوة والدور مطلوبان'); return; }
+
+    const id = document.getElementById('stepId').value;
+    const res = await postJson('/AdvancedWorkspace/SaveWorkflowStep', {
+        id: id || null, definitionId: defId,
+        stepName, assignedRole: stepRole,
+        stepOrder: parseInt(document.getElementById('stepOrder').value) || 1,
+        description: document.getElementById('stepDesc').value
+    });
+
+    if (res.success) {
+        bootstrap.Modal.getInstance(document.getElementById('modalWorkflowStep'))?.hide();
+        toast('تم الحفظ — جاري تحديث المسار');
+        setTimeout(() => location.reload(), 600);
+    } else toast('حدث خطأ', false);
+});
+
+// Delete step
+document.querySelectorAll('.btn-del-step').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        if (!confirm('حذف هذه الخطوة؟')) return;
+        const res = await postJson('/AdvancedWorkspace/DeleteWorkflowStep',
+            { id: btn.dataset.stepId });
+        if (res.success) {
+            toast('تم الحذف');
+            btn.closest('.wf-step-item').remove();
+        } else toast('حدث خطأ', false);
+    });
+});
+
+// ── Drag & Drop for steps ──
+let draggedStep = null;
+document.querySelectorAll('.wf-step-item').forEach(item => {
+    item.addEventListener('dragstart', () => { draggedStep = item; item.style.opacity = '.4'; });
+    item.addEventListener('dragend',   () => { draggedStep = null; item.style.opacity = '1'; });
+    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', async e => {
+        e.preventDefault();
+        item.classList.remove('drag-over');
+        if (!draggedStep || draggedStep === item) return;
+        const parent = item.closest('.wf-steps-list');
+        const items  = [...parent.querySelectorAll('.wf-step-item')];
+        const fromI  = items.indexOf(draggedStep);
+        const toI    = items.indexOf(item);
+        if (fromI < toI) item.after(draggedStep);
+        else item.before(draggedStep);
+
+        // Renumber and save
+        const newItems = [...parent.querySelectorAll('.wf-step-item')];
+        const reorder  = newItems.map((el, i) => {
+            el.querySelector('.wf-step-order').textContent = i + 1;
+            return { id: el.dataset.stepId, order: i + 1 };
+        });
+        await postJson('/AdvancedWorkspace/ReorderWorkflowSteps', { items: reorder });
+        toast('تم إعادة الترتيب');
+    });
+});
+</script>
+}

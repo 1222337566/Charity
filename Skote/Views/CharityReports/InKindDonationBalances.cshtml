@@ -1,0 +1,61 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.InKindDonationBalanceReportVm
+@{
+    ViewData["Title"] = "تقرير الأرصدة المتبقية للتبرعات العينية";
+}
+
+@await Html.PartialAsync("~/Views/Shared/Reports/_ReportsNav.cshtml")
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3"><label asp-for="FromDate" class="form-label"></label><input asp-for="FromDate" class="form-control" /></div>
+            <div class="col-md-3"><label asp-for="ToDate" class="form-label"></label><input asp-for="ToDate" class="form-control" /></div>
+            <div class="col-md-6 d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary">عرض</button>
+                <a asp-action="InKindDonationBalances" class="btn btn-light">إعادة ضبط</a>
+                <a asp-action="InKindReceiptStatus" asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-primary">حالة الإدخال</a>
+                <a asp-action="InKindBeneficiaryIssues" asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-primary">الصرف للمستحقين</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">إجمالي الكمية المتبرع بها</div><h5>@Model.TotalDonatedQuantity.ToString("N2")</h5></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">إجمالي الكمية المخصصة</div><h5>@Model.TotalAllocatedQuantity.ToString("N2")</h5></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">المتبقي للتخصيص</div><h5>@Model.TotalRemainingQuantity.ToString("N2")</h5></div></div></div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h4 class="card-title mb-0">تقرير الأرصدة المتبقية للتبرعات العينية</h4>
+            <a asp-action="PrintInKindDonationBalances" asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")" target="_blank" class="btn btn-outline-secondary btn-sm">طباعة</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th><th>رقم التبرع</th><th>المتبرع</th><th>الصنف</th><th>المخزن</th><th>الكمية الواردة</th><th>الكمية المخصصة</th><th>المتبقي</th><th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@row.DonationDate.ToString("yyyy-MM-dd")</td>
+                        <td><a asp-controller="Donations" asp-action="Edit" asp-route-id="@row.DonationId">@row.DonationNumber</a></td>
+                        <td>@row.DonorName</td>
+                        <td>@row.ItemName</td>
+                        <td>@row.WarehouseName</td>
+                        <td>@row.DonatedQuantity.ToString("N2")</td>
+                        <td>@row.AllocatedQuantity.ToString("N2")</td>
+                        <td>@row.RemainingQuantity.ToString("N2")</td>
+                        <td>@row.ReceiptStatusName</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

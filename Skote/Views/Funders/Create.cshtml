@@ -1,0 +1,21 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.Funders
+@model CreateFunderVm
+@{
+    ViewData["Title"] = "إضافة ممول";
+}
+<div class="page-content">
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title mb-4">إضافة ممول جديد</h4>
+            <form asp-action="Create" method="post">
+                @await Html.PartialAsync("_Form", Model)
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                    <a asp-action="Index" class="btn btn-light">إلغاء</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>

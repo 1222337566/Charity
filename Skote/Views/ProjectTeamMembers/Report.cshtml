@@ -1,0 +1,118 @@
+@model List<InfrastrfuctureManagmentCore.Domains.Charity.Projects.ProjectTeamMember>
+@{
+    ViewData["Title"] = "تقرير فريق العمل والمتطوعين";
+    var project  = ViewBag.Project as InfrastrfuctureManagmentCore.Domains.Charity.Projects.CharityProject;
+    var byPhase  = ViewBag.ByPhase as dynamic;
+}
+<style>
+@@media print {
+    .no-print { display:none!important }
+    body { font-size:12px }
+}
+:root{--teal:#0e6f73}
+.rpt-header{background:linear-gradient(135deg,#1e3a5f,#0e6f73);color:#fff;padding:20px 28px;border-radius:14px;margin-bottom:20px}
+.rpt-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:20px}
+.rpt-table th{background:rgba(14,111,115,.08);padding:9px 12px;text-align:right;font-size:.75rem;font-weight:700;color:var(--teal);border-bottom:2px solid rgba(14,111,115,.15)}
+.rpt-table td{padding:9px 12px;border-bottom:.5px solid #f0f4f8;vertical-align:middle}
+.rpt-table tr:hover td{background:#f8fbfb}
+.stat-box{background:#fff;border-radius:12px;border:.5px solid rgba(14,111,115,.12);padding:16px;text-align:center}
+.stat-box .n{font-size:1.6rem;font-weight:800;color:var(--teal)}
+.stat-box .l{font-size:.75rem;color:#6b7d80;margin-top:4px}
+.sec-title{font-size:.85rem;font-weight:700;color:var(--teal);padding:8px 0;border-bottom:1px solid rgba(14,111,115,.12);margin-bottom:12px}
+</style>
+
+<div class="container-fluid">
+
+    @* ── رأس التقرير ── *@
+    <div class="rpt-header">
+        <div class="fw-bold" style="font-size:1.15rem">@project?.Name</div>
+        <div style="font-size:.8rem;opacity:.75">تقرير فريق العمل والمتطوعين — @DateTime.Today.ToString("yyyy/MM/dd")</div>
+    </div>
+
+    @* ── إحصائيات ── *@
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-box"><div class="n">@ViewBag.TotalEmployees</div><div class="l">موظفون</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box"><div class="n">@ViewBag.TotalVolunteers</div><div class="l">متطوعون</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box"><div class="n">@ViewBag.TotalHours</div><div class="l">إجمالي الساعات</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box"><div class="n">@ViewBag.TotalDays</div><div class="l">إجمالي الأيام</div></div>
+        </div>
+    </div>
+
+    @* ── جدول تفصيلي حسب المرحلة ── *@
+    @foreach (var grp in byPhase)
+    {
+        <div class="sec-title">
+            <i class="bx bx-git-branch me-1"></i>@grp.Phase
+            <span class="text-muted fw-normal ms-2" style="font-size:.75rem">
+                | موظفون: @grp.Employees.Count | متطوعون: @grp.Volunteers.Count
+                | ساعات: @grp.TotalHours | أيام: @grp.TotalDays
+            </span>
+        </div>
+        <table class="rpt-table">
+            <thead>
+                <tr>
+                    <th>الاسم</th><th>النوع</th><th>الدور</th>
+                    <th>النشاط</th><th>الحالة</th>
+                    <th>ساعات مخططة</th><th>ساعات فعلية</th>
+                    <th>أيام فعلية</th><th>إثبات</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in grp.Employees)
+            {
+                <tr>
+                    <td class="fw-semibold">@(m.Employee?.FullName ?? "—")</td>
+                    <td><span class="badge bg-primary" style="font-size:.65rem">موظف</span></td>
+                    <td>@m.RoleTitle</td>
+                    <td class="text-muted small">@m.Activity?.Title</td>
+                    <td>@m.ParticipationStatus</td>
+                    <td class="text-center">@m.PlannedHours</td>
+                    <td class="text-center fw-bold" style="color:var(--teal)">@m.ActualHours</td>
+                    <td class="text-center">@m.ActualDays</td>
+                    <td>
+                        <span class="badge @(m.VerificationStatus=="Verified"?"bg-success":m.VerificationStatus=="Rejected"?"bg-danger":"bg-secondary")"
+                              style="font-size:.65rem">
+                            @(m.VerificationStatus=="Verified"?"مثبَّت":m.VerificationStatus=="Rejected"?"مرفوض":"غير مثبَّت")
+                        </span>
+                    </td>
+                </tr>
+            }
+            @foreach (var m in grp.Volunteers)
+            {
+                <tr style="background:rgba(52,195,143,.02)">
+                    <td class="fw-semibold">@(m.Volunteer?.FullName ?? "—")</td>
+                    <td><span class="badge bg-success" style="font-size:.65rem">متطوع</span></td>
+                    <td>@m.RoleTitle</td>
+                    <td class="text-muted small">@m.Activity?.Title</td>
+                    <td>@m.ParticipationStatus</td>
+                    <td class="text-center">@m.PlannedHours</td>
+                    <td class="text-center fw-bold" style="color:#1a7a55">@m.ActualHours</td>
+                    <td class="text-center">@m.ActualDays</td>
+                    <td>
+                        <span class="badge @(m.VerificationStatus=="Verified"?"bg-success":m.VerificationStatus=="Rejected"?"bg-danger":"bg-secondary")"
+                              style="font-size:.65rem">
+                            @(m.VerificationStatus=="Verified"?"مثبَّت":m.VerificationStatus=="Rejected"?"مرفوض":"غير مثبَّت")
+                        </span>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    <div class="d-flex gap-2 no-print">
+        <button onclick="window.print()" class="btn btn-sm" style="background:var(--teal);color:#fff;border-radius:10px">
+            <i class="bx bx-printer me-1"></i>طباعة
+        </button>
+        <a asp-action="Index" asp-route-projectId="@project?.Id" class="btn btn-sm btn-light" style="border-radius:10px">
+            رجوع
+        </a>
+    </div>
+</div>

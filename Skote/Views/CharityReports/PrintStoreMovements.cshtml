@@ -1,0 +1,4 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.StoreMovementReportVm
+@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة تقرير حركة المخازن"; }
+<h3>تقرير حركة المخازن</h3><div class="meta">الفترة: @(Model.FromDate?.ToString("yyyy-MM-dd") ?? "الكل") - @(Model.ToDate?.ToString("yyyy-MM-dd") ?? "الكل")</div>
+<table class="table"><thead><tr><th>المخزن</th><th>عدد أذون الإضافة</th><th>كمية الإضافة</th><th>عدد أذون الصرف</th><th>كمية الصرف</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@row.WarehouseName</td><td>@row.ReceiptsCount</td><td>@row.ReceiptQuantity.ToString("N2")</td><td>@row.IssuesCount</td><td>@row.IssueQuantity.ToString("N2")</td></tr>}</tbody></table>

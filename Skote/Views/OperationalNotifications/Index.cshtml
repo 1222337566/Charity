@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = "الإشعارات التشغيلية";
+}
+
+<div class="container-fluid">
+    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+        <h4 class="mb-sm-0 font-size-18">الإشعارات التشغيلية</h4>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="alert alert-success">@success</div>
+    }
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">اختبار الإشعارات</h5>
+                    <p class="text-muted">هذه الصفحة للاختبار السريع بعد تطبيق Sprint 17. الإشعارات الحقيقية تُطلق من داخل الموديولات نفسها.</p>
+
+                    <div class="d-grid gap-2">
+                        <form asp-action="SendAidRequestSample" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-primary w-100">إرسال إشعار طلب مساعدة</button>
+                        </form>
+
+                        <form asp-action="SendCommitteeDecisionSample" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success w-100">إرسال إشعار قرار لجنة</button>
+                        </form>
+
+                        <form asp-action="SendGrantDueSample" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning w-100">إرسال إشعار دفعة تمويل قريبة</button>
+                        </form>
+
+                        <form asp-action="SendLowStockSample" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger w-100">إرسال إشعار رصيد منخفض</button>
+                        </form>
+
+                        <form asp-action="SendPayrollApprovedSample" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-info w-100">إرسال إشعار اعتماد مرتبات</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">أماكن الربط المقترحة</h5>
+                    <ul class="mb-0">
+                        <li>بعد حفظ طلب مساعدة جديد داخل <strong>BeneficiaryAidRequestsController</strong>.</li>
+                        <li>بعد اعتماد قرار لجنة داخل <strong>BeneficiaryCommitteeDecisionsController</strong>.</li>
+                        <li>عند مراجعة أو اعتماد دفعات التمويل داخل <strong>GrantInstallmentsController</strong>.</li>
+                        <li>بعد تسجيل إذن صرف أو جرد يكشف رصيدًا منخفضًا داخل <strong>CharityStoreIssuesController</strong>.</li>
+                        <li>بعد اعتماد شهر مرتبات داخل <strong>PayrollMonthsController</strong>.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

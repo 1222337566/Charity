@@ -1,0 +1,3 @@
+@model InfrastructureManagmentWebFramework.Models.Reports.PayrollMonthReportVm
+@{ Layout = "~/Views/Shared/Reports/_PrintLayout.cshtml"; ViewData["Title"] = "طباعة تقرير المرتبات"; }
+<h3>تقرير المرتبات</h3><table class="table"><thead><tr><th>الشهر</th><th>الحالة</th><th>عدد الموظفين</th><th>الأساسي</th><th>الإضافات</th><th>الخصومات</th><th>الصافي</th></tr></thead><tbody>@foreach (var row in Model.Rows){<tr><td>@($"{row.Month:00}/{row.Year}")</td><td>@row.Status</td><td>@row.EmployeesCount</td><td>@row.TotalBasic.ToString("N2")</td><td>@row.TotalAdditions.ToString("N2")</td><td>@row.TotalDeductions.ToString("N2")</td><td>@row.TotalNet.ToString("N2")</td></tr>}</tbody></table>

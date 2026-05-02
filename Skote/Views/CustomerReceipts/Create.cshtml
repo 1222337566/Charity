@@ -1,0 +1,71 @@
+﻿@model CreateCustomerReceiptVm
+@using InfrastructureManagmentWebFramework.Models.Optics;
+
+@{
+    ViewData["Title"] = "سند قبض عميل";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">سند قبض عميل</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <input asp-for="CustomerId" type="hidden" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label asp-for="ReceiptNumber" class="form-label"></label>
+                        <input asp-for="ReceiptNumber" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="ReceiptDateUtc" class="form-label"></label>
+                        <input asp-for="ReceiptDateUtc" type="datetime-local" class="form-control"
+                               value="@(Model.ReceiptDateUtc.ToString("yyyy-MM-ddTHH:mm"))" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">رقم العميل</label>
+                        <input class="form-control" value="@Model.CustomerNumber" readonly />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">اسم العميل</label>
+                        <input class="form-control" value="@Model.CustomerName" readonly />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">الرصيد الحالي</label>
+                        <input class="form-control fw-bold" value="@Model.CurrentBalance" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Amount" class="form-label"></label>
+                        <input asp-for="Amount" class="form-control" />
+                        <span asp-validation-for="Amount" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="PaymentMethodId" class="form-label"></label>
+                        <select asp-for="PaymentMethodId" asp-items="Model.PaymentMethods" class="form-select">
+                            <option value="">-- اختر طريقة الدفع --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.CustomerId" class="btn btn-secondary">رجوع</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

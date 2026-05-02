@@ -1,0 +1,279 @@
+﻿@model PosSaleVm
+@using InfrastructureManagmentWebFramework.Models.POS
+
+@{
+    ViewData["Title"] = "POS";
+    <link rel="stylesheet" href="~/assets/css/pos.core.css" />
+}
+
+<div class="container-fluid">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form asp-action="Save" method="post" id="pos-form">
+        @Html.AntiForgeryToken()
+
+        <div class="row">
+            <!-- بيانات الفاتورة -->
+            <div class="row-lg-8">
+                <div class="card pos-sticky-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">بيانات الفاتورة</h4>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="InvoiceNumber" class="form-label"></label>
+                            <input asp-for="InvoiceNumber" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="InvoiceDateUtc" class="form-label"></label>
+                            <input asp-for="InvoiceDateUtc"
+                                   type="datetime-local"
+                                   class="form-control"
+                                   value="@(Model.InvoiceDateUtc.ToString("yyyy-MM-ddTHH:mm"))" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CustomerName" class="form-label"></label>
+                            <input asp-for="CustomerName" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="WarehouseId" class="form-label"></label>
+                            <select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select">
+                                <option value="">-- اختر المخزن --</option>
+                            </select>
+                        </div>
+                        <hr />
+                        <h5 class="mb-3">طرق الدفع</h5>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle" id="pos-payments-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>طريقة الدفع</th>
+                                        <th style="width:140px;">المبلغ</th>
+                                        <th style="width:80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pos-payments-body">
+                                    @if (Model.Payments != null && Model.Payments.Any())
+                                    {
+                                        for (int i = 0; i < Model.Payments.Count; i++)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <select class="form-select payment-method">
+                                                        <option value="">-- اختر --</option>
+                                                        @foreach (var method in Model.Payments[i].PaymentMethods)
+                                                        {
+                                                            <option value="@method.Value" selected="@(method.Value == Model.Payments[i].PaymentMethodId.ToString() ? "selected" : null)">
+                                                                @method.Text
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="number" min="0.01" step="0.01" class="form-control payment-amount"
+                                                           value="@Model.Payments[i].Amount" />
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-danger btn-remove-payment">حذف</button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex gap-2 mb-3">
+                            <button type="button" id="btn-add-payment" class="btn btn-outline-primary btn-sm">
+                                إضافة طريقة دفع
+                            </button>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">إجمالي المدفوع</label>
+                                <input type="text" id="total-paid" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">المتبقي</label>
+                                <input type="text" id="remaining-paid" class="form-control fw-bold" readonly />
+                            </div>
+                        </div>
+                       
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label"></label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- شاشة الكاشير -->
+            <div class="row-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">شاشة البيع</h4>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="alert alert-info py-2 mb-3">
+                            <strong>اختصارات:</strong>
+                             F2 للتركيز على البحث — Enter لإضافة الصنف — Esc لمسح خانة البحث
+                      </div>
+                        <div class="row g-2 mb-3">
+                          <div class="col-md-9">
+                            <input type="text"
+                                   id="item-search"
+                                   class="form-control form-control-lg"
+                                   placeholder="اسكان باركود أو ابحث بالكود أو الاسم ثم Enter" />
+                     <small class="text-muted">يفضل اختيار المخزن أولًا لإظهار الرصيد المتاح.</small>
+                     </div>
+    <div class="col-md-3">
+        <button type="button" id="btn-add-line" class="btn btn-outline-primary w-100 h-100">
+            إضافة سطر يدوي
+        </button>
+    </div>
+</div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle" id="pos-lines-table">
+                               <thead class="table-light">
+                                     <tr>
+                                             <th style="width:120px;">الكود</th>
+                                             <th>الصنف</th>
+                                             <th style="width:110px;">المتاح</th>
+                                             <th style="width:100px;">الكمية</th>
+                                             <th style="width:120px;">السعر</th>
+                                             <th style="width:110px;">الخصم</th>
+                                             <th style="width:110px;">الضريبة</th>
+                                             <th style="width:140px;">الإجمالي</th>
+                                             <th style="width:80px;">حذف</th>
+                                      </tr>
+                                </thead>
+                                <tbody id="pos-lines-body">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">الإجمالي قبل الخصم</label>
+                                <input asp-for="SubTotal" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">إجمالي الخصم</label>
+                                <input asp-for="DiscountAmount" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">إجمالي الضريبة</label>
+                                <input asp-for="TaxAmount" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">الصافي</label>
+                                <input asp-for="NetAmount" class="form-control fw-bold" readonly />
+                            </div>
+                        </div>
+                        <table class="d-none">
+                            <tbody>
+                                <tr id="payment-line-template">
+                                    <td>
+                                        <select class="form-select payment-method">
+                                            <option value="">-- اختر --</option>
+                                            @if (Model.Payments != null && Model.Payments.Any())
+                                            {
+                                                foreach (var method in Model.Payments[0].PaymentMethods)
+                                                {
+                                                    <option value="@method.Value">@method.Text</option>
+                                                }
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" min="0.01" step="0.01" class="form-control payment-amount" value="0" />
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger btn-remove-payment">حذف</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                      <div class="mt-3 d-flex gap-2 flex-wrap">
+                         <button type="button" id="btn-save-pos" class="btn btn-success">حفظ الفاتورة</button>
+
+                              <button type="submit"
+                                formaction="@Url.Action("Hold","Pos")"
+                                formmethod="post"
+                                class="btn btn-warning">
+                                     تعليق الفاتورة
+                              </button>
+
+                   <a href="@Url.Action("HeldInvoices","Pos")" class="btn btn-info">
+                      الفواتير المعلقة
+                   </a>
+
+                   <button type="button" id="btn-reprint-last" class="btn btn-outline-primary">
+                      إعادة طباعة آخر فاتورة
+                    </button>
+
+                     <button type="button" id="btn-clear-lines" class="btn btn-secondary">
+                         تفريغ الشاشة
+                      </button>
+                     </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<table class="d-none">
+    <tbody>
+        <tr id="pos-line-template">
+          <td>
+           <input type="hidden" class="item-id" />
+           <input type="text" class="form-control item-code" readonly />
+          </td>
+          <td>
+          <input type="text" class="form-control item-name" readonly />
+    </td>
+    <td>
+        <input type="text" class="form-control available-qty text-center fw-bold" readonly />
+    </td>
+    <td>
+        <input type="number" min="0.01" step="0.01" class="form-control qty" value="1" />
+    </td>
+    <td>
+        <input type="number" min="0" step="0.01" class="form-control price" value="0" />
+    </td>
+    <td>
+        <input type="number" min="0" step="0.01" class="form-control discount" value="0" />
+    </td>
+    <td>
+        <input type="number" min="0" step="0.01" class="form-control tax" value="0" />
+    </td>
+    <td>
+        <input type="text" class="form-control line-total fw-bold" readonly />
+    </td>
+    <td>
+        <button type="button" class="btn btn-sm btn-danger btn-remove-line">حذف</button>
+    </td>
+</tr>
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/assets/js/pos.core.js"></script>
+}

@@ -1,0 +1,115 @@
+﻿@model FindPurchasePageVm
+@using InfrastructureManagmentWebFramework.Helpers
+@using InfrastructureManagmentWebFramework.Models.Optics.Search
+
+@{
+    ViewData["Title"] = "بحث المشتريات والتوريدات";
+}
+
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header">
+            <h4 class="mb-0">بحث المشتريات والتوريدات</h4>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">بحث</label>
+                    <input name="q" value="@Model.Filter.Q" class="form-control"
+                           placeholder="رقم الفاتورة / المورد / رقم فاتورة المورد" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">من تاريخ</label>
+                    <input asp-for="Filter.DateFrom" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input asp-for="Filter.DateTo" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">المورد</label>
+                    <select asp-for="Filter.SupplierId" asp-items="Model.Filter.Suppliers" class="form-select">
+                        <option value="">-- الكل --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1">
+                    <label class="form-label">المخزن</label>
+                    <select asp-for="Filter.WarehouseId" asp-items="Model.Filter.Warehouses" class="form-select">
+                        <option value="">-- الكل --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">بحث</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="border rounded p-3 bg-light">
+                <div class="text-muted">عدد الفواتير</div>
+                <div class="fs-4 fw-bold">@Model.Count</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="border rounded p-3 bg-light">
+                <div class="text-muted">إجمالي الصافي</div>
+                <div class="fs-4 fw-bold">@Model.TotalNetAmount</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ</th>
+                            <th>المورد</th>
+                            <th>رقم فاتورة المورد</th>
+                            <th>المخزن</th>
+                            <th>التصنيف</th>
+                            <th>المشروع</th>
+                            <th>التمويل</th>
+                            <th>الصافي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Rows.Any())
+                        {
+                            foreach (var item in Model.Rows)
+                            {
+                                var tags = CharityOperationNoteTags.Parse(item.Notes);
+                                <tr>
+                                    <td>@item.InvoiceNumber</td>
+                                    <td>@item.InvoiceDateUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                                    <td>@item.SupplierName</td>
+                                    <td>@(item.SupplierInvoiceNumber ?? "-")</td>
+                                    <td>@item.WarehouseName</td>
+                                    <td>@(string.IsNullOrWhiteSpace(tags.CategoryText) ? "-" : tags.CategoryText)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(tags.ProjectName) ? "-" : tags.ProjectName)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(tags.GrantAgreementNumber) ? "-" : tags.GrantAgreementNumber)</td>
+                                    <td>@item.NetAmount</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">لا توجد نتائج</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

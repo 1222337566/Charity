@@ -1,0 +1,240 @@
+@model List<InfrastrfuctureManagmentCore.Domains.Charity.Projects.ProjectTeamMember>
+@using InfrastrfuctureManagmentCore.Domains.Charity.Projects
+@{
+    ViewData["Title"] = "فريق العمل والمتطوعون";
+    var project   = ViewBag.Project as CharityProject;
+    var filterType= ViewBag.FilterType as string;
+
+    string Sbg(string s) => s switch {
+        "Active"    =>"bg-primary",  "Completed"=>"bg-success",
+        "Assigned"  =>"bg-info",     "Cancelled"=>"bg-danger",
+        "Absent"    =>"bg-warning",  _=>"bg-secondary"
+    };
+    string SaP(string s) => s switch {
+        "Active"=>"نشط","Completed"=>"مكتمل","Assigned"=>"مُكلَّف",
+        "Cancelled"=>"ملغى","Absent"=>"غائب",_=>s
+    };
+    string SbgV(string s) => s switch {
+        "Verified"=>"bg-success","Rejected"=>"bg-danger",
+        "NeedsReview"=>"bg-warning",_=>"bg-secondary"
+    };
+    string SaV(string s) => s switch {
+        "Verified"=>"مثبَّت","Rejected"=>"مرفوض",
+        "NeedsReview"=>"يحتاج مراجعة",_=>"غير مثبَّت"
+    };
+}
+
+<style>
+:root{--teal:#0e6f73;--teal-l:#e1f5f5}
+.tm-hero{background:linear-gradient(135deg,#1e3a5f,#0e6f73);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.tm-stat{background:rgba(255,255,255,.13);border-radius:12px;padding:10px 16px;text-align:center;min-width:80px}
+.tm-stat .n{font-size:1.3rem;font-weight:800;line-height:1.1}
+.tm-stat .l{font-size:.67rem;opacity:.8;margin-top:2px}
+.tm-card{background:#fff;border-radius:14px;border:.5px solid rgba(14,111,115,.12);box-shadow:0 2px 12px rgba(14,111,115,.06);padding:16px 18px;margin-bottom:12px;transition:box-shadow .2s}
+.tm-card:hover{box-shadow:0 4px 20px rgba(14,111,115,.12)}
+.tm-avatar{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;flex-shrink:0}
+.tm-emp{background:rgba(85,110,230,.12);color:#3145a3}
+.tm-vol{background:rgba(52,195,143,.12);color:#1a7a55}
+.prog-bar{height:5px;border-radius:999px;background:#e2e8f0;overflow:hidden;width:80px;display:inline-block;vertical-align:middle}
+.prog-fill{height:100%;border-radius:999px;background:var(--teal)}
+.filter-tab{padding:6px 16px;border-radius:20px;font-size:.8rem;font-weight:600;border:1px solid rgba(14,111,115,.2);background:#fff;cursor:pointer;transition:all .2s;text-decoration:none;color:#1e3a5f}
+.filter-tab.active,.filter-tab:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.act-badge{background:rgba(14,111,115,.1);color:var(--teal);padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+</style>
+
+<div class="container-fluid">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* ── Hero ── *@
+    <div class="tm-hero">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+            <div>
+                <div class="fw-bold" style="font-size:1.1rem">@project?.Name</div>
+                <div style="font-size:.78rem;opacity:.7">فريق العمل والمتطوعون</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="tm-stat">
+                    <div class="n">@ViewBag.TotalEmployees</div>
+                    <div class="l">موظفون</div>
+                </div>
+                <div class="tm-stat">
+                    <div class="n">@ViewBag.TotalVolunteers</div>
+                    <div class="l">متطوعون</div>
+                </div>
+                <div class="tm-stat">
+                    <div class="n">@ViewBag.ActiveCount</div>
+                    <div class="l">نشطون</div>
+                </div>
+                <div class="tm-stat">
+                    <div class="n">@ViewBag.CompletedCount</div>
+                    <div class="l">أكملوا</div>
+                </div>
+                <div class="tm-stat">
+                    <div class="n">@((decimal)ViewBag.TotalHours)</div>
+                    <div class="l">ساعات</div>
+                </div>
+                <div class="tm-stat">
+                    <div class="n">@ViewBag.TotalDays</div>
+                    <div class="l">أيام</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── أزرار الإضافة والتصفية ── *@
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Create" asp-route-projectId="@project?.Id"
+               class="btn btn-sm" style="background:var(--teal);color:#fff;border-radius:10px">
+                <i class="bx bx-plus me-1"></i>إضافة عضو
+            </a>
+            <a asp-action="Report" asp-route-projectId="@project?.Id"
+               class="btn btn-sm btn-outline-secondary" style="border-radius:10px">
+                <i class="bx bx-file-export me-1"></i>تقرير الفريق
+            </a>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" asp-route-projectId="@project?.Id"
+               class="filter-tab @(filterType==null?"active":"")">الكل (@Model.Count)</a>
+            <a asp-action="Index" asp-route-projectId="@project?.Id" asp-route-type="Employee"
+               class="filter-tab @(filterType=="Employee"?"active":"")">
+                موظفون (@(Model.Count(x=>x.MemberType=="Employee")))
+            </a>
+            <a asp-action="Index" asp-route-projectId="@project?.Id" asp-route-type="Volunteer"
+               class="filter-tab @(filterType=="Volunteer"?"active":"")">
+                متطوعون (@(Model.Count(x=>x.MemberType=="Volunteer")))
+            </a>
+        </div>
+    </div>
+
+    @* ── البطاقات ── *@
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bx bx-group" style="font-size:3rem;opacity:.3"></i>
+            <p class="mt-2">لا يوجد أعضاء مسجّلون بعد</p>
+        </div>
+    }
+    else
+    {
+        @* تجميع حسب المرحلة *@
+        var grouped = Model.GroupBy(m => m.Phase?.Name ?? "غير مسكَّن");
+        foreach (var grp in grouped)
+        {
+            <div class="mb-2 mt-3">
+                <span class="fw-bold" style="font-size:.82rem;color:#6b7d80">
+                    <i class="bx bx-git-branch me-1"></i>@grp.Key
+                </span>
+            </div>
+
+            @foreach (var m in grp)
+            {
+                var name  = m.MemberType == "Employee"  ? m.Employee?.FullName  ?? "—"
+                                                        : m.Volunteer?.FullName ?? "—";
+                var code  = m.MemberType == "Employee"  ? m.Employee?.Code  ?? ""
+                                                        : m.Volunteer?.VolunteerCode ?? "";
+                var initials = name.Length >= 2 ? name[..2] : name;
+                var hoursRatio = m.PlannedHours > 0 ? Math.Min(m.ActualHours / m.PlannedHours * 100, 100) : 0;
+
+                <div class="tm-card">
+                    <div class="d-flex align-items-start gap-3">
+
+                        @* Avatar *@
+                        <div class="tm-avatar @(m.MemberType=="Employee"?"tm-emp":"tm-vol")">
+                            @initials
+                        </div>
+
+                        @* Info *@
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fw-bold" style="font-size:.92rem">@name</span>
+                                <span class="badge @(m.MemberType=="Employee"?"bg-primary":"bg-success")"
+                                      style="font-size:.65rem">
+                                    @(m.MemberType=="Employee"?"موظف":"متطوع")
+                                </span>
+                                <span class="badge @Sbg(m.ParticipationStatus)"
+                                      style="font-size:.65rem">@SaP(m.ParticipationStatus)</span>
+                                <span class="badge @SbgV(m.VerificationStatus)"
+                                      style="font-size:.65rem">@SaV(m.VerificationStatus)</span>
+                            </div>
+
+                            <div class="text-muted" style="font-size:.78rem;margin-top:3px">
+                                @if (!string.IsNullOrEmpty(code))
+                                { <span class="me-2">🆔 @code</span> }
+                                @if (!string.IsNullOrEmpty(m.RoleTitle))
+                                { <span class="me-2">👔 @m.RoleTitle</span> }
+                                @if (m.Activity != null)
+                                { <span class="act-badge">⚙ @m.Activity.Title</span> }
+                            </div>
+
+                            <div class="d-flex align-items-center gap-3 mt-2 flex-wrap">
+                                @* التواريخ *@
+                                <span style="font-size:.75rem;color:#adb5bd">
+                                    <i class="bx bx-calendar me-1"></i>
+                                    @m.StartDate.ToString("yyyy/MM/dd")
+                                    @(m.EndDate.HasValue ? " ← " + m.EndDate.Value.ToString("yyyy/MM/dd") : "")
+                                </span>
+
+                                @* الساعات *@
+                                @if (m.PlannedHours > 0 || m.ActualHours > 0)
+                                {
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="prog-bar">
+                                            <div class="prog-fill" style="width:@hoursRatio%"></div>
+                                        </div>
+                                        <span style="font-size:.75rem;color:var(--teal)">
+                                            @m.ActualHours / @m.PlannedHours ساعة
+                                        </span>
+                                    </div>
+                                }
+
+                                @* الأيام *@
+                                @if ((m.PlannedDays ?? 0) > 0 || (m.ActualDays ?? 0) > 0)
+                                {
+                                    <span style="font-size:.75rem;color:#6b7d80">
+                                        <i class="bx bx-calendar-check me-1"></i>
+                                        @m.ActualDays / @m.PlannedDays يوم
+                                    </span>
+                                }
+
+                                @* المرفقات *@
+                                @if (m.Attachments?.Any() == true)
+                                {
+                                    <span class="act-badge">
+                                        <i class="bx bx-paperclip me-1"></i>@m.Attachments.Count مرفق
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        @* الأزرار *@
+                        <div class="d-flex flex-column gap-1">
+                            <a asp-action="Edit" asp-route-id="@m.Id"
+                               class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;padding:3px 10px">
+                                <i class="bx bx-edit"></i>
+                            </a>
+                            <a asp-action="Verify" asp-route-id="@m.Id"
+                               class="btn btn-sm" style="font-size:.75rem;padding:3px 10px;background:rgba(52,195,143,.15);color:#1a7a55">
+                                <i class="bx bx-shield-check"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    }
+
+    <div class="mt-3">
+        <a asp-action="PhaseOverview" asp-controller="ActivityPhaseTracking"
+           asp-route-projectId="@project?.Id" class="btn btn-light btn-sm">
+            <i class="bx bx-arrow-back me-1"></i>متابعة المراحل
+        </a>
+    </div>
+</div>

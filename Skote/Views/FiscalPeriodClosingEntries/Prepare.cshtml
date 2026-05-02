@@ -1,0 +1,164 @@
+@model InfrastructureManagmentWebFramework.Models.FiscalPeriodClosingEntries.FiscalPeriodClosingEntryPrepareVm
+
+@{
+    ViewData["Title"] = "تجهيز قيد الإقفال";
+}
+
+<div style="background:linear-gradient(135deg,#312e81,#7c3aed);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px">
+    <h4 class="fw-bold mb-1 text-white">
+        <i class="bx bx-transfer-alt me-2"></i>تجهيز قيد الإقفال — @Model.PeriodName
+    </h4>
+    <div style="opacity:.78;font-size:.82rem">
+        من @Model.StartDate.ToString("yyyy/MM/dd") إلى @Model.EndDate.ToString("yyyy/MM/dd")
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.HasClosingEntry)
+{
+    <div class="alert alert-info">
+        يوجد قيد إقفال لهذه الفترة بالفعل رقم:
+        <strong>@Model.ExistingClosingEntryNumber</strong>
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card" style="border-radius:14px"><div class="card-body text-center">
+            <div class="text-muted small">إجمالي الإيرادات</div>
+            <div class="fs-4 fw-bold text-success">@Model.TotalRevenue.ToString("N2")</div>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card" style="border-radius:14px"><div class="card-body text-center">
+            <div class="text-muted small">إجمالي المصروفات</div>
+            <div class="fs-4 fw-bold text-danger">@Model.TotalExpense.ToString("N2")</div>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card" style="border-radius:14px"><div class="card-body text-center">
+            <div class="text-muted small">صافي الفائض/العجز</div>
+            <div class="fs-4 fw-bold @(Model.NetSurplusOrDeficit >= 0 ? "text-success" : "text-danger")">
+                @Model.NetSurplusOrDeficit.ToString("N2")
+            </div>
+        </div></div>
+    </div>
+</div>
+
+@if (!Model.HasClosingEntry)
+{
+    <div class="card mb-3" style="border-radius:16px">
+        <div class="card-header fw-bold">إنشاء قيد الإقفال</div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="FiscalPeriodId" value="@Model.FiscalPeriodId" />
+
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label">حساب الفائض/العجز المرحّل</label>
+                        <select name="RetainedSurplusAccountId" class="form-select" required>
+                            <option value="">-- اختر الحساب --</option>
+                            @foreach (var acc in Model.EquityAccounts)
+                            {
+                                <option value="@acc.Value">@acc.Text</option>
+                            }
+                        </select>
+                        <small class="text-muted">يفضل حساب ضمن حقوق الملكية / صافي الأصول.</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">تاريخ القيد</label>
+                        <input name="ClosingEntryDateUtc"
+                               type="date"
+                               value="@Model.ClosingEntryDateUtc.ToString("yyyy-MM-dd")"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">ملاحظات</label>
+                        <input name="Notes" value="@Model.Notes" class="form-control" />
+                    </div>
+                </div>
+
+                <button class="btn btn-dark fw-bold mt-3"
+                        onclick="return confirm('هل تريد إنشاء قيد إقفال لهذه الفترة؟');">
+                    <i class="bx bx-save me-1"></i>إنشاء قيد الإقفال
+                </button>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card" style="border-radius:16px">
+            <div class="card-header fw-bold">حسابات الإيرادات التي سيتم إقفالها</div>
+            <div class="card-body table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>الحساب</th>
+                            <th>رصيد دائن</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var r in Model.RevenueRows)
+                    {
+                        <tr>
+                            <td>@r.AccountCode</td>
+                            <td>@r.AccountNameAr</td>
+                            <td class="text-success fw-bold">@r.NetCreditBalance.ToString("N2")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+                @if (!Model.RevenueRows.Any())
+                {
+                    <div class="alert alert-info mb-0">لا توجد إيرادات للإقفال.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card" style="border-radius:16px">
+            <div class="card-header fw-bold">حسابات المصروفات التي سيتم إقفالها</div>
+            <div class="card-body table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>الحساب</th>
+                            <th>رصيد مدين</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var r in Model.ExpenseRows)
+                    {
+                        <tr>
+                            <td>@r.AccountCode</td>
+                            <td>@r.AccountNameAr</td>
+                            <td class="text-danger fw-bold">@r.NetDebitBalance.ToString("N2")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+                @if (!Model.ExpenseRows.Any())
+                {
+                    <div class="alert alert-info mb-0">لا توجد مصروفات للإقفال.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

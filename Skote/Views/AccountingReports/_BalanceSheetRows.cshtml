@@ -1,0 +1,36 @@
+@model IEnumerable<InfrastrfuctureManagmentCore.Domains.Accounting.Reports.BalanceSheetRow>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>الكود</th>
+                    <th>الحساب</th>
+                    <th>الرصيد</th>
+                    <th>الإجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    <tr>
+                        <td>@row.AccountCode</td>
+                        <td>@row.AccountNameAr</td>
+                        <td class="text-end">@row.Balance.ToString("N2")</td>
+                        <td>
+                            <a asp-action="AccountStatement" asp-route-accountId="@row.AccountId" class="btn btn-sm btn-outline-secondary">
+                                كشف الحساب
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info mb-0">لا توجد بيانات.</div>
+}

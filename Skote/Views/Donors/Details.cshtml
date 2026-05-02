@@ -1,0 +1,119 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Donors.DonorDetailsVm
+@using Skote.Helpers
+@{
+    ViewData["Title"] = "ملف المتبرع";
+    string TypeColor(string t) => t switch {"شركة"=>"#556ee6","مؤسسة"=>"#34c38f","جهة مانحة"=>"#f1b44c","فاعل خير"=>"#e83e8c",_=>"#0e6f73"};
+    string TypeIcon(string t)  => t switch {"شركة"=>"bx-buildings","مؤسسة"=>"bx-building-house","جهة مانحة"=>"bx-dollar-circle","فاعل خير"=>"bx-heart",_=>"bx-user"};
+    var tc = TypeColor(Model.DonorType);
+}
+<style>
+:root{--teal:#0e6f73;--teal-l:#e1f5f5;--ink:#1e3a5f;--muted:#6b7d80}
+.dn-profile-hero{background:linear-gradient(135deg,#1a3c5e,#0e6f73);border-radius:20px;padding:24px 28px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden}
+.dn-profile-hero::after{content:'';position:absolute;top:-60px;left:-60px;width:220px;height:220px;background:rgba(255,255,255,.04);border-radius:50%}
+.dn-big-avatar{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:rgba(255,255,255,.2);flex-shrink:0}
+.dn-stat{background:rgba(255,255,255,.13);border-radius:12px;padding:12px 16px;text-align:center;flex:1;min-width:80px}
+.dn-stat .n{font-size:1.4rem;font-weight:800;line-height:1}
+.dn-stat .l{font-size:.67rem;opacity:.8;margin-top:3px}
+.info-card{background:#fff;border-radius:14px;border:.5px solid rgba(14,111,115,.1);box-shadow:0 2px 10px rgba(14,111,115,.05);overflow:hidden;margin-bottom:14px}
+.info-card-hdr{padding:11px 18px;background:#f4f9f9;border-bottom:.5px solid rgba(14,111,115,.08);display:flex;align-items:center;gap:8px}
+.info-card-hdr .ic-title{font-weight:700;font-size:.87rem;color:var(--ink)}
+.info-card-body{padding:14px 18px}
+.info-row{display:flex;gap:8px;padding:7px 0;border-bottom:.5px solid rgba(14,111,115,.04)}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:.74rem;font-weight:700;color:var(--muted);min-width:130px;flex-shrink:0}
+.info-val{font-size:.84rem;color:var(--ink);flex:1}
+.dn-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.dn-table th{padding:9px 14px;font-size:.72rem;font-weight:700;color:var(--muted);background:#f4f9f9;text-align:right;border-bottom:.5px solid rgba(14,111,115,.1);white-space:nowrap}
+.dn-table td{padding:10px 14px;border-bottom:.5px solid rgba(14,111,115,.04);vertical-align:middle}
+.dn-table tr:hover td{background:rgba(14,111,115,.015)}
+.donation-type{padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700}
+</style>
+<div class="dn-profile-hero">
+    <div class="d-flex align-items-start gap-3 flex-wrap">
+        <div class="dn-big-avatar"><i class="bx @TypeIcon(Model.DonorType)"></i></div>
+        <div class="flex-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                <h4 class="mb-0 fw-bold">@Model.FullName</h4>
+                <span class="badge" style="background:rgba(255,255,255,.25);font-size:.72rem">@Model.DonorType</span>
+                @if(!Model.IsActive){<span class="badge bg-danger" style="font-size:.72rem">غير نشط</span>}
+            </div>
+            <div style="opacity:.8;font-size:.82rem">@Model.Code</div>
+            @if(!string.IsNullOrEmpty(Model.PhoneNumber)){
+                <div class="mt-1" style="opacity:.8;font-size:.82rem"><i class="bx bx-phone me-1"></i>@Model.PhoneNumber</div>
+            }
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <authz policy="DonorsManage">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-light fw-semibold" style="border-radius:9px">تعديل</a>
+            </authz>
+            <a asp-controller="Donations" asp-action="Create" asp-route-donorId="@Model.Id" class="btn btn-sm fw-semibold" style="background:#34c38f;color:#fff;border-radius:9px"><i class="bx bx-plus me-1"></i>تسجيل تبرع</a>
+            <a asp-controller="Donations" asp-action="Index" asp-route-donorId="@Model.Id" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:9px">إدارة التبرعات</a>
+            <a asp-action="Index" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-radius:9px"><i class="bx bx-arrow-back me-1"></i>رجوع</a>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-3 mt-4">
+        <div class="dn-stat"><div class="n">@Model.DonationsCount</div><div class="l">عدد التبرعات</div></div>
+        <div class="dn-stat"><div class="n">@Model.TotalDonationsAmount.ToString("N0")</div><div class="l">إجمالي القيمة</div></div>
+        <div class="dn-stat"><div class="n">@Model.CreatedAtUtc.ToLocalTime().Year</div><div class="l">سنة التسجيل</div></div>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="info-card">
+            <div class="info-card-hdr"><i class="bx bx-user-circle" style="color:var(--teal);font-size:1.1rem"></i><span class="ic-title">البيانات الأساسية</span></div>
+            <div class="info-card-body">
+                <div class="info-row"><span class="info-label">الكود</span><span class="info-val fw-bold" style="color:var(--teal)">@Model.Code</span></div>
+                <div class="info-row"><span class="info-label">نوع المتبرع</span><span class="info-val">@Model.DonorType</span></div>
+                @if(!string.IsNullOrEmpty(Model.ContactPerson)){<div class="info-row"><span class="info-label">مسؤول التواصل</span><span class="info-val">@Model.ContactPerson</span></div>}
+                @if(!string.IsNullOrEmpty(Model.NationalIdOrTaxNo)){<div class="info-row"><span class="info-label">الرقم القومي/الضريبي</span><span class="info-val">@Model.NationalIdOrTaxNo</span></div>}
+                @if(!string.IsNullOrEmpty(Model.PhoneNumber)){<div class="info-row"><span class="info-label">الهاتف</span><span class="info-val">@Model.PhoneNumber</span></div>}
+                @if(!string.IsNullOrEmpty(Model.Email)){<div class="info-row"><span class="info-label">البريد الإلكتروني</span><span class="info-val">@Model.Email</span></div>}
+                @if(!string.IsNullOrEmpty(Model.PreferredCommunicationMethod)){<div class="info-row"><span class="info-label">وسيلة التواصل</span><span class="info-val">@Model.PreferredCommunicationMethod</span></div>}
+                <div class="info-row"><span class="info-label">تاريخ التسجيل</span><span class="info-val">@Model.CreatedAtUtc.ToLocalTime().ToString("yyyy/MM/dd")</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="info-card">
+            <div class="info-card-hdr"><i class="bx bx-map-pin" style="color:#f1b44c;font-size:1.1rem"></i><span class="ic-title">العنوان</span></div>
+            <div class="info-card-body">
+                @if(!string.IsNullOrEmpty(Model.GovernorateName)){<div class="info-row"><span class="info-label">المحافظة</span><span class="info-val">@Model.GovernorateName</span></div>}
+                @if(!string.IsNullOrEmpty(Model.CityName)){<div class="info-row"><span class="info-label">المدينة/المركز</span><span class="info-val">@Model.CityName</span></div>}
+                @if(!string.IsNullOrEmpty(Model.AreaName)){<div class="info-row"><span class="info-label">المنطقة/القرية</span><span class="info-val">@Model.AreaName</span></div>}
+                @if(!string.IsNullOrEmpty(Model.AddressLine)){<div class="info-row"><span class="info-label">العنوان</span><span class="info-val">@Model.AddressLine</span></div>}
+            </div>
+        </div>
+        @if(!string.IsNullOrEmpty(Model.Notes)){
+        <div class="info-card">
+            <div class="info-card-hdr"><i class="bx bx-note" style="color:#74788d;font-size:1.1rem"></i><span class="ic-title">ملاحظات</span></div>
+            <div class="info-card-body"><div style="font-size:.84rem;color:var(--muted);white-space:pre-wrap">@Model.Notes</div></div>
+        </div>
+        }
+    </div>
+</div>
+@if(Model.RecentDonations.Any()){
+<div class="info-card mt-1">
+    <div class="info-card-hdr">
+        <i class="bx bx-gift" style="color:#34c38f;font-size:1.1rem"></i>
+        <span class="ic-title">آخر التبرعات</span>
+        <span class="ms-auto badge" style="background:var(--teal-l);color:var(--teal)">@Model.DonationsCount تبرع</span>
+    </div>
+    <div class="table-responsive">
+        <table class="dn-table">
+            <thead><tr><th>رقم التبرع</th><th>التاريخ</th><th>النوع</th><th>القيمة</th><th>الإيصال</th><th>طريقة الدفع</th></tr></thead>
+            <tbody>
+            @foreach(var d in Model.RecentDonations){
+                <tr>
+                    <td class="fw-semibold" style="color:var(--teal)">@d.DonationNumber</td>
+                    <td>@d.DonationDate.ToString("yyyy/MM/dd")</td>
+                    <td><span class="donation-type" style="background:@(d.DonationType=="نقدي"?"rgba(52,195,143,.1)":"rgba(85,110,230,.1)");color:@(d.DonationType=="نقدي"?"#1a7a55":"#3145a3")">@d.DonationType</span></td>
+                    <td class="fw-semibold">@(d.Amount?.ToString("N0")??"—")</td>
+                    <td class="text-muted">@(d.ReceiptNumber??"—")</td>
+                    <td class="text-muted">@(d.PaymentMethod??"—")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+}

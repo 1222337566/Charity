@@ -1,0 +1,142 @@
+﻿@model WorkOrdersDashboardVm
+@using InfrastructureManagmentWebFramework.Models.Optics.WorkOrders
+
+@{
+    ViewData["Title"] = "متابعة أوامر الشغل";
+    var currentFilter = (ViewBag.Filter as string ?? "all").ToLower();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-2 col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <p class="text-muted fw-medium">طلبات جديدة</p>
+                    <h4 class="mb-0">@Model.NewCount</h4>
+                    <a asp-action="Dashboard" asp-route-filter="new" class="small">عرض</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <p class="text-muted fw-medium">في المعمل</p>
+                    <h4 class="mb-0">@Model.InLabCount</h4>
+                    <a asp-action="Dashboard" asp-route-filter="inlab" class="small">عرض</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <p class="text-muted fw-medium">جاهز</p>
+                    <h4 class="mb-0">@Model.ReadyCount</h4>
+                    <a asp-action="Dashboard" asp-route-filter="ready" class="small">عرض</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <p class="text-muted fw-medium">تم التسليم اليوم</p>
+                    <h4 class="mb-0">@Model.DeliveredTodayCount</h4>
+                    <a asp-action="Index" class="small">كل الأوامر</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid border border-danger">
+                <div class="card-body">
+                    <p class="text-danger fw-medium">طلبات متأخرة</p>
+                    <h4 class="mb-0 text-danger">@Model.OverdueCount</h4>
+                    <a asp-action="Dashboard" asp-route-filter="overdue" class="small text-danger">عرض</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h4 class="mb-0">متابعة أوامر الشغل</h4>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-action="Dashboard" asp-route-filter="all" class="btn @(currentFilter == "all" ? "btn-primary" : "btn-outline-primary") btn-sm">الكل</a>
+                <a asp-action="Dashboard" asp-route-filter="new" class="btn @(currentFilter == "new" ? "btn-warning" : "btn-outline-warning") btn-sm">جديد</a>
+                <a asp-action="Dashboard" asp-route-filter="inlab" class="btn @(currentFilter == "inlab" ? "btn-info" : "btn-outline-info") btn-sm">في المعمل</a>
+                <a asp-action="Dashboard" asp-route-filter="ready" class="btn @(currentFilter == "ready" ? "btn-success" : "btn-outline-success") btn-sm">جاهز</a>
+                <a asp-action="Dashboard" asp-route-filter="overdue" class="btn @(currentFilter == "overdue" ? "btn-danger" : "btn-outline-danger") btn-sm">متأخر</a>
+                <a asp-action="Index" class="btn btn-outline-dark btn-sm">الاوامر كل </a>
+                <a asp-action="ReadyForDelivery" class="btn btn-outline-success btn-sm"> للتسليم</a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الأمر</th>
+                            <th>الفاتورة</th>
+                            <th>العميل</th>
+                            <th>الروشتة</th>
+                            <th>التاريخ</th>
+                            <th>التسليم المتوقع</th>
+                            <th>الحالة</th>
+                            <th>عاجل</th>
+                            <th>متأخر</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Orders.Any())
+                        {
+                            foreach (var item in Model.Orders)
+                            {
+                                        <tr class="@(item.IsOverdue ? "table-danger" : "")">
+                                            <td>@item.WorkOrderNumber</td>
+                                            <td>@item.InvoiceNumber</td>
+                                            <td>@item.CustomerName</td>
+                                            <td>@(item.PrescriptionText ?? "-")</td>
+                                            <td>@item.OrderDateUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                                            <td>@(item.ExpectedDeliveryDateUtc?.ToLocalTime().ToString("yyyy-MM-dd") ?? "-")</td>
+                                            <td>@item.StatusText</td>
+                                            <td>@(item.IsUrgent ? "نعم" : "-")</td>
+                                            <td>
+                                        @if (item.IsOverdue)
+                                        {
+                                                        <span class="badge bg-danger">نعم</span>
+                                        }
+                                        else
+                                        {
+                                                        <span>-</span>
+                                        }
+                                            </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                                عرض
+                                            </a>
+                                            <a asp-action="Print" asp-route-id="@item.Id" class="btn btn-sm btn-dark">
+                                                طباعة
+                                            </a>
+                                        </div>
+                                    </td>
+                                        </tr>
+                            }
+                        }
+                        else
+                        {
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted">لا توجد أوامر مطابقة</td>
+                                </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

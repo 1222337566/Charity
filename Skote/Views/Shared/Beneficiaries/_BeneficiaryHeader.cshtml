@@ -1,0 +1,104 @@
+@using Skote.Helpers
+@model InfrastructureManagmentWebFramework.Models.Charity.BeneficiaryProfile.Shared.BeneficiaryHeaderVm
+
+@if (Model != null)
+{
+    var canManageBeneficiaries = User.HasCharityPermission(CharityPermissions.BeneficiariesManage);
+    var canReviewResearch = User.IsInRole(CharityRoles.Admin) || User.HasCharityPermission(CharityPermissions.ResearchReview);
+    var canViewAidOps = User.IsInRole(CharityRoles.Admin) || User.HasCharityPermission(CharityPermissions.AidDisbursementView) || User.HasCharityPermission(CharityPermissions.AidDisbursementManage);
+    var hasApprovedCommitteeDecision = ViewBag.HasApprovedCommitteeDecision is bool v ? v : true;
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    bool IsActive(params string[] cs) => cs.Contains(ctrl, StringComparer.OrdinalIgnoreCase);
+
+<style>
+.bn-hero{background:linear-gradient(135deg,#1a3c5e,#0e6f73);border-radius:18px;padding:16px 22px;color:#fff;margin-bottom:16px;position:relative;overflow:hidden}
+.bn-hero::after{content:'';position:absolute;top:-40px;left:-40px;width:180px;height:180px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none}
+.bn-initials{width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;flex-shrink:0}
+.bn-code-lbl{background:rgba(255,255,255,.2);padding:2px 9px;border-radius:6px;font-size:.7rem;font-weight:700}
+.bn-nav{display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px;background:#fafbfc;border-bottom:.5px solid rgba(14,111,115,.07)}
+.bn-nav-btn{padding:5px 12px;border-radius:20px;font-size:.77rem;font-weight:600;text-decoration:none;color:#4a6080;border:.5px solid rgba(14,111,115,.12);background:#fff;transition:all .18s;white-space:nowrap;line-height:1.4}
+.bn-nav-btn:hover{background:rgba(14,111,115,.08);color:#0e6f73;border-color:rgba(14,111,115,.25)}
+.bn-nav-btn.active{background:#0e6f73;color:#fff;border-color:#0e6f73}
+.bn-nav-btn.accent{background:rgba(85,110,230,.08);color:#3145a3;border-color:rgba(85,110,230,.2)}
+.bn-nav-btn.accent:hover,.bn-nav-btn.accent.active{background:#556ee6;color:#fff;border-color:#556ee6}
+.bn-nav-btn.danger{background:rgba(244,106,106,.08);color:#c0392b;border-color:rgba(244,106,106,.2)}
+.bn-nav-btn.danger:hover,.bn-nav-btn.danger.active{background:#f46a6a;color:#fff;border-color:#f46a6a}
+.bn-sep{width:1px;height:20px;background:rgba(14,111,115,.12);margin:0 3px;align-self:center}
+</style>
+
+<div class="bn-hero">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="bn-initials">
+            @string.Join("", (Model.FullName ?? "م").Split(' ').Take(2).Select(w => w.Length > 0 ? w[0].ToString() : ""))
+        </div>
+        <div class="flex-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                <span class="fw-bold" style="font-size:1rem">@Model.FullName</span>
+                <span class="bn-code-lbl">@Model.Code</span>
+            </div>
+            <div style="opacity:.8;font-size:.78rem;display:flex;flex-wrap:wrap;gap:.8rem">
+                @if(!string.IsNullOrEmpty(Model.NationalId)){<span><i class="bx bx-id-card me-1"></i>@Model.NationalId</span>}
+                @if(!string.IsNullOrEmpty(Model.PhoneNumber)){<span><i class="bx bx-phone me-1"></i>@Model.PhoneNumber</span>}
+                @if(!string.IsNullOrEmpty(Model.StatusName)){<span><i class="bx bx-check-circle me-1"></i>@Model.StatusName</span>}
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="BeneficiaryCard" asp-action="Index" asp-route-id="@Model.Id"
+               class="btn btn-sm fw-semibold" style="background:rgba(255,255,255,.9);color:#0e6f73;border-radius:9px">
+                <i class="bx bx-id-card me-1"></i>البطاقة الشاملة
+            </a>
+            @if(canManageBeneficiaries){
+                <a asp-controller="Beneficiaries" asp-action="Edit" asp-route-id="@Model.Id"
+                   class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:9px">
+                    <i class="bx bx-edit-alt me-1"></i>تعديل
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3" style="border-radius:14px;border:.5px solid rgba(14,111,115,.1);overflow:hidden;box-shadow:0 2px 10px rgba(14,111,115,.05)">
+    <div class="bn-nav">
+        <a class="bn-nav-btn @(IsActive("Beneficiaries")?"active":"")"
+           asp-controller="Beneficiaries" asp-action="Details" asp-route-id="@Model.Id">
+            <i class="bx bx-user me-1"></i>البيانات
+        </a>
+        <a class="bn-nav-btn @(IsActive("BeneficiaryDocuments")?"active":"")"
+           asp-controller="BeneficiaryDocuments" asp-action="Index" asp-route-beneficiaryId="@Model.Id">
+            <i class="bx bx-file me-1"></i>المستندات
+        </a>
+        @if(canManageBeneficiaries || canReviewResearch){
+            <a class="bn-nav-btn @(IsActive("BeneficiaryHumanitarianResearchs")?"active":"")"
+               asp-controller="BeneficiaryHumanitarianResearchs" asp-action="Index" asp-route-beneficiaryId="@Model.Id">
+                <i class="bx bx-clipboard me-1"></i>البحث الإنساني
+            </a>
+        }
+        <span class="bn-sep"></span>
+        @if(canManageBeneficiaries && hasApprovedCommitteeDecision){
+            <a class="bn-nav-btn accent @(IsActive("BeneficiaryAidRequests")?"active":"")"
+               asp-controller="BeneficiaryAidRequests" asp-action="Index" asp-route-beneficiaryId="@Model.Id">
+                <i class="bx bx-hand-right me-1"></i>طلبات المساعدة
+            </a>
+        }
+        @if(canViewAidOps && hasApprovedCommitteeDecision){
+            <a class="bn-nav-btn accent @(IsActive("BeneficiaryAidDisbursements")?"active":"")"
+               asp-controller="BeneficiaryAidDisbursements" asp-action="Index" asp-route-beneficiaryId="@Model.Id">
+                <i class="bx bx-money-withdraw me-1"></i>سجل الصرف
+            </a>
+        }
+        <span class="bn-sep"></span>
+        <a class="bn-nav-btn @(IsActive("BeneficiaryAssessments")?"active":"")"
+           asp-controller="BeneficiaryAssessments" asp-action="Index" asp-route-beneficiaryId="@Model.Id">
+            <i class="bx bx-star me-1"></i>التقييمات
+        </a>
+        <a class="bn-nav-btn @(IsActive("BeneficiaryCommitteeDecisions")?"active":"")"
+           asp-controller="BeneficiaryCommitteeDecisions" asp-action="Index" asp-route-beneficiaryId="@Model.Id">
+            <i class="bx bx-check-square me-1"></i>قرارات اللجنة
+        </a>
+        <a class="bn-nav-btn @(IsActive("BeneficiaryCategoryAssignments")?"active":"")"
+           asp-controller="BeneficiaryCategoryAssignments" asp-action="Create" asp-route-beneficiaryId="@Model.Id">
+            <i class="bx bx-tag me-1"></i>التصنيفات
+        </a>
+    </div>
+</div>
+}

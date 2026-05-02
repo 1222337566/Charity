@@ -1,0 +1,85 @@
+﻿@model List<UnitListItemVm>
+@using InfrastructureManagmentWebFramework.Models.FinancialAccounting;
+
+@{
+    ViewData["Title"] = "الوحدات";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">الوحدات</h4>
+            <a asp-action="Create" class="btn btn-primary btn-sm">إضافة وحدة</a>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الكود</th>
+                            <th>الاسم</th>
+                            <th>الاسم الإنجليزي</th>
+                            <th>الرمز</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.UnitCode</td>
+                                <td>@item.UnitNameAr</td>
+                                <td>@(item.UnitNameEn ?? "-")</td>
+                                <td>@(item.Symbol ?? "-")</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">نشطة</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">غير نشطة</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
+                                            تعديل
+                                        </a>
+
+                                        <form asp-action="ToggleActive" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+
+                                            @if (item.IsActive)
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('هل تريد تعطيل الوحدة؟');">
+                                                    تعطيل
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-success"
+                                                        onclick="return confirm('هل تريد تفعيل الوحدة؟');">
+                                                    تفعيل
+                                                </button>
+                                            }
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,142 @@
+﻿@model List<ReadyForDeliveryItemVm>
+@using InfrastructureManagmentWebFramework.Models.Optics.WorkOrders
+
+@{
+    ViewData["Title"] = "جاهز للتسليم";
+}
+
+<div class="container-fluid">
+    @if (TempData["Success"] != null)
+    {
+            <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h4 class="mb-0">الطلبات الجاهزة للتسليم</h4>
+                <small class="text-muted">يعرض فقط أوامر الشغل التي حالتها Ready</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">متابعة أوامر الشغل</a>
+                <a asp-action="Index" class="btn btn-outline-dark btn-sm">كل الأوامر</a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">عدد الطلبات الجاهزة</div>
+                        <div class="fs-4 fw-bold">@Model.Count</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">العاجل</div>
+                        <div class="fs-4 fw-bold">@Model.Count(x => x.IsUrgent)</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">المتأخر</div>
+                        <div class="fs-4 fw-bold text-danger">@Model.Count(x => x.IsLateForDelivery)</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="text-muted">جاهز اليوم</div>
+                        <div class="fs-4 fw-bold">@Model.Count(x => x.ReadyDateUtc.HasValue && x.ReadyDateUtc.Value.Date == DateTime.UtcNow.Date)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الأمر</th>
+                            <th>الفاتورة</th>
+                            <th>العميل</th>
+                            <th>رقم العميل</th>
+                            <th>الموبايل</th>
+                            <th>الروشتة</th>
+                            <th>جاهز من</th>
+                            <th>التسليم المتوقع</th>
+                            <th>عاجل</th>
+                            <th>متأخر</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                        <tr class="@(item.IsLateForDelivery ? "table-danger" : "")">
+                                            <td>@item.WorkOrderNumber</td>
+                                            <td>@item.InvoiceNumber</td>
+                                            <td>@item.CustomerName</td>
+                                            <td>@(item.CustomerNumber ?? "-")</td>
+                                            <td>@(item.CustomerMobile ?? "-")</td>
+                                            <td>@(item.PrescriptionText ?? "-")</td>
+                                            <td>@(item.ReadyDateUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                            <td>@(item.ExpectedDeliveryDateUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                            <td>
+                                        @if (item.IsUrgent)
+                                        {
+                                                        <span class="badge bg-warning text-dark">عاجل</span>
+                                        }
+                                        else
+                                        {
+                                                        <span>-</span>
+                                        }
+                                            </td>
+                                            <td>
+                                        @if (item.IsLateForDelivery)
+                                        {
+                                                        <span class="badge bg-danger">متأخر</span>
+                                        }
+                                        else
+                                        {
+                                                        <span>-</span>
+                                        }
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-1 flex-wrap">
+                                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                                        عرض
+                                                    </a>
+
+                                                    <a asp-action="Print" asp-route-id="@item.Id" class="btn btn-sm btn-dark">
+                                                        طباعة
+                                                    </a>
+
+                                                    <form asp-action="DeliverFromReadyQueue" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            تم التسليم
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                            }
+                        }
+                        else
+                        {
+                                <tr>
+                                    <td colspan="11" class="text-center text-muted">لا توجد طلبات جاهزة للتسليم حاليًا</td>
+                                </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,213 @@
+@model Skote.Controllers.CashFlowVm
+@{ ViewData["Title"] = "التدفق النقدي المتوقع"; }
+@{
+    // حساب الرصيد التراكمي
+    decimal cum = Model.CurrentBalance;
+    foreach (var mo in Model.Months_List)
+    { cum += mo.NetFlow; mo.CumulativeBalance = cum; }
+    cum = Model.CurrentBalance; // reset
+}
+
+<style>
+.cf-hero{background:linear-gradient(135deg,#0a5659,#0e6f73);border-radius:18px;padding:20px 26px;color:#fff;margin-bottom:20px}
+.cf-stat{background:rgba(255,255,255,.13);border-radius:12px;padding:11px 18px;text-align:center;flex:1;min-width:90px}
+.cf-stat .n{font-size:1.2rem;font-weight:800;line-height:1}
+.cf-stat .l{font-size:.67rem;opacity:.8;margin-top:2px}
+.cf-card{background:#fff;border-radius:16px;border:.5px solid rgba(14,111,115,.12);box-shadow:0 2px 10px rgba(14,111,115,.05);margin-bottom:16px}
+.cf-head{padding:14px 18px 12px;border-bottom:.5px solid rgba(14,111,115,.08);font-size:.92rem;font-weight:700;color:#0a5f63}
+.cf-body{padding:16px 18px}
+.month-card{border-radius:14px;border:.5px solid;padding:14px 18px;transition:.12s}
+.month-card:hover{box-shadow:0 4px 16px rgba(14,111,115,.10);transform:translateY(-1px)}
+.month-card.negative{border-color:rgba(244,106,106,.3);background:#fff8f8}
+.month-card.positive{border-color:rgba(52,195,143,.2);background:#f8fdfb}
+.month-card.neutral{border-color:rgba(14,111,115,.12);background:#fff}
+.bar-track{height:10px;border-radius:999px;background:#eef4f3;overflow:hidden;margin:6px 0}
+.bar-fill{height:100%;border-radius:999px}
+.alert-card{border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;border:.5px solid}
+.alert-card.critical{border-color:rgba(244,106,106,.3);background:#fff5f5}
+.alert-card.warning{border-color:rgba(241,180,76,.3);background:#fffbf0}
+</style>
+
+<div class="cf-hero">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+    <div>
+      <h4 class="fw-bold mb-1 text-white"><i class="bx bx-trending-up me-2"></i>التدفق النقدي المتوقع</h4>
+      <div style="opacity:.75;font-size:.82rem">توقع دخل وخروج الأموال للأشهر القادمة</div>
+    </div>
+    <div class="d-flex gap-2">
+      @foreach (var mo in new[]{3,6,12})
+      {
+        <a asp-action="Index" asp-route-months="@mo"
+           class="btn btn-sm fw-bold" style="border-radius:10px;@(Model.Months == mo ? "background:#fff;color:#0a5f63" : "background:rgba(255,255,255,.2);color:#fff;border:none")">
+          @mo أشهر
+        </a>
+      }
+    </div>
+  </div>
+  <div class="d-flex gap-3 flex-wrap">
+    <div class="cf-stat @(Model.CurrentBalance >= 0 ? "" : "")" style="@(Model.CurrentBalance < 0 ? "background:rgba(244,106,106,.22)" : "background:rgba(52,195,143,.22)")">
+      <div class="n" style="color:@(Model.CurrentBalance >= 0 ? "#a7f3d0" : "#fca5a5")">@Model.CurrentBalance.ToString("N0")</div>
+      <div class="l">الرصيد الحالي</div>
+    </div>
+    <div class="cf-stat">
+      <div class="n" style="color:#a7f3d0">@Model.TotalExpected.ToString("N0")</div>
+      <div class="l">إجمالي الدخل المتوقع</div>
+    </div>
+    <div class="cf-stat" style="background:rgba(244,106,106,.18)">
+      <div class="n" style="color:#fca5a5">@Model.TotalPlannedOut.ToString("N0")</div>
+      <div class="l">إجمالي المصاريف المتوقعة</div>
+    </div>
+    <div class="cf-stat" style="background:@(Model.IsFinanciallyHealthy ? "rgba(52,195,143,.20)" : "rgba(244,106,106,.22)")">
+      <div class="n">@(Model.IsFinanciallyHealthy ? "✅" : "⚠️")</div>
+      <div class="l">@(Model.IsFinanciallyHealthy ? "وضع آمن" : "يحتاج مراجعة")</div>
+    </div>
+    @if (Model.SilentDonors > 0)
+    {
+      <div class="cf-stat" style="background:rgba(241,180,76,.20)">
+        <div class="n" style="color:#fde68a">@Model.SilentDonors</div>
+        <div class="l">متبرع صامت</div>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="row g-3">
+
+  @* الأشهر القادمة *@
+  <div class="col-xl-8">
+    <div class="cf-card">
+      <div class="cf-head"><i class="bx bx-calendar me-2"></i>توقع الأشهر القادمة</div>
+      <div class="cf-body">
+        @{
+          var runBal = Model.CurrentBalance;
+          var maxVal = Model.Months_List.Any()
+              ? Math.Max(Model.Months_List.Max(x => x.Inflow), Model.Months_List.Max(x => x.Outflow))
+              : 1m;
+          if (maxVal == 0) maxVal = 1;
+        }
+        @foreach (var mo in Model.Months_List)
+        {
+          runBal += mo.NetFlow;
+          var cls = mo.IsNegative ? "negative" : runBal < 0 ? "negative" : "positive";
+          <div class="month-card @cls mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold" style="font-size:.92rem;color:#15363a">@mo.Label</span>
+              <div class="d-flex gap-3 align-items-center">
+                <span style="font-size:.8rem">
+                  صافي:
+                  <strong style="color:@(mo.NetFlow >= 0 ? "#34c38f" : "#f46a6a")">
+                    @(mo.NetFlow >= 0 ? "+" : "")@mo.NetFlow.ToString("N0")
+                  </strong>
+                </span>
+                <span style="font-size:.78rem;color:#6b7d80">
+                  رصيد: <strong style="color:@(runBal >= 0 ? "#0e6f73" : "#f46a6a")">@runBal.ToString("N0")</strong>
+                </span>
+              </div>
+            </div>
+
+            @* Inflow bar *@
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span style="font-size:.72rem;color:#34c38f;min-width:50px;font-weight:700">↑ دخل</span>
+              <div class="bar-track flex-grow-1">
+                <div class="bar-fill" style="width:@(mo.Inflow/maxVal*100)%;background:#34c38f"></div>
+              </div>
+              <span style="font-size:.78rem;color:#34c38f;font-weight:600;min-width:70px;text-align:left">@mo.Inflow.ToString("N0")</span>
+            </div>
+
+            @* Outflow bar *@
+            <div class="d-flex align-items-center gap-2">
+              <span style="font-size:.72rem;color:#f46a6a;min-width:50px;font-weight:700">↓ خروج</span>
+              <div class="bar-track flex-grow-1">
+                <div class="bar-fill" style="width:@(mo.Outflow/maxVal*100)%;background:#f46a6a"></div>
+              </div>
+              <span style="font-size:.78rem;color:#f46a6a;font-weight:600;min-width:70px;text-align:left">@mo.Outflow.ToString("N0")</span>
+            </div>
+
+            @if (mo.Notes.Any())
+            {
+              <div class="mt-2 d-flex gap-2 flex-wrap">
+                @foreach (var n in mo.Notes)
+                {
+                  <span style="background:rgba(14,111,115,.08);color:#0a5f63;padding:2px 8px;border-radius:5px;font-size:.72rem">@n</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  @* تنبيهات الميزانية + المتبرعون الصامتون *@
+  <div class="col-xl-4">
+
+    @* تنبيهات تجاوز الميزانية *@
+    <div class="cf-card mb-3">
+      <div class="cf-head d-flex justify-content-between">
+        <span><i class="bx bx-alarm me-2"></i>تنبيهات الميزانية</span>
+        <span class="badge" style="background:rgba(244,106,106,.15);color:#ab2b2b">@Model.BudgetAlerts.Count</span>
+      </div>
+      <div class="cf-body">
+        @if (!Model.BudgetAlerts.Any())
+        {
+          <div class="text-center text-muted py-3" style="font-size:.82rem">
+            <i class="bx bx-check-circle" style="font-size:1.8rem;color:#34c38f;display:block"></i>
+            جميع الميزانيات في الحدود الآمنة
+          </div>
+        }
+        else
+        {
+          @foreach (var a in Model.BudgetAlerts)
+          {
+            <div class="alert-card @(a.IsCritical ? "critical" : "warning")">
+              <div>
+                <div style="font-size:.88rem;font-weight:700;color:#15363a">@a.Name</div>
+                <div style="font-size:.75rem;color:#6b7d80;margin-top:2px">
+                  مُصرف: @a.Actual.ToString("N0") / @a.Planned.ToString("N0")
+                </div>
+                <div class="bar-track" style="height:6px;width:160px;margin-top:4px">
+                  <div class="bar-fill"
+                       style="width:@(Math.Min(a.Percent,100))%;background:@(a.IsCritical?"#f46a6a":"#f1b44c")">
+                  </div>
+                </div>
+              </div>
+              <div style="margin-right:auto;text-align:center">
+                <div style="font-size:1.2rem;font-weight:800;color:@(a.IsCritical?"#f46a6a":"#f1b44c")">@a.Percent%</div>
+                @if (a.Url != null)
+                {
+                  <a href="@a.Url" style="font-size:.7rem;color:#0e6f73">فتح</a>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    @* إجراءات سريعة *@
+    <div class="cf-card">
+      <div class="cf-head"><i class="bx bx-link-alt me-2"></i>إجراءات سريعة</div>
+      <div class="cf-body d-grid gap-2">
+        <a asp-controller="BulkMessage" asp-action="Index"
+           asp-route-targetGroup="Donors"
+           class="btn btn-outline-primary fw-semibold" style="border-radius:12px;font-size:.85rem">
+          <i class="bx bx-envelope me-1"></i>تواصل مع المتبرعين الصامتين (@Model.SilentDonors)
+        </a>
+        <a asp-controller="BulkMessage" asp-action="Index"
+           asp-route-targetGroup="KafalaOverdue"
+           class="btn btn-outline-warning fw-semibold" style="border-radius:12px;font-size:.85rem">
+          <i class="bx bx-broadcast me-1"></i>تذكير الكفلاء المتأخرين
+        </a>
+        <a asp-controller="BeneficiaryCard" asp-action="EarlyWarning"
+           class="btn btn-outline-danger fw-semibold" style="border-radius:12px;font-size:.85rem">
+          <i class="bx bx-error-circle me-1"></i>لوحة الإنذار المبكر
+        </a>
+        <a asp-controller="ReportsCompare" asp-action="Index"
+           class="btn btn-outline-secondary fw-semibold" style="border-radius:12px;font-size:.85rem">
+          <i class="bx bx-bar-chart-alt-2 me-1"></i>المقارنة الزمنية
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,42 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.FunderProfile
+@using InfrastructureManagmentWebFramework.Models.Charity.FunderProfile.GrantConditions
+@model List<GrantConditionListItemVm>
+@{
+    ViewData["Title"] = "شروط التمويل";
+    var agreementHeader = ViewBag.GrantAgreementHeader as GrantAgreementHeaderVm;
+}
+<div class="page-content"><div class="container-fluid">
+@if (agreementHeader != null) { @await Html.PartialAsync("~/Views/Shared/Funders/_GrantAgreementHeader.cshtml", agreementHeader) }
+<div class="card"><div class="card-body table-responsive">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="card-title mb-0">شروط التمويل</h4>
+        <a asp-action="Create" asp-route-grantAgreementId="@agreementHeader?.Id" class="btn btn-success">إضافة شرط</a>
+    </div>
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr><th>العنوان</th><th>إلزامي</th><th>الاستحقاق</th><th>تم التنفيذ</th><th>تاريخ التنفيذ</th><th>التفاصيل</th><th></th></tr>
+        </thead>
+        <tbody>
+        @if (Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ConditionTitle</td>
+                    <td><span class="badge @(item.IsMandatory ? "bg-danger" : "bg-secondary")">@(item.IsMandatory ? "إلزامي" : "غير إلزامي")</span></td>
+                    <td>@item.DueDate?.ToString("yyyy-MM-dd")</td>
+                    <td><span class="badge @(item.IsFulfilled ? "bg-success" : "bg-warning")">@(item.IsFulfilled ? "نعم" : "لا")</span></td>
+                    <td>@item.FulfilledDate?.ToString("yyyy-MM-dd")</td>
+                    <td>@item.ConditionDetails</td>
+                    <td><a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">تعديل</a></td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="7" class="text-center text-muted">لا توجد شروط</td></tr>
+        }
+        </tbody>
+    </table>
+</div></div>
+</div></div>

@@ -1,0 +1,24 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Donors.EditDonorVm
+@{
+    ViewData["Title"] = "تعديل متبرع";
+}
+<div class="page-content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title mb-0">تعديل بيانات المتبرع</h4></div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    @Html.Partial("_Form", Model)
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">حفظ التعديل</button>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">رجوع</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

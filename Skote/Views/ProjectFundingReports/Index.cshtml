@@ -1,0 +1,84 @@
+@model InfrastructureManagmentWebFramework.Models.Funding.ProjectFundingReportVm
+@{
+    ViewData["Title"] = "تقرير تمويل المشروعات";
+}
+
+<style>
+.fn-hero{background:linear-gradient(135deg,#1e3a8a,#0891b2);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.fn-card{background:#fff;border-radius:16px;border:.5px solid rgba(8,145,178,.12);box-shadow:0 2px 8px rgba(8,145,178,.05);overflow:hidden;margin-bottom:16px}
+.fn-head{padding:12px 18px;border-bottom:.5px solid rgba(8,145,178,.08);font-size:.9rem;font-weight:700;color:#0e7490;background:rgba(8,145,178,.03)}
+.fn-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.fn-table th{background:#f8fafc;color:#64748b;font-size:.75rem;font-weight:700;padding:9px;border-bottom:1px solid #e5e7eb}
+.fn-table td{padding:9px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.fn-table tr:hover td{background:#f8fafc}
+.fn-stat{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:120px}
+.fn-stat .n{font-size:1.2rem;font-weight:800;line-height:1}
+.fn-stat .l{font-size:.7rem;opacity:.85;margin-top:2px}
+</style>
+
+<div class="fn-hero">
+    <h4 class="fw-bold mb-1 text-white"><i class="bx bx-bar-chart-alt-2 me-2"></i>تقرير تمويل المشروعات</h4>
+    <div style="opacity:.78;font-size:.82rem">قيمة التمويل والمحصل والمتبقي حسب المشروع والجهة المانحة</div>
+    <div class="d-flex gap-3 flex-wrap mt-3">
+        <div class="fn-stat"><div class="n">@Model.TotalFunding.ToString("N0")</div><div class="l">إجمالي التمويل</div></div>
+        <div class="fn-stat"><div class="n">@Model.TotalReceived.ToString("N0")</div><div class="l">المحصل</div></div>
+        <div class="fn-stat"><div class="n">@Model.TotalRemaining.ToString("N0")</div><div class="l">المتبقي</div></div>
+    </div>
+</div>
+
+<div class="fn-card">
+    <div class="fn-head">فلاتر</div>
+    <div class="p-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">المشروع</label>
+                <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select"><option value="">كل المشروعات</option></select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">الجهة المانحة</label>
+                <select asp-for="GrantorId" asp-items="Model.Grantors" class="form-select"><option value="">كل الجهات</option></select>
+            </div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">عرض</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="fn-card">
+    <div class="fn-head">بيانات التمويل</div>
+    <div class="table-responsive">
+        <table class="fn-table">
+            <thead>
+                <tr>
+                    <th>المشروع</th>
+                    <th>الجهة المانحة</th>
+                    <th>رقم الاتفاقية</th>
+                    <th>قيمة التمويل</th>
+                    <th>المحصل</th>
+                    <th>المتبقي</th>
+                    <th>نسبة التحصيل</th>
+                    <th>تاريخ البدء</th>
+                    <th>مسئول التواصل</th>
+                    <th>البريد الإلكتروني</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                var percent = r.FundingAmount <= 0 ? 0 : (r.ReceivedAmount / r.FundingAmount) * 100;
+                <tr>
+                    <td class="fw-bold">@r.ProjectName</td>
+                    <td>@r.GrantorName</td>
+                    <td>@r.AgreementNumber</td>
+                    <td>@r.FundingAmount.ToString("N2")</td>
+                    <td>@r.ReceivedAmount.ToString("N2")</td>
+                    <td class="fw-bold">@r.RemainingAmount.ToString("N2")</td>
+                    <td>@percent.ToString("N2")%</td>
+                    <td>@r.StartDateUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                    <td>@r.ContactPerson</td>
+                    <td>@r.ContactEmail</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

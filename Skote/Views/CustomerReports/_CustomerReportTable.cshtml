@@ -1,0 +1,41 @@
+﻿@model List<CustomerReportItemVm>
+@using InfrastructureManagmentWebFramework.Models.Optics.Reports
+
+<div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width:140px;">التاريخ</th>
+                <th style="width:180px;">العنوان</th>
+                <th style="width:140px;">المرجع</th>
+                <th>التفاصيل</th>
+                <th style="width:120px;">مدين</th>
+                <th style="width:120px;">دائن</th>
+                <th style="width:140px;">الحالة/معلومة</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                            <tr>
+                                <td>@item.DateUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                                <td>@item.Title</td>
+                                <td>@(item.RefNo ?? "-")</td>
+                                <td>@(item.Details ?? "-")</td>
+                                <td>@(item.Debit?.ToString() ?? "-")</td>
+                                <td>@(item.Credit?.ToString() ?? "-")</td>
+                                <td>@(item.StatusText ?? "-")</td>
+                            </tr>
+                }
+            }
+            else
+            {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">لا توجد بيانات</td>
+                    </tr>
+            }
+        </tbody>
+    </table>
+</div>

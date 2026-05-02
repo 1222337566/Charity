@@ -1,0 +1,63 @@
+﻿@model CreateWarehouseVm
+@using InfrastructureManagmentWebFramework.Models.FinancialAccounting;
+
+@{
+    ViewData["Title"] = "إضافة مخزن";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">إضافة مخزن</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="WarehouseCode" class="form-label"></label>
+                        <input asp-for="WarehouseCode" class="form-control" />
+                        <span asp-validation-for="WarehouseCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-8 mb-3">
+                        <label asp-for="WarehouseNameAr" class="form-label"></label>
+                        <input asp-for="WarehouseNameAr" class="form-control" />
+                        <span asp-validation-for="WarehouseNameAr" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="WarehouseNameEn" class="form-label"></label>
+                        <input asp-for="WarehouseNameEn" class="form-control" />
+                        <span asp-validation-for="WarehouseNameEn" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Address" class="form-label"></label>
+                        <input asp-for="Address" class="form-control" />
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3 form-check">
+                        <input asp-for="IsMain" class="form-check-input" />
+                        <label asp-for="IsMain" class="form-check-label"></label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

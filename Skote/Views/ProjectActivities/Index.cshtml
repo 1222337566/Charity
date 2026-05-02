@@ -1,0 +1,77 @@
+@model List<InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Activities.ProjectActivityListItemVm>
+<partial name="~/Views/Shared/Projects/_ProjectHeader.cshtml" />
+@{
+    string StatusColor(string s)=>s switch{"Completed"=>"#34c38f","InProgress"=>"#556ee6","Planned"=>"#f1b44c","Cancelled"=>"#f46a6a",_=>"#adb5bd"};
+    string StatusAr(string s)=>s switch{"Completed"=>"مكتمل","InProgress"=>"جارٍ","Planned"=>"مخطط","Cancelled"=>"ملغى",_=>s};
+    var totalPlanned=Model.Sum(x=>x.PlannedCost);
+    var totalActual=Model.Sum(x=>x.ActualCost);
+    var doneCount=Model.Count(x=>x.Status=="Completed");
+}
+<style>
+:root{--teal:#0e6f73;--teal-l:#e1f5f5;--ink:#1e3a5f;--muted:#6b7d80}
+.act-top{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.act-stat{background:#fff;border-radius:12px;border:.5px solid rgba(14,111,115,.1);padding:12px 16px;flex:1;min-width:90px;text-align:center;box-shadow:0 2px 8px rgba(14,111,115,.05)}
+.act-stat .n{font-size:1.4rem;font-weight:800;color:var(--teal)}
+.act-stat .l{font-size:.68rem;color:var(--muted);margin-top:2px}
+.act-card{background:#fff;border-radius:13px;border:.5px solid rgba(14,111,115,.1);box-shadow:0 2px 10px rgba(14,111,115,.05);padding:15px 18px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;transition:box-shadow .2s}
+.act-card:hover{box-shadow:0 4px 18px rgba(14,111,115,.11)}
+.act-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.act-body{flex:1}
+.act-title{font-weight:700;font-size:.9rem;color:var(--ink);margin-bottom:3px}
+.act-meta{font-size:.75rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:.8rem}
+.act-badge{padding:2px 9px;border-radius:20px;font-size:.67rem;font-weight:700;color:#fff}
+.act-costs{text-align:end;flex-shrink:0;font-size:.75rem}
+.act-costs .planned{color:var(--muted)}
+.act-costs .actual{font-weight:700;color:var(--ink)}
+.empty-act{padding:48px;text-align:center;color:var(--muted)}
+.empty-act i{font-size:2.5rem;opacity:.3;display:block;margin-bottom:10px}
+</style>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:var(--ink)">الأنشطة</h4>
+        <small class="text-muted">@Model.Count نشاط — مكتمل: @doneCount</small>
+    </div>
+    @if(ViewBag.ProjectHeader!=null){
+        <a asp-action="Create" asp-route-projectId="@ViewBag.ProjectHeader.Id" class="btn btn-sm fw-semibold" style="background:var(--teal);color:#fff;border-radius:10px">
+            <i class="bx bx-plus me-1"></i>إضافة نشاط
+        </a>
+    }
+</div>
+<div class="act-top">
+    <div class="act-stat"><div class="n">@Model.Count</div><div class="l">إجمالي</div></div>
+    <div class="act-stat"><div class="n">@doneCount</div><div class="l">مكتمل</div></div>
+    <div class="act-stat"><div class="n">@totalPlanned.ToString("N0")</div><div class="l">مخطط</div></div>
+    <div class="act-stat"><div class="n">@totalActual.ToString("N0")</div><div class="l">فعلي</div></div>
+</div>
+@if(!Model.Any()){
+    <div class="empty-act"><i class="bx bx-calendar-event"></i><p>لا توجد أنشطة بعد</p></div>
+}else{
+    @foreach(var item in Model){
+        var sc=StatusColor(item.Status);
+        var iconBg=item.Status=="Completed"?"rgba(52,195,143,.12)":item.Status=="InProgress"?"rgba(85,110,230,.12)":"rgba(14,111,115,.1)";
+        var iconColor=item.Status=="Completed"?"#34c38f":item.Status=="InProgress"?"#556ee6":"var(--teal)";
+        var delayed=item.ActualDate.HasValue&&item.ActualDate.Value>item.PlannedDate;
+        <div class="act-card">
+            <div class="act-icon" style="background:@iconBg">
+                <i class="bx @(item.Status=="Completed"?"bx-check-circle":item.Status=="InProgress"?"bx-loader-circle":"bx-calendar-event")" style="color:@iconColor"></i>
+            </div>
+            <div class="act-body">
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <span class="act-title">@item.Title</span>
+                    <span class="act-badge" style="background:@sc">@StatusAr(item.Status)</span>
+                    @if(delayed){<span class="badge" style="background:rgba(244,106,106,.15);color:#f46a6a;font-size:.65rem">متأخر</span>}
+                </div>
+                <div class="act-meta">
+                    <span><i class="bx bx-calendar me-1"></i>مخطط: @item.PlannedDate.ToString("yyyy/MM/dd")</span>
+                    @if(item.ActualDate.HasValue){<span><i class="bx bx-check me-1"></i>فعلي: @item.ActualDate.Value.ToString("yyyy/MM/dd")</span>}
+                    @if(!string.IsNullOrWhiteSpace(item.Notes)){<span class="text-truncate" style="max-width:200px">@item.Notes</span>}
+                </div>
+            </div>
+            <div class="act-costs">
+                <div class="planned">مخطط: @item.PlannedCost.ToString("N0")</div>
+                <div class="actual">فعلي: @item.ActualCost.ToString("N0")</div>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light mt-1" style="border-radius:7px;font-size:.72rem">تعديل</a>
+            </div>
+        </div>
+    }
+}

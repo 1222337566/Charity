@@ -1,0 +1,121 @@
+@using InfrastructureManagmentWebFramework.Models.Charity.DonorProfile
+@model List<InfrastructureManagmentWebFramework.Models.Charity.DonorProfile.Donations.DonationInKindItemListItemVm>
+@{
+    ViewData["Title"] = "الأصناف العينية";
+    var donorHeader = ViewBag.DonorHeader as DonorHeaderVm;
+    var donation = ViewBag.Donation as InfrastrfuctureManagmentCore.Domains.Charity.Donors.Donation;
+    string StatusColor(string? c)=>c switch{"FullyIssued"=>"#34c38f","PartiallyIssued"=>"#f1b44c","ReceivedToStore"=>"#556ee6",_=>"#adb5bd"};
+    string StatusAr(string? c)=>c switch{"FullyIssued"=>"مصروف كليًا","PartiallyIssued"=>"مصروف جزئيًا","ReceivedToStore"=>"دخل المخزن","Pending"=>"معلق",_=>c??"—"};
+    var totalQty=Model.Sum(x=>x.Quantity);
+    var totalAllocated=Model.Sum(x=>x.AllocatedQuantity);
+    var totalRemaining=Model.Sum(x=>x.RemainingQuantity);
+    var totalValue=Model.Sum(x=>x.EstimatedTotalValue??0);
+}
+<style>
+:root{--teal:#0e6f73;--teal-l:#e1f5f5;--ink:#1e3a5f;--muted:#6b7d80}
+.ik-hero{background:linear-gradient(135deg,#1a3c5e,#556ee6);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:16px;position:relative;overflow:hidden}
+.ik-hero::after{content:'';position:absolute;top:-40px;left:-40px;width:180px;height:180px;background:rgba(255,255,255,.04);border-radius:50%}
+.ik-stat{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 16px;text-align:center;flex:1;min-width:80px}
+.ik-stat .n{font-size:1.25rem;font-weight:800;line-height:1}
+.ik-stat .l{font-size:.66rem;opacity:.82;margin-top:2px}
+.ik-card{background:#fff;border-radius:14px;border:.5px solid rgba(85,110,230,.1);box-shadow:0 2px 12px rgba(85,110,230,.06);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s}
+.ik-card:hover{box-shadow:0 4px 20px rgba(85,110,230,.12)}
+.ik-card-top{padding:14px 18px;display:flex;align-items:flex-start;gap:12px}
+.ik-card-foot{padding:10px 18px;background:#f8f9fc;border-top:.5px solid rgba(85,110,230,.07);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ik-icon{width:40px;height:40px;border-radius:10px;background:rgba(85,110,230,.12);color:#3145a3;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.ik-name{font-weight:700;font-size:.9rem;color:var(--ink)}
+.ik-meta{font-size:.74rem;color:var(--muted)}
+.ik-qty{font-size:1.1rem;font-weight:800;color:var(--ink)}
+.status-badge{padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;color:#fff}
+.qty-bar{height:6px;border-radius:999px;background:#e2e8f0;overflow:hidden;flex:1;min-width:80px}
+.qty-fill{height:100%;border-radius:999px;background:#34c38f;transition:width .3s}
+.qty-num{font-size:.75rem;font-weight:700}
+</style>
+
+@if(donorHeader!=null){
+    @await Html.PartialAsync("~/Views/Shared/Donors/_DonorHeader.cshtml", donorHeader)
+}
+
+<div class="ik-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+        <div>
+            <h5 class="mb-1 fw-bold"><i class="bx bx-package me-2"></i>الأصناف العينية</h5>
+            @if(donation!=null){<p class="mb-0" style="opacity:.8;font-size:.82rem">تبرع: @donation.DonationNumber | التاريخ: @donation.DonationDate.ToString("yyyy/MM/dd")</p>}
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            @if(donation!=null){
+                <a asp-action="Create" asp-route-donationId="@donation.Id" class="btn btn-sm fw-semibold" style="background:#34c38f;color:#fff;border-radius:9px"><i class="bx bx-plus me-1"></i>إضافة صنف</a>
+                <a asp-controller="Donations" asp-action="Tracking" asp-route-id="@donation.Id" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:9px"><i class="bx bx-radar me-1"></i>تتبع كامل</a>
+                <a asp-controller="Donations" asp-action="PrintMovement" asp-route-id="@donation.Id" target="_blank" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:9px"><i class="bx bx-file me-1"></i>كشف حركة</a>
+                <a asp-controller="DonationAllocations" asp-action="InKindGeneralCreate" class="btn btn-sm fw-semibold" style="background:#f1b44c;color:#fff;border-radius:9px"><i class="bx bx-transfer-alt me-1"></i>تخصيص عام عيني</a>
+            }
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-3">
+        <div class="ik-stat"><div class="n">@Model.Count</div><div class="l">أصناف</div></div>
+        <div class="ik-stat"><div class="n">@totalQty.ToString("N0")</div><div class="l">إجمالي الكميات</div></div>
+        <div class="ik-stat"><div class="n">@totalAllocated.ToString("N0")</div><div class="l">مخصص</div></div>
+        <div class="ik-stat"><div class="n" style="color:@(totalRemaining>0?"#a7f3d0":"inherit")">@totalRemaining.ToString("N0")</div><div class="l">متبقي</div></div>
+        <div class="ik-stat"><div class="n">@totalValue.ToString("N0")</div><div class="l">القيمة التقديرية</div></div>
+    </div>
+</div>
+
+@if(!Model.Any()){
+    <div class="text-center py-5 text-muted"><i class="bx bx-package" style="font-size:3rem;opacity:.3;display:block;margin-bottom:10px"></i><p>لا توجد أصناف عينية</p></div>
+}else{
+    @foreach(var item in Model){
+        var allPct=item.Quantity>0?Math.Min((double)item.AllocatedQuantity/(double)item.Quantity*100,100):0;
+        var rcvPct=item.Quantity>0?Math.Min((double)item.ReceivedToStoreQuantity/(double)item.Quantity*100,100):0;
+        var issPct=item.Quantity>0?Math.Min((double)item.IssuedQuantity/(double)item.Quantity*100,100):0;
+        <div class="ik-card">
+            <div class="ik-card-top">
+                <div class="ik-icon"><i class="bx bx-cube-alt"></i></div>
+                <div class="flex-1">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="ik-name">@item.ItemName</span>
+                        <span class="status-badge" style="background:@StatusColor(item.TrackingStatusCode)">@StatusAr(item.TrackingStatusCode)</span>
+                        @if(!string.IsNullOrEmpty(item.BatchNo)){<span style="font-size:.67rem;color:var(--muted);background:#f0f4f8;padding:1px 7px;border-radius:4px">تشغيلة: @item.BatchNo</span>}
+                    </div>
+                    <div class="d-flex flex-wrap gap-3">
+                        @if(!string.IsNullOrEmpty(item.WarehouseName)){<div class="ik-meta"><i class="bx bx-buildings me-1"></i>@item.WarehouseName</div>}
+                        @if(item.ExpiryDate.HasValue){<div class="ik-meta"><i class="bx bx-time me-1"></i>صلاحية: @item.ExpiryDate.Value.ToString("yyyy/MM/dd")</div>}
+                        @if(item.EstimatedTotalValue.HasValue){<div class="ik-meta"><i class="bx bx-dollar me-1"></i>@item.EstimatedTotalValue.Value.ToString("N0")</div>}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="ik-qty">@item.Quantity.ToString("N0")</div>
+                    <div style="font-size:.67rem;color:var(--muted)">إجمالي الكمية</div>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light mt-1" style="border-radius:7px;font-size:.72rem"><i class="bx bx-edit-alt"></i></a>
+                </div>
+            </div>
+            <div class="ik-card-foot">
+                <div style="flex:1;min-width:200px">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.7rem;color:var(--muted)">مخصص</span>
+                        <span class="qty-num" style="color:#556ee6">@item.AllocatedQuantity.ToString("N0") / @item.Quantity.ToString("N0")</span>
+                    </div>
+                    <div class="qty-bar"><div class="qty-fill" style="width:@allPct.ToString("F0")%;background:#556ee6"></div></div>
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.7rem;color:var(--muted)">وارد للمخزن</span>
+                        <span class="qty-num" style="color:var(--teal)">@item.ReceivedToStoreQuantity.ToString("N0")</span>
+                    </div>
+                    <div class="qty-bar"><div class="qty-fill" style="width:@rcvPct.ToString("F0")%;background:var(--teal)"></div></div>
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.7rem;color:var(--muted)">مصروف</span>
+                        <span class="qty-num" style="color:#34c38f">@item.IssuedQuantity.ToString("N0")</span>
+                    </div>
+                    <div class="qty-bar"><div class="qty-fill" style="width:@issPct.ToString("F0")%;background:#34c38f"></div></div>
+                </div>
+                <div style="flex-shrink:0">
+                    <span style="font-size:.75rem;font-weight:700;color:@(item.RemainingQuantity>0?"var(--teal)":"#f46a6a")">
+                        متبقي: @item.RemainingQuantity.ToString("N0")
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+}

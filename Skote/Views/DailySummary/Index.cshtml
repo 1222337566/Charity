@@ -1,0 +1,248 @@
+@model Skote.Controllers.DailySummaryVm
+@{ ViewData["Title"] = "ملخص اليوم"; }
+@{
+    string EntityAr(string t) => t switch {
+        "AidRequest" => "طلب مساعدة", "KafalaCase" => "كفالة",
+        "AidCycle"   => "دورة صرف",   "ProjectPhase" => "مرحلة مشروع",
+        "ProjectProposal" => "مقترح مشروع", _ => t
+    };
+    var today = Model.Date;
+}
+
+<style>
+.day-hero{background:linear-gradient(135deg,#0a5659,#0e6f73);border-radius:18px;padding:22px 28px;color:#fff;margin-bottom:20px}
+.day-stat{background:rgba(255,255,255,.13);border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:90px}
+.day-stat .n{font-size:1.5rem;font-weight:800;line-height:1}
+.day-stat .l{font-size:.68rem;opacity:.8;margin-top:2px}
+.day-card{background:#fff;border-radius:16px;border:.5px solid rgba(14,111,115,.12);box-shadow:0 2px 10px rgba(14,111,115,.05);margin-bottom:16px}
+.day-card-head{padding:14px 18px 12px;border-bottom:.5px solid rgba(14,111,115,.08);font-size:.92rem;font-weight:700;color:#0a5f63;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.day-card-body{padding:14px 18px 16px}
+.day-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:.5px dashed rgba(14,111,115,.08)}
+.day-item:last-child{border-bottom:none}
+.day-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.day-title{font-size:.88rem;font-weight:600;color:#15363a}
+.day-sub{font-size:.75rem;color:#6b7d80;margin-top:2px}
+.day-badge{padding:2px 8px;border-radius:5px;font-size:.68rem;font-weight:700}
+.urgent-box{background:rgba(244,106,106,.06);border-radius:12px;padding:12px 16px;border:.5px solid rgba(244,106,106,.15);margin-bottom:14px}
+.wf-step-card{background:#fafcfc;border-radius:10px;border:.5px solid rgba(14,111,115,.10);padding:10px 14px;margin-bottom:8px}
+.wf-step-card:last-child{margin-bottom:0}
+</style>
+
+<div class="day-hero">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+    <div>
+      <h4 class="mb-1 text-white fw-bold">
+        ☀️ صباح الخير، @Model.UserName
+      </h4>
+      <div style="opacity:.75;font-size:.82rem">
+        @today.ToString("dddd، d MMMM yyyy")
+        @if (Model.Roles.Any())
+        {
+          <span style="margin-right:10px">
+            @foreach (var r in Model.Roles)
+            { <span style="background:rgba(255,255,255,.18);border-radius:5px;padding:1px 8px;font-size:.7rem;margin-left:4px">@r</span> }
+          </span>
+        }
+      </div>
+    </div>
+    <a asp-controller="ReportsCompare" asp-action="Index"
+       class="btn btn-light btn-sm fw-bold">
+      <i class="bx bx-bar-chart-alt-2 me-1"></i>المقارنة الزمنية
+    </a>
+  </div>
+  <div class="d-flex gap-3 flex-wrap">
+    <div class="day-stat">
+      <div class="n">@Model.PendingSteps.Count</div>
+      <div class="l">مهام معلقة</div>
+    </div>
+    <div class="day-stat" style="background:rgba(52,195,143,.22)">
+      <div class="n" style="color:#a7f3d0">@Model.WeekNewBeneficiaries</div>
+      <div class="l">مستفيد هذا الأسبوع</div>
+    </div>
+    <div class="day-stat" style="background:rgba(241,180,76,.22)">
+      <div class="n" style="color:#fde68a">@Model.WeekAidRequests</div>
+      <div class="l">طلبات الأسبوع</div>
+    </div>
+    <div class="day-stat" style="background:rgba(255,255,255,.15)">
+      <div class="n">@Model.WeekDonations.ToString("N0")</div>
+      <div class="l">تبرعات الأسبوع</div>
+    </div>
+    @if (Model.TodayDonations.Any())
+    {
+      <div class="day-stat" style="background:rgba(52,195,143,.22)">
+        <div class="n" style="color:#a7f3d0">@Model.TodayDonations.Sum(x => x.Amount ?? 0).ToString("N0")</div>
+        <div class="l">تبرعات اليوم</div>
+      </div>
+    }
+  </div>
+</div>
+
+@* ── عاجل ── *@
+@if (Model.OverdueKafalas.Any() || Model.DelayedPhases.Any())
+{
+  <div class="urgent-box mb-3">
+    <div class="fw-bold text-danger mb-2" style="font-size:.88rem">
+      <i class="bx bx-error-circle me-1"></i>يحتاج اهتمامك الآن
+    </div>
+    @foreach (var k in Model.OverdueKafalas.Take(3))
+    {
+      var days = (today - k.NextDueDate!.Value.Date).Days;
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="day-badge" style="background:#f46a6a;color:#fff">كفالة</span>
+        <span style="font-size:.83rem">@k.Sponsor?.FullName — @k.CaseNumber</span>
+        <span class="text-danger" style="font-size:.75rem">متأخرة @days يوم</span>
+      </div>
+    }
+    @foreach (var p in Model.DelayedPhases.Take(3))
+    {
+      var days = (today - p.PlannedEndDate.Date).Days;
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="day-badge" style="background:#f1b44c;color:#fff">مرحلة</span>
+        <span style="font-size:.83rem">@p.Project?.Name — @p.Name</span>
+        <span class="text-warning" style="font-size:.75rem">تأخير @days يوم</span>
+      </div>
+    }
+  </div>
+}
+
+<div class="row g-3">
+
+  @* ── مهام الـ Workflow ── *@
+  <div class="col-xl-6">
+    <div class="day-card">
+      <div class="day-card-head">
+        <span><i class="bx bx-git-branch me-1"></i>مهامي المعلقة</span>
+        <span class="day-badge" style="background:rgba(85,110,230,.15);color:#3145a3">@Model.PendingSteps.Count</span>
+      </div>
+      <div class="day-card-body">
+        @if (!Model.PendingSteps.Any())
+        {
+          <div class="text-center text-muted py-3">
+            <i class="bx bx-check-double" style="font-size:2rem;color:#34c38f;display:block"></i>
+            لا مهام معلقة 🎉
+          </div>
+        }
+        else
+        {
+          @foreach (var s in Model.PendingSteps.Take(6))
+          {
+            var waitDays = (int)(DateTime.UtcNow - s.CreatedAtUtc).TotalDays;
+            <div class="wf-step-card">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="day-badge me-1" style="background:rgba(85,110,230,.12);color:#3145a3;font-size:.65rem">@EntityAr(s.EntityType)</span>
+                  <span style="font-size:.85rem;font-weight:600;color:#15363a">@s.EntityTitle</span>
+                </div>
+                @if (waitDays >= 3)
+                { <span class="day-badge" style="background:#f46a6a;color:#fff">⚠ @waitDays يوم</span> }
+              </div>
+              <div style="font-size:.75rem;color:#6b7d80;margin-top:4px">
+                الخطوة: @s.StepName &nbsp;·&nbsp; منذ @waitDays يوم
+              </div>
+              <a asp-controller="WorkflowBoard" asp-action="Index"
+                 class="btn btn-sm mt-2 fw-bold"
+                 style="border-radius:8px;background:rgba(14,111,115,.08);color:#0e6f73;border:none;font-size:.75rem">
+                <i class="bx bx-chevron-left"></i> عرض في اللوحة
+              </a>
+            </div>
+          }
+          @if (Model.PendingSteps.Count > 6)
+          {
+            <a asp-controller="WorkflowBoard" asp-action="Index"
+               class="btn btn-outline-primary btn-sm w-100 mt-2" style="border-radius:10px">
+              عرض الكل (@Model.PendingSteps.Count)
+            </a>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  @* ── طلبات اليوم + إنجازات الأسبوع ── *@
+  <div class="col-xl-6">
+
+    @* طلبات مساعدة اليوم *@
+    <div class="day-card mb-3">
+      <div class="day-card-head">
+        <span><i class="bx bx-heart me-1"></i>طلبات مساعدة اليوم</span>
+        <span class="day-badge" style="background:rgba(244,106,106,.15);color:#ab2b2b">@Model.NewAidRequests.Count</span>
+      </div>
+      <div class="day-card-body">
+        @if (!Model.NewAidRequests.Any())
+        {
+          <div class="text-center text-muted py-2" style="font-size:.82rem">لا طلبات جديدة اليوم</div>
+        }
+        else
+        {
+          @foreach (var r in Model.NewAidRequests.Take(5))
+          {
+            <div class="day-item">
+              <div class="day-dot" style="background:#f46a6a"></div>
+              <div>
+                <div class="day-title">@(r.Beneficiary?.FullName ?? "—")</div>
+                <div class="day-sub">@r.CreatedAtUtc.ToLocalTime().ToString("h:mm tt")</div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    @* إنجازات تستحق الأسبوع *@
+    <div class="day-card mb-3">
+      <div class="day-card-head">
+        <span><i class="bx bx-flag me-1"></i>إنجازات تستحق هذا الأسبوع</span>
+        <span class="day-badge" style="background:rgba(241,180,76,.15);color:#8a5f00">@Model.DueMilestones.Count</span>
+      </div>
+      <div class="day-card-body">
+        @if (!Model.DueMilestones.Any())
+        {
+          <div class="text-center text-muted py-2" style="font-size:.82rem">لا إنجازات مستحقة هذا الأسبوع</div>
+        }
+        else
+        {
+          @foreach (var m in Model.DueMilestones)
+          {
+            var isToday = m.DueDate.Date == today;
+            <div class="day-item">
+              <div class="day-dot" style="background:@(isToday?"#f46a6a":"#f1b44c")"></div>
+              <div>
+                <div class="day-title">@m.Title</div>
+                <div class="day-sub">
+                  @m.Phase?.Project?.Name — @(isToday ? "اليوم!" : m.DueDate.ToString("d/M"))
+                  @if (isToday) { <span class="day-badge" style="background:#f46a6a;color:#fff;margin-right:4px">اليوم</span> }
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    @* تبرعات اليوم *@
+    @if (Model.TodayDonations.Any())
+    {
+      <div class="day-card">
+        <div class="day-card-head">
+          <span><i class="bx bx-dollar-circle me-1"></i>تبرعات اليوم</span>
+          <span class="day-badge" style="background:rgba(52,195,143,.15);color:#0d7a5a">
+            @Model.TodayDonations.Sum(x => x.Amount ?? 0).ToString("N0")
+          </span>
+        </div>
+        <div class="day-card-body">
+          @foreach (var d in Model.TodayDonations)
+          {
+            <div class="day-item">
+              <div class="day-dot" style="background:#34c38f"></div>
+              <div>
+                <div class="day-title">@(d.Donor?.FullName ?? "—")</div>
+                <div class="day-sub">@(d.Amount?.ToString("N0")) ريال</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  </div>
+</div>

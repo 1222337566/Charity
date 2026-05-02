@@ -1,0 +1,93 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.ProjectProfile.Beneficiaries.CreateProjectBeneficiaryVm
+
+<input asp-for="ProjectId" type="hidden" />
+
+<div class="row g-3">
+
+    @* المستفيد  *@
+    <div class="col-md-12">
+        <label asp-for="BeneficiaryId" class="form-label fw-semibold">المستفيد *</label>
+        <select asp-for="BeneficiaryId" asp-items="Model.Beneficiaries" class="form-select select2">
+            <option value="">-- اختر المستفيد --</option>
+        </select>
+        <span asp-validation-for="BeneficiaryId" class="text-danger small"></span>
+    </div>
+
+    @* الفئة المستهدفة  *@
+    <div class="col-md-6">
+        <label asp-for="TargetGroupName" class="form-label fw-semibold">الفئة المستهدفة</label>
+        <select asp-for="TargetGroupName" asp-items="Model.TargetGroups" class="form-select">
+            <option value="">-- اختر الفئة --</option>
+        </select>
+        <small class="text-muted">الفئات المحددة في مقترح المشروع فقط</small>
+    </div>
+
+    @* نوع المشاركة  *@
+    <div class="col-md-6">
+        <label asp-for="ParticipationType" class="form-label fw-semibold">نوع المشاركة</label>
+        <select asp-for="ParticipationType" class="form-select">
+            <option value="Beneficiary">منتفع</option>
+            <option value="Participant">مشارك</option>
+        </select>
+    </div>
+
+    @* المرحلة  *@
+    <div class="col-md-6">
+        <label asp-for="PhaseId" class="form-label fw-semibold">المرحلة</label>
+        <select asp-for="PhaseId" asp-items="Model.Phases" class="form-select" id="phaseSelect"
+                onchange="loadActivities(this.value)">
+            <option value="">-- اختر المرحلة --</option>
+        </select>
+    </div>
+
+    @* النشاط المرتبط  *@
+    <div class="col-md-6">
+        <label asp-for="ActivityId" class="form-label fw-semibold">النشاط المرتبط</label>
+        <select asp-for="ActivityId" class="form-select" id="activitySelect">
+            <option value="">-- اختر النشاط --</option>
+        </select>
+        <small class="text-muted">يُحدَّث تلقائياً عند اختيار المرحلة</small>
+    </div>
+
+    @* تاريخ الإلحاق  *@
+    <div class="col-md-6">
+        <label asp-for="EnrollmentDate" class="form-label fw-semibold">تاريخ الإلحاق *</label>
+        <input asp-for="EnrollmentDate" type="date" class="form-control" />
+    </div>
+
+    @* تاريخ الخروج  *@
+    <div class="col-md-6">
+        <label asp-for="ExitDate" class="form-label fw-semibold">تاريخ الخروج</label>
+        <input asp-for="ExitDate" type="date" class="form-control" />
+    </div>
+
+    @* نوع الاستفادة  *@
+    <div class="col-md-12">
+        <label asp-for="BenefitType" class="form-label fw-semibold">نوع الاستفادة</label>
+        <input asp-for="BenefitType" class="form-control" placeholder="مثال: تدريب / دعم نقدي / توعية" />
+    </div>
+
+    @* ملاحظات  *@
+    <div class="col-md-12">
+        <label asp-for="Notes" class="form-label fw-semibold">ملاحظات</label>
+        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+    </div>
+
+</div>
+
+<script>
+async function loadActivities(phaseId) {
+    const sel = document.getElementById('activitySelect');
+    sel.innerHTML = '<option value="">جاري التحميل...</option>';
+    if (!phaseId) { sel.innerHTML = '<option value="">-- اختر النشاط --</option>'; return; }
+
+    const res  = await fetch(`/ProjectBeneficiaries/GetActivitiesByPhase?phaseId=${phaseId}`);
+    const acts = await res.json();
+    sel.innerHTML = '<option value="">-- اختر النشاط --</option>';
+    acts.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.value; opt.textContent = a.text;
+        sel.appendChild(opt);
+    });
+}
+</script>

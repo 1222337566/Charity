@@ -1,0 +1,120 @@
+@model InfrastructureManagmentWebFramework.Models.Statements.CustomerStatementPageVm
+
+@{
+    ViewData["Title"] = "كشف حساب عميل";
+}
+
+<style>
+.st-hero{background:linear-gradient(135deg,#064e3b,#0f766e);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.st-card{background:#fff;border-radius:16px;border:.5px solid rgba(6,78,59,.12);box-shadow:0 2px 8px rgba(6,78,59,.05);overflow:hidden;margin-bottom:16px}
+.st-head{padding:12px 18px;border-bottom:.5px solid rgba(6,78,59,.08);font-size:.9rem;font-weight:700;color:#064e3b;background:rgba(6,78,59,.03)}
+.st-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.st-table th{background:#f8fafc;color:#64748b;font-size:.75rem;font-weight:700;padding:9px;border-bottom:1px solid #e5e7eb}
+.st-table td{padding:9px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.st-table tr:hover td{background:#f8fafc}
+.st-stat{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:120px}
+.st-stat .n{font-size:1.2rem;font-weight:800;line-height:1}
+.st-stat .l{font-size:.7rem;opacity:.85;margin-top:2px}
+</style>
+
+<div class="st-hero">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold mb-1 text-white"><i class="bx bx-user-circle me-2"></i>كشف حساب عميل</h4>
+            <div style="opacity:.78;font-size:.82rem">عرض فواتير البيع وسندات القبض والرصيد الجاري للعميل</div>
+        </div>
+        <a asp-controller="CustomerDuesPayments" asp-action="Index" class="btn btn-warning btn-sm fw-bold" style="border-radius:10px">
+            مستحقات العملاء
+        </a>
+    </div>
+
+    @if (Model.CustomerId.HasValue)
+    {
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="st-stat"><div class="n">@Model.TotalDebit.ToString("N0")</div><div class="l">إجمالي الفواتير</div></div>
+            <div class="st-stat"><div class="n">@Model.TotalCredit.ToString("N0")</div><div class="l">إجمالي المقبوض</div></div>
+            <div class="st-stat" style="background:rgba(244,106,106,.2)"><div class="n" style="color:#fecaca">@Model.ClosingBalance.ToString("N0")</div><div class="l">الرصيد النهائي</div></div>
+        </div>
+    }
+</div>
+
+<div class="st-card">
+    <div class="st-head">فلاتر الكشف</div>
+    <div class="p-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label asp-for="CustomerId" class="form-label"></label>
+                <select asp-for="CustomerId" asp-items="Model.Customers" class="form-select">
+                    <option value="">-- اختر العميل --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="FromDate" class="form-label"></label>
+                <input asp-for="FromDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="ToDate" class="form-label"></label>
+                <input asp-for="ToDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100 fw-bold">عرض كشف الحساب</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.CustomerId.HasValue)
+{
+    <div class="st-card">
+        <div class="st-head d-flex justify-content-between align-items-center">
+            <span>كشف حساب: @Model.CustomerNumber - @Model.CustomerName</span>
+            <a asp-controller="CustomerDuesPayments" asp-action="Receive" asp-route-customerId="@Model.CustomerId" class="btn btn-sm btn-success">تحصيل جديد</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="st-table">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>نوع المستند</th>
+                        <th>رقم المستند</th>
+                        <th>البيان</th>
+                        <th>مدين</th>
+                        <th>دائن</th>
+                        <th>الرصيد الجاري</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var line in Model.Lines)
+                {
+                    <tr>
+                        <td>@line.DateUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                        <td><span class="badge bg-light text-dark">@line.DocumentTypeAr</span></td>
+                        <td>@line.DocumentNumber</td>
+                        <td>@line.Description</td>
+                        <td class="text-danger fw-bold">@line.Debit.ToString("N2")</td>
+                        <td class="text-success fw-bold">@line.Credit.ToString("N2")</td>
+                        <td class="fw-bold @(line.RunningBalance > 0 ? "text-danger" : "text-success")">@line.RunningBalance.ToString("N2")</td>
+                        <td>@line.Notes</td>
+                    </tr>
+                }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4">الإجمالي</th>
+                        <th class="text-danger">@Model.TotalDebit.ToString("N2")</th>
+                        <th class="text-success">@Model.TotalCredit.ToString("N2")</th>
+                        <th>@Model.ClosingBalance.ToString("N2")</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        @if (!Model.Lines.Any())
+        {
+            <div class="p-4 text-center text-muted">لا توجد حركات لهذا العميل في الفترة المحددة.</div>
+        }
+    </div>
+}

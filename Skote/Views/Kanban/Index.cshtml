@@ -1,0 +1,222 @@
+﻿@model KanbanIndexVm
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@{
+    ViewData["Title"] = "Kanban";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var boardId = Context.Request.Query["board"].FirstOrDefault() ?? ""; // أو مرّره من السيرفر
+
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3" data-board="@Model.BoardId" data-api-base="@(Config["Realtime:BaseUrl"])">
+    <h4 class="mb-0">Kanban Board</h4>
+    <div class="row">
+        <!-- To Do -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-light"><h5>To Do</h5></div>
+                <div class="card-body">
+                    <ul id="todo-list" class="list-group min-vh-100"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-warning"><h5>In Progress</h5></div>
+                <div class="card-body">
+                    <ul id="inprogress-list" class="list-group min-vh-100"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Done -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-success"><h5>Done</h5></div>
+                <div class="card-body">
+                    <ul id="done-list" class="list-group min-vh-100"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
+        <i class="mdi mdi-plus"></i> New Task
+    </button>
+</div>
+
+<!-- … (الأعمدة الثلاثة كما عندك) … -->
+<!-- Modal: New/Edit Task -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form id="taskForm" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="task-id">
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="task-title" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea id="task-desc" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Priority</label>
+                        <select id="task-priority" class="form-select">
+                            <option>Low</option>
+                            <option selected>Medium</option>
+                            <option>High</option>
+                            <option>Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Assigned To (UserId)</label>
+                        <input type="text" id="task-assign" class="form-control" placeholder="optional">
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Due (UTC)</label>
+                    <input type="datetime-local" id="task-due" class="form-control">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="task-del" class="btn btn-outline-danger me-auto" style="display:none">Delete</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+   
+    <script src="~/assets/js/kanban.skote.js"></script>
+
+    <script>
+        (function(){
+          "use strict";
+          // ربط المودال بواجهات الـAPI الموجودة أصلاً بـ kanban.skote.js
+          const $ = s=>document.querySelector(s);
+          const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+          const boardId = document.querySelector('[data-board]')?.getAttribute('data-board');
+
+                     function apiBase() {
+          // 1) Override صريح
+          if (typeof window.apiBase === 'function') {
+            const v = window.apiBase();
+            if (v) return String(v).replace(/\/+$/, '');
+          }
+          // 2) data-api-base من الصفحة
+          const el = document.querySelector('[data-api-base]');
+          if (el?.dataset?.apiBase) {
+            return String(el.dataset.apiBase).replace(/\/+$/, '');
+          }
+          // 3) من __APP__ المحقون من السيرفر
+          if (window.__APP__?.realtimeBase) {
+            return String(window.__APP__.realtimeBase).replace(/\/+$/, '');
+          }
+          // 4) استنتاج من أي Hub URL (kanban > notify > chat)
+          const hubs = window.__SIGNALR_HUBS__ || {};
+          const pick = hubs.kanban || hubs.notify || hubs.chat;
+          if (pick) {
+            try { return new URL(pick, location.origin).origin; } catch {}
+          }
+          // 5) توافق قديم
+          if (window.__realtimeBase) {
+            return String(window.__realtimeBase).replace(/\/+$/, '');
+          }
+          // 6) آخر حل: N/A عشان تعرف بسرعة إنه مفيش قيمة صحيحة
+          return 'N/A';
+        }
+          async function authHeaders() {
+            const t = await (window.TokenProvider?.getToken?.() ?? '');
+            return t ? { Authorization: 'Bearer ' + t } : {};
+          }
+
+          // فتح المودال على وضع "جديد"
+          document.querySelector('[data-bs-target="#taskModal"]')?.addEventListener('click', ()=>{
+            $('#task-id').value = '';
+            $('#task-title').value = '';
+            $('#task-desc').value = '';
+            $('#task-priority').value = 'Medium';
+            $('#task-assign').value = '';
+            $('#task-due').value = '';
+            $('#task-del').style.display = 'none';
+            document.querySelector('#taskModal .modal-title').textContent = 'New Task';
+          });
+
+          // حفظ (Create أو Update)
+          document.getElementById('taskForm')?.addEventListener('submit', async (ev)=>{
+            ev.preventDefault();
+            const id = $('#task-id').value || null;
+            const dto = {
+              boardId: boardId,
+              title: $('#task-title').value.trim(),
+              description: $('#task-desc').value.trim() || null,
+              priority: $('#task-priority').value,
+              assignedToUserId: $('#task-assign').value.trim() || null,
+              dueDateUtc: $('#task-due').value ? new Date($('#task-due').value).toISOString() : null
+            };
+            if (!dto.title) return;
+
+            try{
+              if (!id){
+                // Create
+                const res = await fetch(`${apiBase()}/kanban/tasks`, {
+                  method:'POST', credentials:'include',
+                  headers: { 'Content-Type':'application/json', ...(await authHeaders()) },
+                  body: JSON.stringify(dto)
+                });
+                if(!res.ok) throw new Error('Create failed');
+              } else {
+                // Update
+                const res = await fetch(`${apiBase()}/kanban/tasks`, {
+                  method:'PUT', credentials:'include',
+                  headers: { 'Content-Type':'application/json', ...(await authHeaders()) },
+                  body: JSON.stringify({ taskId: id, ...dto })
+                });
+                if(!res.ok) throw new Error('Update failed');
+              }
+              modal.hide();
+              // reload من الـAPI (kanban.skote.js فيه loadBoard())
+              if (typeof window.loadKanbanBoard === 'function') window.loadKanbanBoard();
+            }catch(e){ console.warn(e); }
+          });
+
+          // حذف (لو فتحنا تعديل لاحقًا)
+          document.getElementById('task-del')?.addEventListener('click', async ()=>{
+            const id = $('#task-id').value;
+            if(!id) return;
+            try{
+              const res = await fetch(`${apiBase()}/kanban/tasks/${id}`, {
+                method:'DELETE', credentials:'include', headers: await authHeaders()
+              });
+              if(!res.ok) throw new Error('Delete failed');
+              modal.hide();
+              if (typeof window.loadKanbanBoard === 'function') window.loadKanbanBoard();
+            }catch(e){ console.warn(e); }
+          });
+
+          // ميثود عمومية يناديها أي مكان لو فتحنا تعديل
+          window.openTaskEdit = function(task){
+            $('#task-id').value = task.id;
+            $('#task-title').value = task.title || '';
+            $('#task-desc').value = task.description || '';
+            $('#task-priority').value = task.priority || 'Medium';
+            $('#task-assign').value = task.assignedToUserId || '';
+            $('#task-due').value = task.dueDateUtc ? new Date(task.dueDateUtc).toISOString().slice(0,16) : '';
+            $('#task-del').style.display = '';
+            document.querySelector('#taskModal .modal-title').textContent = 'Edit Task';
+            modal.show();
+          };
+        })();
+    </script>
+}

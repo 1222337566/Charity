@@ -1,0 +1,191 @@
+﻿@model EditItemVm
+@using InfrastructureManagmentWebFramework.Models.FinancialAccounting;
+
+@{
+    ViewData["Title"] = "تعديل صنف";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">تعديل صنف</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <input asp-for="Id" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="ItemCode" class="form-label"></label>
+                        <input asp-for="ItemCode" class="form-control" />
+                        <span asp-validation-for="ItemCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-5 mb-3">
+                        <label asp-for="ItemNameAr" class="form-label"></label>
+                        <input asp-for="ItemNameAr" class="form-control" />
+                        <span asp-validation-for="ItemNameAr" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Barcode" class="form-label"></label>
+                        <input asp-for="Barcode" class="form-control" />
+                        <span asp-validation-for="Barcode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ItemNameEn" class="form-label"></label>
+                        <input asp-for="ItemNameEn" class="form-control" />
+                        <span asp-validation-for="ItemNameEn" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ItemGroupId" class="form-label"></label>
+                        <select asp-for="ItemGroupId" asp-items="Model.ItemGroups" class="form-select">
+                            <option value="">-- اختر المجموعة --</option>
+                        </select>
+                        <span asp-validation-for="ItemGroupId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="UnitId" class="form-label"></label>
+                        <select asp-for="UnitId" asp-items="Model.Units" class="form-select">
+                            <option value="">-- اختر الوحدة --</option>
+                        </select>
+                        <span asp-validation-for="UnitId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="PurchasePrice" class="form-label"></label>
+                        <input asp-for="PurchasePrice" class="form-control" />
+                        <span asp-validation-for="PurchasePrice" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="SalePrice" class="form-label"></label>
+                        <input asp-for="SalePrice" class="form-control" />
+                        <span asp-validation-for="SalePrice" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="MinimumQuantity" class="form-label"></label>
+                        <input asp-for="MinimumQuantity" class="form-control" />
+                        <span asp-validation-for="MinimumQuantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="ReorderQuantity" class="form-label"></label>
+                        <input asp-for="ReorderQuantity" class="form-control" />
+                        <span asp-validation-for="ReorderQuantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3 form-check">
+                        <input asp-for="IsService" class="form-check-input" />
+                        <label asp-for="IsService" class="form-check-label"></label>
+                    </div>
+
+                    <div class="col-md-3 mb-3 form-check">
+                        <input asp-for="IsStockItem" class="form-check-input" />
+                        <label asp-for="IsStockItem" class="form-check-label"></label>
+                    </div>
+
+                    <div class="col-md-3 mb-3 form-check">
+                        <input asp-for="IsTaxable" class="form-check-input" />
+                        <label asp-for="IsTaxable" class="form-check-label"></label>
+                    </div>
+
+                    <div class="col-md-3 mb-3 form-check">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="TaxRate" class="form-label"></label>
+                        <input asp-for="TaxRate" class="form-control" />
+                        <span asp-validation-for="TaxRate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    <hr />
+                    <h5 class="mb-3">بيانات النظارات</h5>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="OpticalItemType" class="form-label"></label>
+                            <select asp-for="OpticalItemType" class="form-select">
+                                <option value="0">General</option>
+                                <option value="1">Frame</option>
+                                <option value="2">Lens</option>
+                                <option value="3">Contact Lens</option>
+                                <option value="4">Accessory</option>
+                                <option value="5">Service</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="BrandName" class="form-label"></label>
+                            <input asp-for="BrandName" class="form-control" />
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="ModelName" class="form-label"></label>
+                            <input asp-for="ModelName" class="form-control" />
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="Color" class="form-label"></label>
+                            <input asp-for="Color" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="EyeSize" class="form-label"></label>
+                            <input asp-for="EyeSize" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="BridgeSize" class="form-label"></label>
+                            <input asp-for="BridgeSize" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="TempleLength" class="form-label"></label>
+                            <input asp-for="TempleLength" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="LensMaterial" class="form-label"></label>
+                            <input asp-for="LensMaterial" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="LensIndex" class="form-label"></label>
+                            <input asp-for="LensIndex" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="LensCoating" class="form-label"></label>
+                            <input asp-for="LensCoating" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4 mb-3 form-check">
+                            <input asp-for="RequiresPrescription" class="form-check-input" />
+                            <label asp-for="RequiresPrescription" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ التعديل</button>
+                <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

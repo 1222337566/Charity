@@ -1,0 +1,74 @@
+﻿@using InfrastrfuctureManagmentCore.Domains.PosHolds;
+@model List<PosHold>
+
+@{
+    ViewData["Title"] = "الفواتير المعلقة";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">الفواتير المعلقة</h4>
+            <a href="@Url.Action("Index","Pos")" class="btn btn-secondary btn-sm">رجوع للكاشير</a>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم التعليق</th>
+                            <th>التاريخ</th>
+                            <th>العميل</th>
+                            <th>المخزن</th>
+                            <th>عدد السطور</th>
+                            <th>الصافي</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.HoldNumber</td>
+                                    <td>@item.HoldDateUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@item.CustomerName</td>
+                                    <td>@item.Warehouse?.WarehouseNameAr</td>
+                                    <td>@item.Lines.Count</td>
+                                    <td>@item.NetAmount</td>
+                                    <td>
+                                        <form asp-action="Resume" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                استرجاع
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">لا توجد فواتير معلقة</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,127 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@{
+    ViewData["Title"] = "Kanban Boards";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="row" data-api-base="@(Config["Realtime:BaseUrl"])">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Create Board</h5>
+            </div>
+            <div class="card-body">
+                <form id="board-form" class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Board Name</label>
+                        <input type="text" id="board-name" class="form-control" placeholder="e.g. Product Roadmap" required>
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+                <small id="board-msg" class="text-muted d-block mt-2"></small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">My Boards</h5>
+                <a id="refresh-boards" class="btn btn-sm btn-light"><i class="bx bx-refresh"></i></a>
+            </div>
+            <div class="card-body">
+                <div id="boards-list" class="row g-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/js/realtime.token.js?v=2"></script>
+    <script>
+        (function(){
+          "use strict";
+          const $ = s=>document.querySelector(s);
+          const esc = s=>String(s??'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]));
+                  function apiBase() {
+          // 1) Override صريح
+          if (typeof window.apiBase === 'function') {
+            const v = window.apiBase();
+            if (v) return String(v).replace(/\/+$/, '');
+          }
+          // 2) data-api-base من الصفحة
+          const el = document.querySelector('[data-api-base]');
+          if (el?.dataset?.apiBase) {
+            return String(el.dataset.apiBase).replace(/\/+$/, '');
+          }
+          // 3) من __APP__ المحقون من السيرفر
+          if (window.__APP__?.realtimeBase) {
+            return String(window.__APP__.realtimeBase).replace(/\/+$/, '');
+          }
+          // 4) استنتاج من أي Hub URL (kanban > notify > chat)
+          const hubs = window.__SIGNALR_HUBS__ || {};
+          const pick = hubs.kanban || hubs.notify || hubs.chat;
+          if (pick) {
+            try { return new URL(pick, location.origin).origin; } catch {}
+          }
+          // 5) توافق قديم
+          if (window.__realtimeBase) {
+            return String(window.__realtimeBase).replace(/\/+$/, '');
+          }
+          // 6) آخر حل: N/A عشان تعرف بسرعة إنه مفيش قيمة صحيحة
+          return 'N/A';
+        }
+
+          async function authHeaders() {
+            const t = await (window.TokenProvider?.getToken?.() ?? '');
+            return t ? { Authorization: 'Bearer ' + t } : {};
+          }
+
+          async function loadBoards(){
+            const res = await fetch(`${apiBase()}/kanban/boards/mine`, { credentials:'include', headers: await authHeaders() });
+            const list = await res.json();
+            const host = $('#boards-list');
+            host.innerHTML = '';
+            (list||[]).forEach(b=>{
+              const col = document.createElement('div');
+              col.className = 'col-md-6 col-xl-4';
+              col.innerHTML = `
+                <div class="card border">
+                  <div class="card-body">
+                    <h6 class="mb-2">${esc(b.name)}</h6>
+                    <a class="btn btn-sm btn-outline-primary" href="/Kanban/Index?board=${b.id}">Open</a>
+                  </div>
+                </div>`;
+              host.appendChild(col);
+            });
+          }
+
+          // create
+          $('#board-form').addEventListener('submit', async (ev)=>{
+            ev.preventDefault();
+            const name = $('#board-name').value.trim();
+            if(!name) return;
+            $('#board-msg').textContent = 'Creating...';
+            try{
+              const res = await fetch(`${apiBase()}/kanban/boards`, {
+                method:'POST', credentials:'include',
+                headers: { 'Content-Type':'application/json', ...(await authHeaders()) },
+                body: JSON.stringify({ name })
+              });
+              if(!res.ok) throw new Error('Create failed');
+              const data = await res.json();
+              $('#board-msg').textContent = 'Created ✔';
+              $('#board-name').value = '';
+              await loadBoards();
+            }catch(e){
+              $('#board-msg').textContent = 'Error: ' + (e.message||e);
+            }
+          });
+
+          $('#refresh-boards')?.addEventListener('click', loadBoards);
+
+          loadBoards().catch(console.error);
+        })();
+    </script>
+}

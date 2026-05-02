@@ -1,0 +1,150 @@
+:root {
+    --joud-sidebar-width: 290px;
+    --joud-sidebar-collapsed-width: 0px;
+    --joud-topbar-height: 70px;
+    /* match exact login brand panel colours */
+    --joud-brand-bg:     #0a5659;
+    --joud-brand-accent: #0e6f73;
+    --joud-brand-text:   #ffffff;
+}
+
+/* topbar brand rail aligned with sidebar */
+.vertical-menu #page-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1002;
+}
+
+body[data-sidebar-hidden="false"] .joud-topbar-brand {
+    width: var(--joud-sidebar-width);
+}
+
+body[data-sidebar-hidden="true"] .joud-topbar-brand {
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border-left: 0;
+}
+
+.joud-topbar-shell {
+    display: flex;
+    align-items: stretch;
+    min-height: var(--joud-topbar-height);
+}
+
+.joud-topbar-brand {
+    background: var(--joud-brand-bg);
+    color: var(--joud-brand-text);
+    min-width: var(--joud-sidebar-width);
+    width: var(--joud-sidebar-width);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border-left: 1px solid rgba(255,255,255,.08);
+    transition: width .25s ease, min-width .25s ease, padding .25s ease;
+}
+
+.joud-topbar-brand-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    justify-content: flex-start;
+    direction: rtl;
+}
+
+.joud-topbar-brand img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: rgba(255,255,255,.95);
+    padding: 4px;
+}
+
+.joud-topbar-brand-text {
+    line-height: 1.1;
+    text-align: right;
+}
+
+.joud-topbar-brand-text .title-ar {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.joud-topbar-brand-text .title-en {
+    font-size: 0.9rem;
+    font-weight: 700;
+    opacity: .95;
+}
+
+.joud-topbar-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* make existing navbar take full width inside new shell */
+.joud-topbar-main > .navbar-header,
+.joud-topbar-main > .container-fluid {
+    width: 100%;
+}
+
+.joud-sidebar-toggle {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.14);
+    color: #fff;
+    cursor: pointer;
+    transition: transform .15s ease, background-color .15s ease;
+}
+
+.joud-sidebar-toggle:hover {
+    background: rgba(255,255,255,.22);
+    transform: translateY(-1px);
+}
+
+
+
+
+
+
+
+/* help align with skote RTL layouts */
+html[dir="rtl"] 
+
+.vertical-menu,
+.app-menu,
+.main-content,
+.joud-topbar-brand {
+    transition: all .25s ease;
+}
+
+/* on smaller screens don't force a fixed brand rail */
+@media (max-width: 991.98px) {
+    .joud-topbar-brand {
+        width: auto !important;
+        min-width: auto !important;
+        padding: 0 10px !important;
+        background: transparent;
+        border-left: 0;
+    }
+
+    .joud-topbar-brand-text .title-ar {
+        font-size: 1.2rem;
+    }
+
+    .joud-topbar-brand-text .title-en {
+        display: none;
+    }
+
+    

@@ -1,0 +1,57 @@
+﻿@model List<OpticalWorkOrderListItemVm>
+@using InfrastructureManagmentWebFramework.Models.Optics.WorkOrders
+
+@{
+    ViewData["Title"] = "أوامر الشغل";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">أوامر الشغل</h4>
+        </div>
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الأمر</th>
+                            <th>الفاتورة</th>
+                            <th>العميل</th>
+                            <th>التاريخ</th>
+                            <th>التسليم المتوقع</th>
+                            <th>الحالة</th>
+                            <th>عاجل</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.WorkOrderNumber</td>
+                                <td>@item.InvoiceNumber</td>
+                                <td>@item.CustomerName</td>
+                                <td>@item.OrderDateUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                                <td>@(item.ExpectedDeliveryDateUtc?.ToLocalTime().ToString("yyyy-MM-dd") ?? "-")</td>
+                                <td>@item.StatusText</td>
+                                <td>@(item.IsUrgent ? "نعم" : "-")</td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary">عرض</a>
+                                        <a asp-action="Print" asp-route-id="@item.Id" class="btn btn-sm btn-dark">طباعة</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

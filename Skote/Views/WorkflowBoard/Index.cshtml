@@ -1,0 +1,404 @@
+@model List<InfrastrfuctureManagmentCore.Domains.Charity.Workflow.WorkflowStep>
+@using InfrastrfuctureManagmentCore.Domains.Charity.Workflow
+@{
+    ViewData["Title"] = "لوحة سير العمل";
+    var roles          = (ViewBag.Roles as List<string>) ?? new();
+    var allByEntity    = (ViewBag.AllStepsByEntity as Dictionary<(string,Guid),List<WorkflowStep>>)
+                      ?? new();
+
+    string EntityAr(string t) => t switch {
+        "AidRequest"=>"طلب مساعدة","HumanitarianResearch"=>"بحث إنساني",
+        "KafalaCase"=>"كفالة","AidCycle"=>"دورة صرف",
+        "ProjectProposal"=>"مقترح مشروع","StockNeedRequest"=>"طلب احتياج",
+        _ => t
+    };
+    string EntityIcon(string t) => t switch {
+        "AidRequest"=>"bx-heart","HumanitarianResearch"=>"bx-search-alt",
+        "KafalaCase"=>"bx-user-check","AidCycle"=>"bx-transfer",
+        "ProjectProposal"=>"bx-file-blank","StockNeedRequest"=>"bx-package",
+        _ => "bx-file"
+    };
+    string EntityColor(string t) => t switch {
+        "AidRequest"=>"#f46a6a","HumanitarianResearch"=>"#556ee6",
+        "KafalaCase"=>"#34c38f","AidCycle"=>"#0e6f73",
+        "ProjectProposal"=>"#dba44a","StockNeedRequest"=>"#8b5cf6",
+        _ => "#adb5bd"
+    };
+    string EntityDetailUrl(string type, Guid id) => type switch {
+        "AidRequest"           => $"/BeneficiaryAidRequests/Details/{id}",
+        "HumanitarianResearch" => $"/BeneficiaryHumanitarianResearchs/Details/{id}",
+        "KafalaCase"           => $"/KafalaCases/Details/{id}",
+        "ProjectProposal"      => $"/ProjectProposals/Details/{id}",
+        "StockNeedRequest"     => $"/StockNeedRequests/Details/{id}",
+        _ => "#"
+    };
+
+    var byEntity = Model
+        .GroupBy(s => new { s.EntityType, s.EntityId, s.EntityTitle })
+        .OrderBy(g => g.Min(s => s.CreatedAtUtc))
+        .ToList();
+
+    var byType = byEntity.GroupBy(g => g.Key.EntityType).ToList();
+}
+
+<style>
+/* ── Hero ── */
+.wb-hero{background:linear-gradient(135deg,#0a5659,#0e6f73);border-radius:18px;padding:20px 26px;color:#fff;margin-bottom:20px}
+.wb-stat{background:rgba(255,255,255,.12);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:60px}
+.wb-stat .n{font-size:1.3rem;font-weight:800;line-height:1}
+.wb-stat .l{font-size:.67rem;opacity:.8;margin-top:2px}
+
+/* ── Section header ── */
+.wb-sec{font-size:.88rem;font-weight:800;padding-right:10px;border-right:3px solid;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+
+/* ── Card ── */
+.wb-card{background:#fff;border-radius:18px;border:.5px solid rgba(14,111,115,.1);box-shadow:0 2px 14px rgba(14,111,115,.06);margin-bottom:16px;overflow:hidden}
+.wb-card-head{padding:13px 18px 11px;border-bottom:.5px solid rgba(14,111,115,.07);display:flex;align-items:center;gap:12px;background:rgba(14,111,115,.02)}
+.entity-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+
+/* ── Progress bar ── */
+.overall-prog{height:6px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+.overall-fill{height:100%;border-radius:999px;transition:width .35s}
+
+/* ══════════════════════════════════════════════
+   خط زمني الخطوات — المهم في هذا التعديل
+══════════════════════════════════════════════ */
+.steps-timeline{padding:16px 18px 6px;position:relative}
+.steps-track{display:flex;align-items:flex-start;position:relative;gap:0;overflow-x:auto;padding-bottom:10px}
+
+/* الخط الرابط */
+.steps-track::before{
+  content:'';
+  position:absolute;
+  top:18px; right:18px; left:18px;
+  height:2px;
+  background:linear-gradient(to left,#e2e8f0,#e2e8f0);
+  z-index:0;
+}
+
+/* كل خطوة */
+.step-node{display:flex;flex-direction:column;align-items:center;flex:1;min-width:90px;max-width:140px;position:relative;z-index:1;padding:0 4px}
+
+/* دائرة الخطوة */
+.step-circle{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;font-weight:800;color:#fff;
+  flex-shrink:0;position:relative;
+  border:2.5px solid transparent;
+  transition:.2s;
+}
+.step-circle.done    {background:#34c38f;border-color:#34c38f}
+.step-circle.active  {background:#556ee6;border-color:#556ee6;
+  box-shadow:0 0 0 5px rgba(85,110,230,.2),0 2px 8px rgba(85,110,230,.3);
+  animation:pulse-s 1.8s infinite}
+.step-circle.wait    {background:#f8fbfb;border-color:#e2e8f0;color:#adb5bd}
+.step-circle.rejected{background:#f46a6a;border-color:#f46a6a}
+.step-circle.returned{background:#f1b44c;border-color:#f1b44c}
+keyframes pulse-s{0%,100%{box-shadow:0 0 0 5px rgba(85,110,230,.2)}50%{box-shadow:0 0 0 9px rgba(85,110,230,.07)}}
+
+/* رابط بين الدوائر */
+.step-connector{
+  position:absolute;top:17px;
+  right:calc(50% + 18px);
+  width:calc(100% - 36px);
+  height:2px;
+  z-index:0;
+}
+.step-connector.done   {background:#34c38f}
+.step-connector.active {background:linear-gradient(to left,#e2e8f0 50%,#556ee6 50%)}
+.step-connector.wait   {background:#e2e8f0}
+
+/* اسم الخطوة */
+.step-label{margin-top:8px;font-size:.73rem;font-weight:600;color:#374151;text-align:center;line-height:1.3}
+.step-role {font-size:.65rem;color:#adb5bd;text-align:center;margin-top:2px}
+.step-date {font-size:.62rem;color:#adb5bd;text-align:center;margin-top:2px}
+
+/* ملاحظة الخطوة */
+.step-note{background:rgba(14,111,115,.05);border-radius:8px;padding:5px 9px;margin-top:5px;font-size:.7rem;color:#374151;line-height:1.4;border-right:2px solid rgba(14,111,115,.2);max-width:130px;text-align:right;word-break:break-word}
+
+/* badge الحالة صغير */
+.step-status{padding:2px 7px;border-radius:5px;font-size:.62rem;font-weight:700;margin-top:4px}
+
+/* ── منطقة الإجراء ── */
+.action-box{background:rgba(85,110,230,.04);border-radius:12px;padding:13px 16px;border:.5px solid rgba(85,110,230,.13);margin:10px 18px 14px}
+.act-note{border-radius:10px;border:.5px solid rgba(85,110,230,.2);padding:8px 12px;width:100%;font-size:.83rem;background:#fff;resize:none}
+.act-note:focus{outline:none;border-color:#556ee6;box-shadow:0 0 0 3px rgba(85,110,230,.1)}
+.btn-approve{background:#34c38f;color:#fff;border:none;border-radius:10px;padding:8px 20px;font-size:.83rem;font-weight:700;cursor:pointer;flex:1}
+.btn-approve:hover{background:#2aad7e}
+.btn-return {background:#f1b44c;color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:.83rem;font-weight:700;cursor:pointer}
+.btn-reject {background:#f46a6a;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:.83rem;font-weight:700;cursor:pointer}
+
+/* ── preview ── */
+.preview-btn{font-size:.73rem;padding:3px 10px;border-radius:7px;background:rgba(14,111,115,.08);color:#0e6f73;border:none;cursor:pointer;white-space:nowrap}
+.preview-panel{border-top:.5px solid rgba(14,111,115,.07);background:#fafffe;padding:12px 18px;display:none}
+.preview-panel.show{display:block}
+
+.empty-wf{text-align:center;padding:52px;color:#adb5bd;background:#fff;border-radius:16px}
+</style>
+
+@* Hero *@
+<div class="wb-hero">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1 text-white"><i class="bx bx-git-branch me-2"></i>لوحة سير العمل</h4>
+      <div style="opacity:.72;font-size:.8rem">خط زمني لكل طلب يوضح رقم الخطوة الحالية وملاحظات كل خطوة</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      @foreach (var r in roles)
+      { <span class="badge bg-white text-dark" style="font-size:.75rem">@r</span> }
+    </div>
+  </div>
+  <div class="d-flex gap-3 flex-wrap">
+    <div class="wb-stat"><div class="n">@byEntity.Count</div><div class="l">إجمالي الطلبات</div></div>
+    @foreach (var tg in byType.Take(4))
+    {
+      <div class="wb-stat" style="background:rgba(255,255,255,.1)">
+        <div class="n">@tg.Count()</div>
+        <div class="l">@EntityAr(tg.Key)</div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (TempData["WorkflowMessage"] != null)
+{
+  var ok = TempData["WorkflowSuccess"] as bool? ?? false;
+  <div class="alert alert-@(ok?"success":"danger") alert-dismissible fade show" style="border-radius:12px">
+    <i class="bx bx-@(ok?"check-circle":"error") me-2"></i>@TempData["WorkflowMessage"]
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+}
+
+@if (!byEntity.Any())
+{
+  <div class="empty-wf">
+    <i class="bx bx-check-double" style="font-size:3.5rem;color:#34c38f;display:block;margin-bottom:14px"></i>
+    <h5 style="color:#0a5f63">لا توجد مهام معلقة</h5>
+    <p class="text-muted small">أحسنت! جميع الطلبات تمت معالجتها.</p>
+  </div>
+}
+
+@foreach (var typeGroup in byType)
+{
+  var col   = EntityColor(typeGroup.Key);
+  var icon  = EntityIcon(typeGroup.Key);
+  var label = EntityAr(typeGroup.Key);
+
+  <div class="wb-sec" style="color:@col;border-color:@col">
+    <i class="bx @icon"></i>
+    @label
+    <span class="badge ms-1" style="background:@col;font-size:.7rem">@typeGroup.Count() معلق</span>
+  </div>
+
+  @foreach (var entityGroup in typeGroup)
+  {
+    var key        = (entityGroup.Key.EntityType, entityGroup.Key.EntityId);
+    var allSteps   = allByEntity.TryGetValue(key, out var s) ? s : entityGroup.ToList();
+    var totalSteps = allSteps.Count;
+    var doneCount  = allSteps.Count(x => x.Status == "Approved");
+    var pendingStep = allSteps.FirstOrDefault(x => x.Status == "Pending");
+    var currentIdx  = pendingStep != null ? pendingStep.StepOrder : doneCount + 1;
+    var isCompleted = doneCount == totalSteps;
+    var isRejected  = allSteps.Any(x => x.Status == "Rejected");
+    var pct         = totalSteps > 0 ? (decimal)doneCount / totalSteps * 100 : 0;
+    var waitDays    = pendingStep != null ? (int)(DateTime.UtcNow - pendingStep.CreatedAtUtc).TotalDays : 0;
+    var detailUrl   = EntityDetailUrl(entityGroup.Key.EntityType, entityGroup.Key.EntityId);
+    var cardId      = $"wc-{entityGroup.Key.EntityId:N}";
+        var softColor = $"{col}20";
+        string barColor = isRejected ? "#f46a6a" : isCompleted ? "#34c38f" : "#556ee6";
+
+    <div class="wb-card">
+      @* ── رأس الكارت ── *@
+      <div class="wb-card-head">
+                <div class="entity-avatar" style="background:@softColor">
+          <i class="bx @icon" style="color:@col;font-size:1.15rem"></i>
+        </div>
+        <div class="flex-grow-1 min-w-0">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="fw-bold" style="font-size:.9rem">@entityGroup.Key.EntityTitle</span>
+            @if (isCompleted)
+            { <span class="badge bg-success" style="font-size:.68rem">✓ مكتمل</span> }
+            @if (isRejected)
+            { <span class="badge bg-danger" style="font-size:.68rem">✗ مرفوض</span> }
+            @if (waitDays >= 3)
+            { <span class="badge bg-danger" style="font-size:.68rem">⚠ منذ @waitDays يوم</span> }
+          </div>
+          <div style="font-size:.73rem;color:#6b7d80;margin-top:3px">
+            @label ·
+            الخطوة <strong>@doneCount/@totalSteps</strong> مكتملة ·
+            @if (!isCompleted && !isRejected && pendingStep != null)
+            {
+              <span>الخطوة الحالية:
+                <strong style="color:@col">@pendingStep.StepName</strong>
+              </span>
+            }
+          </div>
+          @* شريط تقدم رفيع ──  *@
+          <div class="overall-prog mt-1">
+            <div class="overall-fill" style="width:@pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%;background:@barColor"></div>
+          </div>
+        </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                    @if (detailUrl != "#")
+                    {
+                        <a asp-controller="WorkflowBoard"
+                           asp-action="OpenEntityDirect"
+                           asp-route-entityType="@entityGroup.Key.EntityType"
+                           asp-route-entityId="@entityGroup.Key.EntityId"
+                           class="preview-btn text-decoration-none">
+                            <i class="bx bx-show me-1"></i>
+                            عرض الاستمارة
+                        </a>
+
+                        <button type="button"
+                                class="preview-btn"
+                                onclick="togglePreview('@cardId')">
+                            <i class="bx bx-detail me-1"></i>
+                            معاينة
+                        </button>
+                    }
+                </div>
+      </div>
+
+      @* ══════════════════════════════════════════
+         الخط الزمني للخطوات
+      ══════════════════════════════════════════ *@
+      <div class="steps-timeline">
+        <div class="steps-track">
+          @for (int si = 0; si < allSteps.Count; si++)
+          {
+            var step = allSteps[si];
+            bool isLast = si == allSteps.Count - 1;
+
+            string circleClass = step.Status switch {
+                "Approved" => "done",
+                "Pending"  => "active",
+                "Rejected" => "rejected",
+                "Returned" => "returned",
+                _ => "wait"
+            };
+            string statusAr = step.Status switch {
+                "Approved" => "✓ مُعتمَد",
+                "Pending"  => "⏳ قيد المراجعة",
+                "Rejected" => "✗ مرفوض",
+                "Returned" => "↩ مُعاد",
+                _ => "انتظار"
+            };
+            string statusBg = step.Status switch {
+                "Approved" => "rgba(52,195,143,.15)", "Pending"  => "rgba(85,110,230,.12)",
+                "Rejected" => "rgba(244,106,106,.12)","Returned" => "rgba(241,180,76,.12)",
+                _ => "rgba(173,181,189,.1)"
+            };
+            string statusFg = step.Status switch {
+                "Approved" => "#065f46","Pending"  => "#3145a3",
+                "Rejected" => "#991b1b","Returned" => "#92400e",
+                _ => "#6b7d80"
+            };
+
+            <div class="step-node">
+              @* رابط الخط قبل الدائرة *@
+              @if (si > 0)
+              {
+                var prevStatus = allSteps[si - 1].Status;
+                var connClass  = prevStatus == "Approved" ? "done" : (step.Status == "Pending" ? "active" : "wait");
+                <div class="step-connector @connClass"></div>
+              }
+
+              @* الدائرة بالرقم *@
+              <div class="step-circle @circleClass">@step.StepOrder</div>
+
+              @* الاسم والدور *@
+              <div class="step-label">@step.StepName</div>
+              <div class="step-role">@step.AssignedRole</div>
+
+              @* التاريخ لو اتعمل عليها إجراء *@
+              @if (step.ActionDate.HasValue)
+              {
+                <div class="step-date">@step.ActionDate.Value.ToString("d/M HH:mm")</div>
+              }
+
+              @* بادج الحالة *@
+              <span class="step-status" style="background:@statusBg;color:@statusFg">@statusAr</span>
+
+              @* ملاحظة الخطوة ← المهم الجديد *@
+              @if (!string.IsNullOrWhiteSpace(step.ActionNote))
+              {
+                <div class="step-note">
+                  <i class="bx bx-comment-detail me-1" style="font-size:.75rem"></i>@step.ActionNote
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @* رسالة الاكتمال *@
+        @if (isCompleted)
+        {
+          <div style="text-align:center;font-size:.8rem;color:#34c38f;font-weight:600;padding:6px 0">
+            <i class="bx bx-check-double me-1"></i>اكتمل مسار الموافقة ✓
+          </div>
+        }
+      </div>
+
+      @* ── منطقة الإجراء للخطوة الحالية ── *@
+      @if (pendingStep != null)
+      {
+        <div class="action-box">
+          <div style="font-size:.75rem;font-weight:700;color:#3145a3;margin-bottom:8px">
+            <i class="bx bx-pencil me-1"></i>
+            قرارك كـ <strong>@pendingStep.AssignedRole</strong>
+            — الخطوة <strong>@pendingStep.StepOrder</strong> من <strong>@totalSteps</strong>
+          </div>
+          <form asp-action="TakeAction" asp-controller="WorkflowBoard" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="stepId"    value="@pendingStep.Id"/>
+            <input type="hidden" name="returnUrl" value="@Context.Request.Path"/>
+            <textarea name="note" class="act-note" rows="2"
+                      placeholder="ملاحظة على القرار (ستظهر في الخط الزمني)..."></textarea>
+            <div class="d-flex gap-2 mt-2 flex-wrap">
+              <button type="submit" name="action" value="Approved" class="btn-approve">
+                <i class="bx bx-check me-1"></i>موافقة
+              </button>
+              <button type="submit" name="action" value="Returned" class="btn-return">
+                <i class="bx bx-undo me-1"></i>إعادة
+              </button>
+              <button type="submit" name="action" value="Rejected" class="btn-reject"
+                      onclick="return confirm('هل أنت متأكد من الرفض؟')">
+                <i class="bx bx-x me-1"></i>رفض
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      @* ── معاينة الاستمارة ── *@
+      <div class="preview-panel" id="preview-@cardId">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-bold" style="font-size:.8rem;color:#0a5f63">
+            <i class="bx bx-file me-1"></i>معاينة الاستمارة
+          </span>
+          @if (detailUrl != "#")
+          {
+            <a href="@detailUrl" target="_blank" class="btn btn-sm fw-bold"
+               style="border-radius:9px;background:@col;color:#fff;border:none;font-size:.73rem">
+              <i class="bx bx-link-external me-1"></i>فتح الصفحة الكاملة
+            </a>
+          }
+        </div>
+        <div style="font-size:.78rem;color:#adb5bd;text-align:center;padding:8px 0">
+          اضغط "فتح الصفحة الكاملة" لعرض تفاصيل الاستمارة
+        </div>
+      </div>
+    </div>
+  }
+}
+
+@section Scripts {
+<script>
+function togglePreview(id) {
+    var p = document.getElementById('preview-' + id);
+    if (p) p.classList.toggle('show');
+}
+</script>
+}

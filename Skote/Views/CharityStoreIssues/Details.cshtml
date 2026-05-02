@@ -1,0 +1,88 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Stores.Issues.StoreIssueDetailsVm
+@using Skote.Helpers
+@await Html.PartialAsync("~/Views/Shared/Stores/_StoresNav.cshtml")
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 no-print">
+    <h4 class="mb-0">تفاصيل إذن الصرف</h4>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-dark btn-sm" onclick="window.print()">
+            <i class="bx bx-printer"></i> طباعة الإذن
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">رجوع</a>
+    </div>
+</div>
+
+<style>
+    media print {
+        .no-print, .navbar-header, .vertical-menu, .page-title-box, footer
+
+    {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+    }
+
+    .card {
+        border: 1px solid #999 !important;
+        box-shadow: none !important;
+    }
+
+    }
+</style>
+<div class="card mb-3"><div class="card-body">
+    <div class="row g-3">
+        <div class="col-md-3"><strong>رقم الإذن:</strong> @Model.IssueNumber</div>
+        <div class="col-md-3"><strong>التاريخ:</strong> @Model.IssueDate.ToString("yyyy-MM-dd")</div>
+        <div class="col-md-3"><strong>المخزن:</strong> @Model.WarehouseName</div>
+        <div class="col-md-3"><strong>نوع الصرف:</strong> @Model.IssueType</div>
+        <div class="col-md-3"><strong>الحالة:</strong> <span class="badge @(Model.ApprovalStatus == "Approved" ? "bg-success-subtle text-success" : Model.ApprovalStatus == "Rejected" ? "bg-danger-subtle text-danger" : "bg-warning-subtle text-warning")">@Model.ApprovalStatusName</span></div>
+        <div class="col-md-3"><strong>اعتمد بواسطة:</strong> @(Model.ApprovedByUserId ?? "-")</div>
+        <div class="col-md-3"><strong>تاريخ الاعتماد:</strong> @(Model.ApprovedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+        <div class="col-md-3"><strong>تاريخ الرفض:</strong> @(Model.RejectedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+        <div class="col-md-12"><strong>المستفيد:</strong> @Model.BeneficiaryName</div>
+        <div class="col-md-12"><strong>المشروع:</strong> @Model.ProjectName</div>
+        <div class="col-md-12"><strong>مصروف إلى:</strong> @Model.IssuedToName</div>
+        <div class="col-md-12"><strong>ملاحظات المستند:</strong> @Model.Notes</div>
+        <div class="col-md-12"><strong>ملاحظات الاعتماد:</strong> @Model.ApprovalNotes</div>
+    </div>
+</div></div>
+
+<authz policy="StoresApprove">
+    @if (Model.CanApprove || Model.CanReject)
+    {
+        <div class="card mb-3"><div class="card-body">
+            <h5 class="mb-3">اعتماد / رفض الإذن</h5>
+            <form asp-action="Approve" method="post" class="mb-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <label class="form-label">ملاحظات الاعتماد</label>
+                <textarea name="approvalNotes" class="form-control" rows="2"></textarea>
+                <button type="submit" class="btn btn-success mt-2">اعتماد إذن الصرف</button>
+            </form>
+            <form asp-action="Reject" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <label class="form-label">سبب الرفض</label>
+                <textarea name="approvalNotes" class="form-control" rows="2"></textarea>
+                <button type="submit" class="btn btn-outline-danger mt-2">رفض الإذن</button>
+            </form>
+        </div></div>
+    }
+</authz>
+
+<table class="table table-bordered table-striped align-middle">
+    <thead><tr><th>الكود</th><th>الصنف</th><th>الكمية</th><th>التكلفة</th><th>الإجمالي</th></tr></thead>
+    <tbody>
+    @foreach (var line in Model.Lines)
+    {
+        <tr>
+            <td>@line.ItemCode</td>
+            <td>@line.ItemName</td>
+            <td>@line.Quantity</td>
+            <td>@line.UnitCost.ToString("N2")</td>
+            <td>@line.Total.ToString("N2")</td>
+        </tr>
+    }
+    </tbody>
+</table>

@@ -1,0 +1,35 @@
+﻿@using InfrastructureManagmentWebFramework.Models.Charity.DonorProfile
+@model InfrastructureManagmentWebFramework.Models.Charity.DonorProfile.Donations.EditDonationVm
+@{
+    ViewData["Title"] = "تعديل تبرع";
+    var donorHeader = ViewBag.DonorHeader as DonorHeaderVm;
+}
+<div class="page-content">
+    <div class="container-fluid">
+        @if (donorHeader != null)
+        {
+            @await Html.PartialAsync("~/Views/Shared/Donors/_DonorHeader.cshtml", donorHeader)
+        }
+        <div class="card">
+            <div class="card-header"><h4 class="card-title mb-0">تعديل التبرع</h4></div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    @Html.Partial("_Form", Model)
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">حفظ التعديل</button>
+                        <a asp-action="PrintReceipt" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-dark">طباعة A4</a>
+                        @if (Model.DonationType == "عيني")
+                        {
+                            <a asp-action="PrintMovement" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-info">كشف الحركة</a>
+                        }
+                        <a asp-action="Index" asp-route-donorId="@Model.DonorId" class="btn btn-secondary">رجوع</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

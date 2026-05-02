@@ -1,0 +1,344 @@
+@model Skote.Controllers.AssignBeneficiaryVm
+@{
+    ViewData["Title"] = "تسكين مستفيد في نشاط";
+    var project  = ViewBag.Project  as InfrastrfuctureManagmentCore.Domains.Charity.Projects.CharityProject;
+    var activity = ViewBag.Activity as InfrastrfuctureManagmentCore.Domains.Charity.Projects.ProjectSubGoalActivity;
+    var phase    = ViewBag.Phase    as InfrastrfuctureManagmentCore.Domains.Charity.Projects.ProjectPhase;
+    var assigned = ViewBag.Assigned as List<InfrastrfuctureManagmentCore.Domains.Charity.Projects.ProjectActivityBeneficiary>;
+    var targetGroups    = ViewBag.TargetGroups as List<string> ?? new List<string>();
+    var selectedGroup   = ViewBag.SelectedGroup as string ?? string.Empty;
+    var groupedBenef    = ViewBag.GroupedBeneficiaries as dynamic;
+
+    string Sbg(string s) => s switch {
+        "Verified"=>"bg-success","Rejected"=>"bg-danger",
+        "NeedsReview"=>"bg-warning",_=>"bg-secondary"
+    };
+    string SaV(string s) => s switch {
+        "Verified"=>"مثبَّت","Rejected"=>"مرفوض",
+        "NeedsReview"=>"يحتاج مراجعة",_=>"غير مثبَّت"
+    };
+}
+
+<style>
+:root{--teal:#0e6f73}
+.assign-wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@@media(max-width:768px){.assign-wrap{grid-template-columns:1fr}}
+.panel{background:#fff;border-radius:14px;border:.5px solid rgba(14,111,115,.12);box-shadow:0 2px 10px rgba(14,111,115,.06);overflow:hidden}
+.panel-head{padding:12px 16px;font-size:.82rem;font-weight:700;color:var(--teal);border-bottom:.5px solid rgba(14,111,115,.08);display:flex;align-items:center;gap:6px}
+.panel-body{padding:14px 16px}
+.tg-tab{padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:.5px solid rgba(14,111,115,.2);text-decoration:none;color:#1e3a5f;background:#fff;transition:all .18s}
+.tg-tab.active,.tg-tab:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+/* ── Beneficiary Cards ── */
+.grp-head{font-size:.75rem;font-weight:700;color:#6b7d80;padding:6px 0 4px;border-bottom:.5px solid rgba(14,111,115,.08);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.grp-head .grp-name{display:flex;align-items:center;gap:6px}
+.grp-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0}
+.bn-card{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;margin-bottom:4px;cursor:pointer;border:.5px solid transparent;transition:all .15s;background:#f8fbfb}
+.bn-card:hover{background:rgba(14,111,115,.06);border-color:rgba(14,111,115,.15)}
+.bn-card.selected{background:rgba(14,111,115,.1);border-color:var(--teal)}
+.bn-card.disabled{opacity:.45;cursor:not-allowed;background:#f4f4f4}
+.bn-avatar{width:32px;height:32px;border-radius:8px;background:rgba(14,111,115,.12);color:var(--teal);font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bn-code{font-size:.7rem;color:#adb5bd}
+.bn-name{font-size:.82rem;font-weight:600;color:#1e3a5f;line-height:1.2}
+
+/* ── Assigned list ── */
+.benef-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:5px;background:#f8fbfb;border:.5px solid rgba(14,111,115,.06)}
+.benef-row:hover{background:rgba(14,111,115,.04)}
+.benef-avatar{width:30px;height:30px;border-radius:8px;background:rgba(14,111,115,.12);color:var(--teal);font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rm-btn{margin-right:auto;padding:2px 9px;border-radius:7px;font-size:.7rem;background:rgba(244,106,106,.1);color:#c04;border:.5px solid rgba(244,106,106,.2);cursor:pointer}
+.rm-btn:hover{background:#f46a6a;color:#fff}
+.tg-pill{padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700;background:rgba(14,111,115,.1);color:var(--teal)}
+</style>
+
+<div class="container-fluid">
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show small py-2">@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show small py-2">@TempData["Warning"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ── معلومات النشاط ── *@
+<div class="panel mb-3">
+    <div class="panel-head"><i class="bx bx-info-circle"></i>تفاصيل النشاط</div>
+    <div class="panel-body">
+        <div class="row g-2 small">
+            <div class="col-md-4"><span class="text-muted">المشروع:</span> <strong>@project?.Name</strong></div>
+            <div class="col-md-4"><span class="text-muted">المرحلة:</span> <strong>@phase?.Name</strong></div>
+            <div class="col-md-4"><span class="text-muted">النشاط:</span> <strong>@activity?.Title</strong></div>
+            <div class="col-md-4"><span class="text-muted">المستهدف:</span> <strong>@activity?.PlannedQuantity @activity?.QuantityUnit</strong></div>
+            <div class="col-md-4"><span class="text-muted">المسكَّنون:</span> <strong style="color:var(--teal)">@assigned?.Count</strong></div>
+        </div>
+    </div>
+</div>
+
+@* ── تبويبات الفئات ── *@
+@if (targetGroups.Any())
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a asp-action="Assign"
+           asp-route-projectId="@Model.ProjectId"
+           asp-route-activityId="@Model.ActivityId"
+           asp-route-phaseId="@Model.PhaseId"
+           class="tg-tab @(string.IsNullOrEmpty(selectedGroup)?"active":"")">
+            الكل (@assigned?.Count)
+        </a>
+        @foreach (var tg in targetGroups)
+        {
+            var cnt = assigned?.Count(a => a.TargetGroupName == tg) ?? 0;
+            <a asp-action="Assign"
+               asp-route-projectId="@Model.ProjectId"
+               asp-route-activityId="@Model.ActivityId"
+               asp-route-phaseId="@Model.PhaseId"
+               asp-route-targetGroup="@tg"
+               class="tg-tab @(selectedGroup==tg?"active":"")">
+                @tg @(cnt > 0 ? $"({cnt})" : "")
+            </a>
+        }
+    </div>
+}
+
+<div class="assign-wrap">
+
+    @* ══ يسار: المستفيدون المتاحون مجمَّعون بالفئة ══ *@
+    <div class="panel">
+        <div class="panel-head">
+            <i class="bx bx-user-plus"></i>إضافة مستفيد للنشاط
+            @if (!string.IsNullOrEmpty(selectedGroup))
+            {
+                <span class="tg-pill ms-1">@selectedGroup</span>
+            }
+        </div>
+        <div class="panel-body">
+
+            @* بحث سريع *@
+            <input type="text" id="bnSearch"
+                   class="form-control mb-3"
+                   style="border-radius:20px;font-size:.82rem;border-color:rgba(14,111,115,.2)"
+                   placeholder="🔍 بحث باسم أو كود..."
+                   oninput="filterBn(this.value)" />
+
+            @* نموذج إضافة (مخفي حتى يختار المستفيد) *@
+            <form asp-action="Assign" method="post" id="addForm">
+                @Html.AntiForgeryToken()
+                <input asp-for="ProjectId"  type="hidden" />
+                <input asp-for="ActivityId" type="hidden" />
+                <input asp-for="PhaseId"    type="hidden" />
+                <input asp-for="TargetGroupName" type="hidden" id="hiddenGroup" />
+                <input asp-for="BeneficiaryId"   type="hidden" id="hiddenBnId" />
+
+                @* نوع المشاركة *@
+                <div class="d-flex gap-3 mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="ParticipationType"
+                               value="Beneficiary" id="rb-benef" checked />
+                        <label class="form-check-label small" for="rb-benef">منتفع</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="ParticipationType"
+                               value="Participant" id="rb-part" />
+                        <label class="form-check-label small" for="rb-part">مشارك</label>
+                    </div>
+                </div>
+
+                @* ملاحظات *@
+                <textarea asp-for="Notes" class="form-control mb-3" rows="1"
+                          style="font-size:.8rem;border-radius:10px"
+                          placeholder="ملاحظات (اختياري)"></textarea>
+
+                @* زر الحفظ — يظهر فقط بعد اختيار مستفيد *@
+                <div id="addBar" class="d-none">
+                    <div class="d-flex align-items-center gap-2 p-2 mb-3"
+                         style="background:rgba(14,111,115,.06);border-radius:10px;border:.5px solid rgba(14,111,115,.15)">
+                        <i class="bx bx-user-check" style="color:var(--teal);font-size:1.2rem"></i>
+                        <div class="flex-grow-1 small">
+                            <div id="selName" class="fw-bold" style="color:var(--teal)"></div>
+                            <div id="selGroup" class="text-muted" style="font-size:.7rem"></div>
+                        </div>
+                        <button type="submit" class="btn btn-sm fw-bold"
+                                style="background:var(--teal);color:#fff;border-radius:8px">
+                            <i class="bx bx-plus me-1"></i>تسكين
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light"
+                                onclick="clearSelection()" style="border-radius:8px">✕</button>
+                    </div>
+                </div>
+            </form>
+
+            @* قائمة المستفيدين مجمَّعة حسب الفئة *@
+            <div id="bnList" style="max-height:420px;overflow-y:auto">
+                @if (groupedBenef != null)
+                {
+                    foreach (var grp in groupedBenef)
+                    {
+                        <div class="grp-head">
+                            <div class="grp-name">
+                                <div class="grp-dot"></div>
+                                @grp.GroupName
+                            </div>
+                            <span style="font-size:.7rem;color:#adb5bd">@grp.Members.Count</span>
+                        </div>
+                        foreach (var bn in grp.Members)
+                        {
+                            var initials = ((string)bn.Name).Length >= 2 ? ((string)bn.Name)[..2] : (string)bn.Name;
+                            <div class="bn-card"
+                                 onclick="selectBn('@bn.Id','@bn.Name','@bn.Code','@bn.TargetGroupName')"
+                                 data-name="@bn.Name" data-code="@bn.Code" data-group="@grp.GroupName">
+                                <div class="bn-avatar">@initials</div>
+                                <div class="flex-grow-1">
+                                    <div class="bn-name">@bn.Name</div>
+                                    <div class="bn-code">@bn.Code</div>
+                                </div>
+                                <i class="bx bx-plus-circle" style="color:rgba(14,111,115,.4);font-size:1.1rem"></i>
+                            </div>
+                        }
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted small">
+                        <i class="bx bx-user-x" style="font-size:2rem;opacity:.3;display:block"></i>
+                        لا يوجد مستفيدون متاحون
+                        @if (!string.IsNullOrEmpty(selectedGroup))
+                        { <span>في فئة @selectedGroup</span> }
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    @* ══ يمين: المسكَّنون الحاليون ══ *@
+    <div class="panel">
+        <div class="panel-head">
+            <i class="bx bx-group"></i>المسكَّنون في هذا النشاط
+            @if (!string.IsNullOrEmpty(selectedGroup))
+            {
+                <span class="tg-pill ms-1">@selectedGroup</span>
+            }
+        </div>
+        <div class="panel-body" style="max-height:560px;overflow-y:auto">
+            @{
+                var filteredAssigned = string.IsNullOrEmpty(selectedGroup)
+                    ? assigned
+                    : assigned?.Where(a => a.TargetGroupName == selectedGroup).ToList();
+            }
+            @if (filteredAssigned?.Any() != true)
+            {
+                <div class="text-center py-4 text-muted">
+                    <i class="bx bx-user-x" style="font-size:2rem;opacity:.3"></i>
+                    <p class="mt-2 small">لا يوجد مستفيدون مسكَّنون
+                        @if (!string.IsNullOrEmpty(selectedGroup))
+                        { <span>في فئة @selectedGroup</span> }
+                    </p>
+                </div>
+            }
+            else
+            {
+                @* تجميع حسب الفئة *@
+                var byGroup = filteredAssigned
+                    .GroupBy(a => a.TargetGroupName ?? "غير محدد")
+                    .OrderBy(g => g.Key);
+
+                @foreach (var grp in byGroup)
+                {
+                    <div class="grp-head mb-2">
+                        <div class="grp-name">
+                            <div class="grp-dot"></div>
+                            @grp.Key
+                        </div>
+                        <span style="font-size:.7rem;color:#adb5bd">@grp.Count()</span>
+                    </div>
+
+                    @foreach (var ab in grp)
+                    {
+                        var bname = ab.Beneficiary?.Beneficiary?.FullName ?? "—";
+                        var bcode = ab.Beneficiary?.Beneficiary?.Code     ?? "";
+                        var initials = bname.Length >= 2 ? bname[..2] : bname;
+
+                        <div class="benef-row">
+                            <div class="benef-avatar">@initials</div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold" style="font-size:.82rem">@bname</div>
+                                <div class="text-muted" style="font-size:.7rem">
+                                    @bcode
+                                    <span class="badge @(ab.ParticipationType=="Participant"?"bg-primary":"bg-success")"
+                                          style="font-size:.6rem;margin-right:4px">
+                                        @(ab.ParticipationType == "Participant" ? "مشارك" : "منتفع")
+                                    </span>
+                                    <span class="badge @Sbg(ab.VerificationStatus)"
+                                          style="font-size:.6rem">@SaV(ab.VerificationStatus)</span>
+                                </div>
+                            </div>
+                            <form asp-action="Remove" method="post" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id"          value="@ab.Id" />
+                                <input type="hidden" name="projectId"   value="@Model.ProjectId" />
+                                <input type="hidden" name="activityId"  value="@Model.ActivityId" />
+                                <input type="hidden" name="phaseId"     value="@Model.PhaseId" />
+                                <input type="hidden" name="targetGroup" value="@selectedGroup" />
+                                <button type="submit" class="rm-btn"
+                                        onclick="return confirm('إلغاء تسكين @bname?')">
+                                    <i class="bx bx-x"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+
+</div>
+
+@* ── روابط ── *@
+<div class="mt-3 d-flex gap-2">
+    <a asp-action="Index" asp-route-projectId="@Model.ProjectId"
+       class="btn btn-light btn-sm" style="border-radius:10px">
+        <i class="bx bx-arrow-back me-1"></i>نظرة عامة
+    </a>
+    <a asp-controller="ProjectBeneficiaries" asp-action="Create"
+       asp-route-projectId="@Model.ProjectId"
+       class="btn btn-sm" style="background:rgba(14,111,115,.1);color:var(--teal);border-radius:10px">
+        <i class="bx bx-user-plus me-1"></i>إضافة مستفيد للمشروع
+    </a>
+</div>
+
+<script>
+function selectBn(id, name, code, group) {
+    // إزالة التحديد السابق
+    document.querySelectorAll('.bn-card').forEach(c => c.classList.remove('selected'));
+    // تحديد البطاقة
+    event.currentTarget.classList.add('selected');
+    // تعبئة الـ hidden inputs
+    document.getElementById('hiddenBnId').value    = id;
+    document.getElementById('hiddenGroup').value   = group || document.getElementById('hiddenGroup').value;
+    // تحديث شريط التأكيد
+    document.getElementById('selName').textContent  = name;
+    document.getElementById('selGroup').textContent = group ? `فئة: ${group}` : '';
+    document.getElementById('addBar').classList.remove('d-none');
+}
+
+function clearSelection() {
+    document.getElementById('hiddenBnId').value = '';
+    document.getElementById('addBar').classList.add('d-none');
+    document.querySelectorAll('.bn-card').forEach(c => c.classList.remove('selected'));
+}
+
+function filterBn(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.bn-card').forEach(card => {
+        const name  = (card.dataset.name  || '').toLowerCase();
+        const code  = (card.dataset.code  || '').toLowerCase();
+        const group = (card.dataset.group || '').toLowerCase();
+        card.style.display = (!q || name.includes(q) || code.includes(q) || group.includes(q)) ? '' : 'none';
+    });
+}
+</script>

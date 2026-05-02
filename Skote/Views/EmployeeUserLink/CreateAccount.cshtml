@@ -1,0 +1,87 @@
+@{
+    ViewData["Title"] = "إنشاء حساب مستخدم";
+    var emp          = ViewBag.Employee as InfrastrfuctureManagmentCore.Domains.HR.HrEmployee;
+    var allRoles     = ViewBag.AllRoles as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+    var suggested    = ViewBag.SuggestedUsername as string ?? "";
+    var suggestedRole = ViewBag.SuggestedRole as string ?? "Reviewer";
+}
+
+<style>
+.ca-hero{background:linear-gradient(135deg,#065f46,#0e6f73);border-radius:16px;padding:16px 22px;color:#fff;margin-bottom:18px}
+.ca-card{background:#fff;border-radius:16px;border:.5px solid rgba(14,111,115,.1);box-shadow:0 2px 10px rgba(14,111,115,.05);overflow:hidden;margin-bottom:16px}
+.ca-head{padding:13px 18px;border-bottom:.5px solid rgba(14,111,115,.08);font-size:.9rem;font-weight:700;color:#0a5f63;background:rgba(14,111,115,.03)}
+.ca-body{padding:18px}
+.role-opt{border:.5px solid rgba(14,111,115,.15);border-radius:12px;padding:10px 14px;cursor:pointer;transition:.12s;display:flex;align-items:center;gap:10px}
+.role-opt:hover,.role-opt.selected{border-color:#0e6f73;background:rgba(14,111,115,.05)}
+.role-opt input[type=radio]{accent-color:#0e6f73}
+</style>
+
+<div class="ca-hero">
+  <h5 class="fw-bold mb-1 text-white"><i class="bx bx-user-plus me-2"></i>إنشاء حساب مستخدم</h5>
+  <div style="opacity:.7;font-size:.8rem">للموظف: <strong>@emp?.FullName</strong> — @emp?.JobTitle?.Name</div>
+</div>
+
+<form asp-action="CreateAccount" asp-route-employeeId="@emp?.Id" method="post">
+  @Html.AntiForgeryToken()
+  <div asp-validation-summary="All" class="alert alert-danger mb-3" style="border-radius:12px"></div>
+
+  <div class="ca-card">
+    <div class="ca-head"><i class="bx bx-id-card me-2"></i>بيانات الحساب</div>
+    <div class="ca-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:.83rem">اسم المستخدم <span class="text-danger">*</span></label>
+          <input name="username" class="form-control" style="border-radius:10px"
+                 value="@suggested" required placeholder="ahmed.hassan"/>
+          <div style="font-size:.72rem;color:#6b7d80;margin-top:3px">مقترح من اسم الموظف</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:.83rem">البريد الإلكتروني</label>
+          <input name="email" type="email" class="form-control" style="border-radius:10px"
+                 value="@emp?.Email" placeholder="user@org.eg"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:.83rem">كلمة المرور <span class="text-danger">*</span></label>
+          <input name="password" type="password" class="form-control" style="border-radius:10px"
+                 required minlength="8" placeholder="8 أحرف على الأقل"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ca-card">
+    <div class="ca-head"><i class="bx bx-shield me-2"></i>الدور والصلاحيات</div>
+    <div class="ca-body">
+      <div style="font-size:.8rem;color:#6b7d80;margin-bottom:10px">
+        الدور المقترح بناءً على الوظيفة:
+        <strong style="color:#0e6f73">@suggestedRole</strong>
+      </div>
+      <div class="row g-2">
+        @if (allRoles != null)
+        {
+          @foreach (var r in allRoles)
+          {
+            <div class="col-md-4">
+              <label class="role-opt @(r.Value == suggestedRole ? "selected" : "")">
+                <input type="radio" name="role" value="@r.Value"
+                       @(r.Value == suggestedRole ? "checked" : "")
+                       onchange="document.querySelectorAll('.role-opt').forEach(e=>e.classList.remove('selected'));this.closest('.role-opt').classList.add('selected')"/>
+                <div>
+                  <div class="fw-semibold" style="font-size:.85rem">@r.Text</div>
+                  <div style="font-size:.7rem;color:#6b7d80">@r.Value</div>
+                </div>
+              </label>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-success fw-bold" style="border-radius:12px">
+      <i class="bx bx-user-check me-1"></i>إنشاء الحساب وربطه
+    </button>
+    <a asp-action="Index" class="btn btn-light fw-bold" style="border-radius:12px">إلغاء</a>
+  </div>
+</form>

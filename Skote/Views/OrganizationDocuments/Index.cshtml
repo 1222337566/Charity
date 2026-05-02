@@ -1,0 +1,160 @@
+@model InfrastructureManagmentWebFramework.Models.OrganizationDocuments.OrganizationDocumentIndexVm
+
+@{
+    ViewData["Title"] = "ملفات الجمعية";
+}
+
+<style>
+.doc-hero{background:linear-gradient(135deg,#334155,#0f766e);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.doc-stat{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:120px}
+.doc-stat .n{font-size:1.2rem;font-weight:800;line-height:1}
+.doc-stat .l{font-size:.7rem;opacity:.85;margin-top:2px}
+.doc-card{background:#fff;border-radius:16px;border:.5px solid rgba(15,118,110,.12);box-shadow:0 2px 8px rgba(15,118,110,.05);overflow:hidden;margin-bottom:16px}
+.doc-head{padding:12px 18px;border-bottom:.5px solid rgba(15,118,110,.08);font-size:.9rem;font-weight:700;color:#0f766e;background:rgba(15,118,110,.03)}
+.doc-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.doc-table th{background:#f8fafc;color:#64748b;font-size:.75rem;font-weight:700;padding:9px;border-bottom:1px solid #e5e7eb}
+.doc-table td{padding:9px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.doc-table tr:hover td{background:#f8fafc}
+</style>
+
+<div class="doc-hero">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold mb-1 text-white">
+                <i class="bx bx-folder-open me-2"></i>ملفات ومستندات الجمعية
+            </h4>
+            <div style="opacity:.78;font-size:.82rem">
+                عقود الموظفين، الخطابات الرسمية، محاضر مجلس الإدارة، الاتفاقيات، عقود المشروعات، وأوراق الجمعية
+            </div>
+        </div>
+        <a asp-action="Create" class="btn btn-warning btn-sm fw-bold" style="border-radius:10px">
+            + إضافة مستند
+        </a>
+    </div>
+
+    <div class="d-flex gap-3 flex-wrap">
+        <div class="doc-stat">
+            <div class="n">@Model.TotalCount</div>
+            <div class="l">عدد المستندات</div>
+        </div>
+        <div class="doc-stat">
+            <div class="n">@((Model.TotalSize / 1024m / 1024m).ToString("N2"))</div>
+            <div class="l">الحجم MB</div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="doc-card">
+    <div class="doc-head">فلاتر البحث</div>
+    <div class="p-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">نوع المستند</label>
+                <select asp-for="DocumentType" asp-items="Model.DocumentTypes" class="form-select">
+                    <option value="">كل الأنواع</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">بحث</label>
+                <input asp-for="SearchText" class="form-control" placeholder="رقم، عنوان، جهة مرتبطة..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">من تاريخ</label>
+                <input asp-for="FromDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">إلى تاريخ</label>
+                <input asp-for="ToDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-1">
+                <div class="form-check mt-4">
+                    <input asp-for="IncludeArchived" class="form-check-input" />
+                    <label asp-for="IncludeArchived" class="form-check-label">الأرشيف</label>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-primary w-100">عرض</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="doc-card">
+    <div class="doc-head">قائمة المستندات</div>
+    <div class="table-responsive">
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th>رقم المستند</th>
+                    <th>العنوان</th>
+                    <th>النوع</th>
+                    <th>تاريخ المستند</th>
+                    <th>الكيان المرتبط</th>
+                    <th>الملف</th>
+                    <th>الحجم</th>
+                    <th>الحالة</th>
+                    <th style="width:170px">إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                <tr>
+                    <td>@r.DocumentNumber</td>
+                    <td>
+                        <div class="fw-bold">@r.Title</div>
+                        @if (!string.IsNullOrWhiteSpace(r.Notes))
+                        {
+                            <div style="font-size:.72rem;color:#94a3b8">@r.Notes</div>
+                        }
+                    </td>
+                    <td><span class="badge bg-light text-dark">@r.DocumentTypeAr</span></td>
+                    <td>@r.DocumentDateUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                    <td>
+                        @r.RelatedEntityName
+                        @if (!string.IsNullOrWhiteSpace(r.RelatedEntityType))
+                        {
+                            <div style="font-size:.72rem;color:#94a3b8">@r.RelatedEntityType</div>
+                        }
+                    </td>
+                    <td>@r.FileName</td>
+                    <td>@((r.FileSize / 1024m).ToString("N1")) KB</td>
+                    <td>
+                        @if (r.IsArchived)
+                        {
+                            <span class="badge bg-secondary">مؤرشف</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">نشط</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Download" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">تحميل</a>
+                        @if (!r.IsArchived)
+                        {
+                            <form asp-action="Archive" asp-route-id="@r.Id" method="post" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        onclick="return confirm('هل تريد أرشفة المستند؟');">
+                                    أرشفة
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!Model.Rows.Any())
+    {
+        <div class="p-4 text-center text-muted">لا توجد مستندات حسب الفلاتر الحالية.</div>
+    }
+</div>

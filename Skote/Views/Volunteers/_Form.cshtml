@@ -1,0 +1,70 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Volunteers.CreateVolunteerVm
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div class="row g-3">
+    <div class="col-md-3">
+        <label asp-for="VolunteerCode" class="form-label"></label>
+        <input asp-for="VolunteerCode" class="form-control" />
+        <span asp-validation-for="VolunteerCode" class="text-danger"></span>
+    </div>
+    <div class="col-md-5">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Qualification" class="form-label"></label>
+        <input asp-for="Qualification" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AddressLine" class="form-label"></label>
+        <input asp-for="AddressLine" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Nationality" class="form-label"></label>
+        <input asp-for="Nationality" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="NationalId" class="form-label"></label>
+        <input asp-for="NationalId" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="PhoneNumber" class="form-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="BirthDate" class="form-label"></label>
+        <input asp-for="BirthDate" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Gender" class="form-label"></label>
+        <select asp-for="Gender" asp-items="Model.Genders" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="MaritalStatus" class="form-label"></label>
+        <select asp-for="MaritalStatus" asp-items="Model.MaritalStatuses" class="form-select">
+            <option value="">-- اختر --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PreferredArea" class="form-label"></label>
+        <input asp-for="PreferredArea" class="form-control" />
+    </div>
+    <div class="col-md-8">
+        <label asp-for="AvailabilityNotes" class="form-label"></label>
+        <textarea asp-for="AvailabilityNotes" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="col-md-2 form-check mt-4 ms-3">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+</div>

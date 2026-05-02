@@ -1,0 +1,16 @@
+@model InfrastructureManagmentWebFramework.Models.Charity.Stores.Issues.CreateStoreIssueVm
+<div class="row g-3">
+    <div class="col-md-4"><label asp-for="IssueNumber" class="form-label"></label><input asp-for="IssueNumber" class="form-control" /></div>
+    <div class="col-md-4"><label asp-for="IssueDate" class="form-label"></label><input asp-for="IssueDate" class="form-control" /></div>
+    <div class="col-md-4"><label asp-for="WarehouseId" class="form-label"></label><select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select"></select></div>
+    <div class="col-md-4"><label asp-for="IssueType" class="form-label"></label><select asp-for="IssueType" asp-items="Model.IssueTypes" class="form-select"></select></div>
+    <div class="col-md-4"><label asp-for="BeneficiaryId" class="form-label"></label><select asp-for="BeneficiaryId" asp-items="Model.Beneficiaries" class="form-select"><option value="">-- بدون --</option></select></div>
+    <div class="col-md-4"><label asp-for="ProjectId" class="form-label"></label><select asp-for="ProjectId" asp-items="Model.Projects" class="form-select"><option value="">-- بدون --</option></select></div>
+    <div class="col-md-12"><label asp-for="IssuedToName" class="form-label"></label><input asp-for="IssuedToName" class="form-control" /></div>
+
+    <div class="col-12"><hr /><h5>بيانات الصنف</h5></div>
+    <div class="col-md-12"><label asp-for="ItemId" class="form-label"></label><select asp-for="ItemId" asp-items="Model.Items" class="form-select"></select></div>
+    <div class="col-md-6"><label asp-for="Quantity" class="form-label"></label><input asp-for="Quantity" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="UnitCost" class="form-label"></label><input asp-for="UnitCost" class="form-control" /></div>
+    <div class="col-md-12"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="3"></textarea></div>
+</div>

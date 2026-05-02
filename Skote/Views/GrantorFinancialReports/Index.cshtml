@@ -1,0 +1,198 @@
+@model InfrastructureManagmentWebFramework.Models.Funding.GrantorFinancialReportPageVm
+
+@{
+    ViewData["Title"] = "التقرير المالي للجهة المانحة";
+}
+
+<style>
+.gr-hero{background:linear-gradient(135deg,#1e3a8a,#0f766e);border-radius:18px;padding:18px 24px;color:#fff;margin-bottom:20px}
+.gr-stat{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;text-align:center;flex:1;min-width:130px}
+.gr-stat .n{font-size:1.2rem;font-weight:800;line-height:1}
+.gr-stat .l{font-size:.7rem;opacity:.85;margin-top:2px}
+.gr-card{background:#fff;border-radius:16px;border:.5px solid rgba(15,118,110,.12);box-shadow:0 2px 8px rgba(15,118,110,.05);overflow:hidden;margin-bottom:16px}
+.gr-head{padding:12px 18px;border-bottom:.5px solid rgba(15,118,110,.08);font-size:.9rem;font-weight:700;color:#0f766e;background:rgba(15,118,110,.03)}
+.gr-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.gr-table th{background:#f8fafc;color:#64748b;font-size:.75rem;font-weight:700;padding:9px;border-bottom:1px solid #e5e7eb}
+.gr-table td{padding:9px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.gr-table tr:hover td{background:#f8fafc}
+.util-wrap{height:7px;background:#e5e7eb;border-radius:20px;overflow:hidden}
+.util-bar{height:100%;background:#0f766e;border-radius:20px}
+</style>
+
+<div class="gr-hero">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold mb-1 text-white">
+                <i class="bx bx-bar-chart-alt-2 me-2"></i>التقرير المالي للجهة المانحة
+            </h4>
+            <div style="opacity:.78;font-size:.82rem">
+                متابعة التمويل والصرف والمتبقي حسب المشروع والجهة المانحة
+            </div>
+        </div>
+        <a asp-controller="ProjectFundingAgreements" asp-action="Index"
+           class="btn btn-warning btn-sm fw-bold" style="border-radius:10px">
+            اتفاقيات التمويل
+        </a>
+    </div>
+
+    <div class="d-flex gap-3 flex-wrap">
+        <div class="gr-stat"><div class="n">@Model.TotalFunding.ToString("N0")</div><div class="l">قيمة التمويل</div></div>
+        <div class="gr-stat"><div class="n">@Model.TotalReceived.ToString("N0")</div><div class="l">المحصل</div></div>
+        <div class="gr-stat" style="background:rgba(244,106,106,.18)"><div class="n" style="color:#fecaca">@Model.TotalActualExpenses.ToString("N0")</div><div class="l">إجمالي المصروف</div></div>
+        <div class="gr-stat" style="background:rgba(16,185,129,.18)"><div class="n" style="color:#bbf7d0">@Model.RemainingFunding.ToString("N0")</div><div class="l">المتبقي من التمويل</div></div>
+        <div class="gr-stat"><div class="n">@Model.SpendingPercent.ToString("N2")%</div><div class="l">نسبة الصرف</div></div>
+    </div>
+</div>
+
+<div class="gr-card">
+    <div class="gr-head">فلاتر التقرير</div>
+    <div class="p-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">الجهة المانحة</label>
+                <select asp-for="GrantorId" asp-items="Model.Grantors" class="form-select">
+                    <option value="">كل الجهات</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">المشروع</label>
+                <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                    <option value="">كل المشروعات</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">من تاريخ</label>
+                <input asp-for="FromDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">إلى تاريخ</label>
+                <input asp-for="ToDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100 fw-bold">عرض</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="gr-card">
+    <div class="gr-head">اتفاقيات التمويل</div>
+    <div class="table-responsive">
+        <table class="gr-table">
+            <thead>
+                <tr>
+                    <th>رقم الاتفاقية</th>
+                    <th>الجهة المانحة</th>
+                    <th>المشروع</th>
+                    <th>قيمة التمويل</th>
+                    <th>المحصل</th>
+                    <th>المتبقي للتحصيل</th>
+                    <th>تاريخ البدء</th>
+                    <th>مسئول التواصل</th>
+                    <th>البريد الإلكتروني</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.Agreements)
+            {
+                <tr>
+                    <td>@row.AgreementNumber</td>
+                    <td>@row.GrantorName</td>
+                    <td class="fw-bold">@row.ProjectName</td>
+                    <td>@row.FundingAmount.ToString("N2")</td>
+                    <td>@row.ReceivedAmount.ToString("N2")</td>
+                    <td>@row.RemainingToReceive.ToString("N2")</td>
+                    <td>@row.StartDateUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                    <td>@row.ContactPerson</td>
+                    <td>@row.ContactEmail</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="gr-card">
+    <div class="gr-head">الصرف حسب بنود الموازنة</div>
+    <div class="table-responsive">
+        <table class="gr-table">
+            <thead>
+                <tr>
+                    <th>المشروع</th>
+                    <th>بند الموازنة</th>
+                    <th>المخطط</th>
+                    <th>الفعلي</th>
+                    <th>المتبقي</th>
+                    <th>نسبة الاستخدام</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.BudgetRows)
+            {
+                var width = Math.Min(100, Math.Max(0, row.UtilizationPercent));
+                <tr>
+                    <td>@row.ProjectName</td>
+                    <td>@row.BudgetLineName</td>
+                    <td>@row.PlannedAmount.ToString("N2")</td>
+                    <td class="text-danger fw-bold">@row.ActualAmount.ToString("N2")</td>
+                    <td class="@(row.RemainingAmount >= 0 ? "text-success" : "text-danger") fw-bold">@row.RemainingAmount.ToString("N2")</td>
+                    <td>
+                        <div style="font-size:.72rem">@row.UtilizationPercent.ToString("N2")%</div>
+                        <div class="util-wrap"><div class="util-bar" style="width:@width%"></div></div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="gr-card">
+    <div class="gr-head">سجل المصروفات والمستندات</div>
+    <div class="table-responsive">
+        <table class="gr-table">
+            <thead>
+                <tr>
+                    <th>الجهة</th>
+                    <th>المشروع</th>
+                    <th>الاتفاقية</th>
+                    <th>بند الصرف</th>
+                    <th>المبلغ</th>
+                    <th>تاريخ الصرف</th>
+                    <th>المستند</th>
+                    <th>المصدر</th>
+                    <th>المرحلة</th>
+                    <th>مركز التكلفة</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.StatementRows)
+            {
+                <tr>
+                    <td>@row.GrantorName</td>
+                    <td>@row.ProjectName</td>
+                    <td>@row.AgreementNumber</td>
+                    <td>
+                        <div class="fw-semibold">@row.ExpenseItem</div>
+                        @if (!string.IsNullOrWhiteSpace(row.BudgetLineName))
+                        {
+                            <div style="font-size:.72rem;color:#94a3b8">بند الموازنة: @row.BudgetLineName</div>
+                        }
+                    </td>
+                    <td class="text-danger fw-bold">@row.Amount.ToString("N2")</td>
+                    <td>@row.DocumentDateUtc.ToLocalTime().ToString("yyyy/MM/dd")</td>
+                    <td>@row.DocumentNumber</td>
+                    <td>@row.SourceKindAr</td>
+                    <td>@row.PhaseName</td>
+                    <td>@row.CostCenterName</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!Model.StatementRows.Any())
+    {
+        <div class="p-4 text-center text-muted">لا توجد مصروفات حسب الفلاتر الحالية.</div>
+    }
+</div>

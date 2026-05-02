@@ -1,0 +1,70 @@
+@model InfrastructureManagmentWebFramework.Models.Funding.CreateProjectFundingAgreementVm
+@{
+    ViewData["Title"] = "إضافة اتفاقية تمويل";
+}
+
+<div class="card" style="border-radius:16px">
+    <div class="card-header fw-bold">إضافة اتفاقية تمويل مشروع</div>
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="AgreementNumber" class="form-label"></label>
+                    <input asp-for="AgreementNumber" class="form-control" />
+                    <span asp-validation-for="AgreementNumber" class="text-danger"></span>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="GrantorId" class="form-label"></label>
+                    <select asp-for="GrantorId" asp-items="Model.Grantors" class="form-select">
+                        <option value="">-- اختر الجهة --</option>
+                    </select>
+                    <span asp-validation-for="GrantorId" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ProjectId" class="form-label"></label>
+                    <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                        <option value="">-- اختر المشروع --</option>
+                    </select>
+                    <span asp-validation-for="ProjectId" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="FundingAmount" class="form-label"></label>
+                    <input asp-for="FundingAmount" type="number" step="0.01" class="form-control" />
+                    <span asp-validation-for="FundingAmount" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="StartDateUtc" class="form-label"></label>
+                    <input asp-for="StartDateUtc" type="date" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="EndDateUtc" class="form-label"></label>
+                    <input asp-for="EndDateUtc" type="date" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ContactPerson" class="form-label"></label>
+                    <input asp-for="ContactPerson" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ContactEmail" class="form-label"></label>
+                    <input asp-for="ContactEmail" class="form-control" />
+                </div>
+                <div class="col-md-12">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-primary fw-bold">حفظ</button>
+                <a asp-action="Index" class="btn btn-light">رجوع</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
